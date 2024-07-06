@@ -12,6 +12,10 @@ namespace GameUtilities.MonoBehaviours {
 
         public static CameraFollow Instance { get; private set; }
 
+        [SerializeField] private float distanceCof = 1.001f;
+        [SerializeField] private float cameraMoveSpeed = 10f;
+        [SerializeField] private float cameraZoomSpeed = 10f;
+        
         private Camera myCamera;
         private Func<Vector3> GetCameraFollowPositionFunc;
         private Func<float> GetCameraZoomFunc;
@@ -64,8 +68,7 @@ namespace GameUtilities.MonoBehaviours {
             cameraFollowPosition.z = transform.position.z;
 
             Vector3 cameraMoveDir = (cameraFollowPosition - transform.position).normalized;
-            float distance = Vector3.Distance(cameraFollowPosition, transform.position);
-            float cameraMoveSpeed = 3f;
+            float distance = Vector3.Distance(cameraFollowPosition, transform.position) / distanceCof;
 
             if (distance > 0) {
                 Vector3 newCameraPosition = transform.position + cameraMoveDir * distance * cameraMoveSpeed * Time.deltaTime;
@@ -86,7 +89,6 @@ namespace GameUtilities.MonoBehaviours {
             float cameraZoom = GetCameraZoomFunc();
 
             float cameraZoomDifference = cameraZoom - myCamera.orthographicSize;
-            float cameraZoomSpeed = 1f;
 
             myCamera.orthographicSize += cameraZoomDifference * cameraZoomSpeed * Time.deltaTime;
 
@@ -100,6 +102,8 @@ namespace GameUtilities.MonoBehaviours {
                 }
             }
         }
-    }
 
+        
+    }
+  
 }
