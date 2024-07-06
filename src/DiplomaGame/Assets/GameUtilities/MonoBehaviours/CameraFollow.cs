@@ -64,8 +64,8 @@ namespace GameUtilities.MonoBehaviours {
             cameraFollowPosition.z = transform.position.z;
 
             Vector3 cameraMoveDir = (cameraFollowPosition - transform.position).normalized;
-            float distance = Vector3.Distance(cameraFollowPosition, transform.position);
-            float cameraMoveSpeed = 3f;
+            float distance = Vector3.Distance(cameraFollowPosition, transform.position) / 1.001f;
+            float cameraMoveSpeed = 10f;
 
             if (distance > 0) {
                 Vector3 newCameraPosition = transform.position + cameraMoveDir * distance * cameraMoveSpeed * Time.deltaTime;
@@ -86,7 +86,7 @@ namespace GameUtilities.MonoBehaviours {
             float cameraZoom = GetCameraZoomFunc();
 
             float cameraZoomDifference = cameraZoom - myCamera.orthographicSize;
-            float cameraZoomSpeed = 1f;
+            float cameraZoomSpeed = 2f;
 
             myCamera.orthographicSize += cameraZoomDifference * cameraZoomSpeed * Time.deltaTime;
 
@@ -100,6 +100,8 @@ namespace GameUtilities.MonoBehaviours {
                 }
             }
         }
-    }
 
+        
+    }
+  
 }
