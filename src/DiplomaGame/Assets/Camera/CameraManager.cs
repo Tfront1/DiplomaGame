@@ -17,13 +17,16 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private float _currentZoom = 5f;
     [SerializeField] private float _zoomSpeed = 200f;
 
-    public static float _mapHeight = 100f;
-    public static float _mapWidth = 100f;
-    public static Vector3 _mapStart = new(-50, -50);
+    public static float _mapHeight = 300f;
+    public static float _mapWidth = 300f;
+    public static Vector3 _mapStart = new(-150, -150);
 
     private Vector3 _targetPosition;
     private bool _isMiddleMousePressed;
     private Vector3 _lastMousePosition;
+
+    private bool _isCameraMovingToPosition = false;
+    private Vector3 _positionToMove;
 
     void Start()
     {
@@ -38,9 +41,26 @@ public class CameraManager : MonoBehaviour
 
     void Update()
     {
-        HandleEdgeMovement();
-        HandleMiddleMouseMovement();
-        HandleZoom();
+
+        //For testing
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            SetCameraPositionToMove(new Vector3(100, 100, 0));
+        }
+        //Debug
+
+        if (_isCameraMovingToPosition)
+        {
+            MoveCameraToPosition();
+            _isCameraMovingToPosition = false;
+        }
+        else
+        {
+            HandleEdgeMovement();
+            HandleMiddleMouseMovement();
+            HandleZoom();
+        }
+
         cameraFollow.SetCameraFollowPosition(_targetPosition);
         cameraFollow.SetCameraZoom(_currentZoom);
     }
@@ -100,12 +120,12 @@ public class CameraManager : MonoBehaviour
         var zoomChange = -Input.GetAxis("Mouse ScrollWheel") * _stepZoom;
         var newZoom = Mathf.Clamp(_currentZoom + zoomChange, _minZoom, _maxZoom);
 
-        if(CheckCameraMapBordersCollision(newZoom))
+        if (CheckCameraMapBordersCollision(newZoom))
         {
-            return;
+            _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom);
+            NormalizeCameraMapPosition();
         }
-
-        if (Math.Abs(_currentZoom - newZoom) > 10e-15 && Math.Abs(newZoom - _maxZoom) > 10e-15 && Math.Abs(newZoom - _minZoom) > 10e-15)
+        else if (Math.Abs(_currentZoom - newZoom) > 10e-15 && Math.Abs(newZoom - _maxZoom) > 10e-15 && Math.Abs(newZoom - _minZoom) > 10e-15)
         {
             var screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
             var mousePositionRelativeToCenter = Input.mousePosition - screenCenter;
@@ -115,7 +135,7 @@ public class CameraManager : MonoBehaviour
 
                 if (zoomChange > 0)
                 {
-                    _targetPosition += -moveDirection * _zoomSpeed * Time.deltaTime;
+                    _targetPosition += _zoomSpeed * Time.deltaTime * -moveDirection;
 
                     NormalizeCameraMapPosition();
                 }
@@ -180,4 +200,48 @@ public class CameraManager : MonoBehaviour
                cameraBottomRight.x > _mapStart.x + _mapWidth ||
                cameraBottomRight.y < _mapStart.y;
     }
+
+    private Vector3 CalculateVectorToMoveCameraFromBorder(float newZoom)
+    {
+        var aspectRatio = Screen.width / (float)Screen.height;
+        var cameraWidth = newZoom * 2 * aspectRatio;
+        var cameraHeight = newZoom * 2;
+
+        var cameraTopLeft = _targetPosition + new Vector3(-cameraWidth / 2, cameraHeight / 2, 0);
+        var cameraBottomRight = _targetPosition + new Vector3(cameraWidth / 2, -cameraHeight / 2, 0);
+
+        var moveVector = new Vector3();
+
+        if (cameraTopLeft.x < _mapStart.x)
+        {
+            moveVector.x = _mapStart.x - cameraTopLeft.x;
+        }
+        if (cameraTopLeft.y > _mapStart.y + _mapHeight)
+        {
+            moveVector.y = (_mapStart.y + _mapHeight) - cameraTopLeft.y;
+        }
+        if (cameraBottomRight.x > _mapStart.x + _mapWidth)
+        {
+            moveVector.x = (_mapStart.x + _mapWidth) - cameraBottomRight.x;
+        }
+        if (cameraBottomRight.y < _mapStart.y)
+        {
+            moveVector.y = _mapStart.y - cameraBottomRight.y;
+        }
+
+        return moveVector;
+    }
+
+    private void MoveCameraToPosition()
+    {
+        _targetPosition.x = _positionToMove.x;
+        _targetPosition.y = _positionToMove.y;
+        NormalizeCameraMapPosition();
+    }
+
+    public void SetCameraPositionToMove(Vector3 finalPosition)
+    {
+        _positionToMove = finalPosition;
+        _isCameraMovingToPosition = true;
+    }    
 }
