@@ -7,7 +7,7 @@ public class TestingScript : MonoBehaviour
 
 	private void Start()
 	{
-		_grid = new MapGrid<int>(4, 2, 10f, new Vector3(0, 0), (MapGrid<int> g, int x, int y) => new int());
+		_grid = new MapGrid<int>(30, 30, 10f, new Vector3(-150, -150), (MapGrid<int> g, int x, int y) => new int());
 	}
 
 	private void Update()
