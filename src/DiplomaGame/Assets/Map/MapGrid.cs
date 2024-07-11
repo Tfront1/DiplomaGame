@@ -4,12 +4,12 @@ using GameUtilities.Utils;
 
 public class MapGrid<TGridObject>
 {
-	private int Width { get; }
-	private int Height { get; }
-	private float CellSize { get; }
-	private Vector3 OriginPosition { get; }
+	public int Width { get; }
+	public int Height { get; }
+	public float CellSize { get; }
+	public Vector3 OriginPosition { get; }
 
-	private readonly TGridObject[,] _gridArray;
+	public readonly TGridObject[,] _gridArray;
 
 	public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
 
