@@ -6,20 +6,20 @@ public class CameraManager : MonoBehaviour
 {
     [SerializeField] private CameraFollow cameraFollow;
 
-    [SerializeField] private float _edgeMoveSpeed = 10f;
-    [SerializeField] private float _edgeSize = 20f;
+    private float _edgeMoveSpeed;
+    private float _edgeSize;
 
-    [SerializeField] private float _middleMouseSpeed = 10f;
+    private float _middleMouseSpeed;
 
-    [SerializeField] private float _minZoom = 5f;
-    [SerializeField] private float _maxZoom = 50f;
-    [SerializeField] private float _stepZoom = 5f;
-    [SerializeField] private float _currentZoom = 5f;
-    [SerializeField] private float _zoomSpeed = 200f;
+    private float _minZoom;
+    private float _maxZoom;
+    private float _stepZoom;
+    private float _currentZoom;
+    private float _zoomSpeed;
 
-    public static float _mapHeight = 300f;
-    public static float _mapWidth = 300f;
-    public static Vector3 _mapStart = new(-150, -150);
+    public static float _mapHeight;
+    public static float _mapWidth;
+    public static Vector3 _mapStart;
 
     private Vector3 _targetPosition;
     private bool _isMiddleMousePressed;
@@ -30,6 +30,8 @@ public class CameraManager : MonoBehaviour
 
     void Start()
     {
+        LoadAllVariables();
+
         if (cameraFollow == null)
         {
             cameraFollow = CameraFollow.Instance;
@@ -37,6 +39,8 @@ public class CameraManager : MonoBehaviour
 
         _targetPosition = cameraFollow.transform.position;
         cameraFollow.SetCameraZoom(_currentZoom);
+
+        
     }
 
     void Update()
@@ -124,6 +128,7 @@ public class CameraManager : MonoBehaviour
         {
             _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom);
             NormalizeCameraMapPosition();
+            _currentZoom = newZoom;
         }
         else if (Math.Abs(_currentZoom - newZoom) > 10e-15 && Math.Abs(newZoom - _maxZoom) > 10e-15 && Math.Abs(newZoom - _minZoom) > 10e-15)
         {
@@ -146,9 +151,10 @@ public class CameraManager : MonoBehaviour
                     NormalizeCameraMapPosition();
                 }
             }
+            _currentZoom = newZoom;
         }
 
-        _currentZoom = newZoom;
+        
     }
 
     private void NormalizeCameraMapPosition()
@@ -243,5 +249,23 @@ public class CameraManager : MonoBehaviour
     {
         _positionToMove = finalPosition;
         _isCameraMovingToPosition = true;
-    }    
+    }
+
+    private void LoadAllVariables()
+    {
+        _edgeMoveSpeed = CameraConfig.EdgeMoveSpeed;
+        _edgeSize = CameraConfig.EdgeSize;
+
+        _middleMouseSpeed = CameraConfig.MiddleMouseSpeed;
+
+        _minZoom = CameraConfig.MinZoom;
+        _maxZoom = CameraConfig.MaxZoom;
+        _stepZoom = CameraConfig.StepZoom;
+        _currentZoom = CameraConfig.CurrentZoom;
+        _zoomSpeed = CameraConfig.ZoomSpeed;
+
+        _mapHeight = MapConfig.MapHeight;
+        _mapWidth = MapConfig.MapWidth;
+        _mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+    }
 }

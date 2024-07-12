@@ -1,0 +1,4 @@
+﻿{
+  "cameraConfigPath": "Assets/Config/camera/cameraConfig.json",
+  "mapConfigPath": "Assets/Config/map/mapConfig.json"
+}
