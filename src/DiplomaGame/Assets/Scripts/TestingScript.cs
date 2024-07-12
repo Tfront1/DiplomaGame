@@ -1,7 +1,6 @@
 using GameUtilities;
 using GameUtilities.Utils;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class TestingScript : MonoBehaviour
 {
@@ -12,7 +11,7 @@ public class TestingScript : MonoBehaviour
 
 	private void Start()
 	{
-		_tilemap = new Tilemap(30, 30, 10f, new Vector3(-150, -150));
+		_tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.SellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
 
 		_tilemap.SetTilemapVisual(_tilemapVisual);
 	}
