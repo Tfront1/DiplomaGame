@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace GameUtilities.Utils
@@ -123,15 +124,15 @@ namespace GameUtilities.Utils
 		public static void AddToMeshArrays(Vector3[] vertices, Vector2[] uvs, int[] triangles, int index, Vector3 pos, float rot, Vector3 baseSize, Vector2 uv00, Vector2 uv11)
 		{
 			//Relocate vertices
-			int vIndex = index * 4;
-			int vIndex0 = vIndex;
-			int vIndex1 = vIndex + 1;
-			int vIndex2 = vIndex + 2;
-			int vIndex3 = vIndex + 3;
+			var vIndex = index * 4;
+			var vIndex0 = vIndex;
+			var vIndex1 = vIndex + 1;
+			var vIndex2 = vIndex + 2;
+			var vIndex3 = vIndex + 3;
 
 			baseSize *= .5f;
 
-			bool skewed = baseSize.x != baseSize.y;
+			var skewed = baseSize.x != baseSize.y;
 			if (skewed)
 			{
 				vertices[vIndex0] = pos + GetQuaternionEuler(rot) * new Vector3(-baseSize.x, baseSize.y);
@@ -154,7 +155,7 @@ namespace GameUtilities.Utils
 			uvs[vIndex3] = new Vector2(uv11.x, uv11.y);
 
 			//Create triangles
-			int tIndex = index * 6;
+			var tIndex = index * 6;
 
 			triangles[tIndex + 0] = vIndex0;
 			triangles[tIndex + 1] = vIndex3;

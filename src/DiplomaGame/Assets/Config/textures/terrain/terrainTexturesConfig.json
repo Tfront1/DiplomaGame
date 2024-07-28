@@ -1,0 +1,30 @@
+﻿{
+  "texturesPath": "Assets/Textures/Terrain",
+  "defaultTextureSize": 64,
+  "tilemapSprites": [
+    {
+      "id": 0,
+      "name": "None",
+      "textureFileName": "none.png",
+      "textureResolution": 64
+    },
+    {
+      "id": 1,
+      "name": "Grass",
+      "textureFileName": "grass.png",
+      "textureResolution": 64
+    },
+    {
+      "id": 2,
+      "name": "Desert",
+      "textureFileName": "desert.png",
+      "textureResolution": 64
+    },
+    {
+      "id": 3,
+      "name": "Dirt",
+      "textureFileName": "dirt.png",
+      "textureResolution": 64
+    }
+  ]
+}

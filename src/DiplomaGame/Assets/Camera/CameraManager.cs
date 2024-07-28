@@ -264,8 +264,8 @@ public class CameraManager : MonoBehaviour
         _currentZoom = CameraConfig.CurrentZoom;
         _zoomSpeed = CameraConfig.ZoomSpeed;
 
-        _mapHeight = MapConfig.MapHeight;
-        _mapWidth = MapConfig.MapWidth;
+        _mapHeight = MapConfig.MapHeight * MapConfig.SellSize;
+        _mapWidth = MapConfig.MapWidth * MapConfig.SellSize;
         _mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
     }
 }
