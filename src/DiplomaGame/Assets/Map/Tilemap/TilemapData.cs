@@ -38,12 +38,12 @@ public class TilemapData
         _width = width;
         _height = height;
 
-        var textures = TerrainTexturesConfig._terrainTextures
-            .Select(sprite => Path.Combine(TerrainTexturesConfig._texturesPath, sprite.textureFileName))
+        var textures = TerrainTexturesConfig.TerrainTextures
+            .Select(sprite => Path.Combine(TerrainTexturesConfig.TexturesPath, sprite.TextureFileName))
             .Select(LoadTexture).Where(texture => texture != null)
             .ToList();
 
-        var combinedTexture = CreateCombinedTexture(textures, TerrainTexturesConfig._defaultTextureSize);
+        var combinedTexture = CreateCombinedTexture(textures, TerrainTexturesConfig.DefaultTextureSize);
 
         InitializeTilemapSprites();
 
@@ -180,12 +180,12 @@ public class TilemapData
     public void InitializeUVCoordsDictionary(Texture2D combinedTexture)
     {
         _uvCoordsDictionary.Clear();
-        var terrainTextures = TerrainTexturesConfig._terrainTextures;
+        var terrainTextures = TerrainTexturesConfig.TerrainTextures;
 
         foreach (var sprite in terrainTextures)
         {
-            var id = sprite.id;
-            var resolution = sprite.textureResolution;
+            var id = sprite.Id;
+            var resolution = sprite.TextureResolution;
 
             var x = id * resolution;
             var uv00 = new Vector2(x / (float)combinedTexture.width, 0);
@@ -206,14 +206,14 @@ public class TilemapData
     /// </summary>
     /// <remarks>
     /// This method creates a new list of `TilemapSprite` objects from the terrain textures configuration.
-    /// Each `TilemapSprite` is initialized with the ID and name of the corresponding terrain texture.
+    /// Each `TilemapSprite` is initialized with the ID and Name of the corresponding terrain texture.
     /// </remarks>
     public void InitializeTilemapSprites()
     {
-        var terrainTextures = TerrainTexturesConfig._terrainTextures;
+        var terrainTextures = TerrainTexturesConfig.TerrainTextures;
 
         _tilemapSprites = new List<TilemapSprite>();
-        terrainTextures.ForEach(x => _tilemapSprites.Add(new TilemapSprite(x.id, x.name)));
+        terrainTextures.ForEach(x => _tilemapSprites.Add(new TilemapSprite(x.Id, x.Name)));
     }
 }
 

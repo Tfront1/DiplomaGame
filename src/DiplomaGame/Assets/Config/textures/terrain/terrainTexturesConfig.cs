@@ -2,9 +2,7 @@ using System.Collections.Generic;
 
 public static class TerrainTexturesConfig
 {
-    public static string _texturesPath;
-    public static List<TerrainTexturesSprite> _terrainTextures;
-    
-    public static int _defaultTextureSize;
-
-}
+    public static string TexturesPath { get; set; }
+    public static List<TerrainTexturesSprite> TerrainTextures { get; set; }
+    public static int DefaultTextureSize { get; set; }
+} 

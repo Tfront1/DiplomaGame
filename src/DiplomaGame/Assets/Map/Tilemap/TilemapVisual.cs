@@ -28,7 +28,7 @@ public class TilemapVisual : MonoBehaviour
     /// Handles changes in the grid value, triggering a mesh update.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">Event arguments containing the x and y coordinates of the changed grid value.</param>
+    /// <param name="e">Event arguments containing the X and Y coordinates of the changed grid value.</param>
     /// <remarks>
     /// This method sets a flag to indicate that the mesh needs to be updated and stores the coordinates 
     /// of the changed grid value. It is intended to respond to updates in the grid data and refresh the mesh accordingly.
@@ -36,8 +36,8 @@ public class TilemapVisual : MonoBehaviour
     private void MapGrid_OnGridValueChanged(object sender, OnGridValueChangedEventArgs e) 
 	{
 		_updateMesh = true;
-        _x = e.x;
-        _y = e.y;
+        _x = e.X;
+        _y = e.Y;
     }
 
 	private void LateUpdate()
@@ -52,8 +52,8 @@ public class TilemapVisual : MonoBehaviour
     /// <summary>
     /// Updates the tilemap visual at the specified grid coordinates.
     /// </summary>
-    /// <param name="x">The x-coordinate of the grid point.</param>
-    /// <param name="y">The y-coordinate of the grid point.</param>
+    /// <param name="x">The X-coordinate of the grid point.</param>
+    /// <param name="y">The Y-coordinate of the grid point.</param>
     /// <remarks>
     /// This method updates the mesh for a specific tile in the tilemap. It calculates the necessary UV coordinates,
     /// updates the mesh arrays with new vertices, UVs, and triangles, and then applies the updated mesh to the `combinedMesh`.

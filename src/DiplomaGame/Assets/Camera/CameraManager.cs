@@ -232,7 +232,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Checks if the camera's new position and zoom level cause it to collide with the map borders.
     /// </summary>
-    /// <param name="newZoom">The new zoom level of the camera.</param>
+    /// <param Name="newZoom">The new zoom level of the camera.</param>
     /// <returns>True if the camera collides with the map borders; otherwise, false.</returns>
     /// <remarks>
     /// This method calculates the aspect ratio of the screen, determines the camera's dimensions based on the provided zoom level,
@@ -260,7 +260,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Calculates the vector required to move the camera away from the map borders.
     /// </summary>
-    /// <param name="newZoom">The new zoom level of the camera.</param>
+    /// <param Name="newZoom">The new zoom level of the camera.</param>
     /// <returns>A vector indicating the direction and distance to move the camera to stay within the map borders.</returns>
     /// <remarks>
     /// This method determines the camera's dimensions based on the new zoom level and calculates the necessary adjustments 
@@ -314,7 +314,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Sets the target position for the camera to move to and starts the movement process.
     /// </summary>
-    /// <param name="finalPosition">The position to move the camera to.</param>
+    /// <param Name="finalPosition">The position to move the camera to.</param>
     /// <remarks>
     /// This method updates the camera's target position and flags that the camera is moving to this new position.
     /// </remarks>
