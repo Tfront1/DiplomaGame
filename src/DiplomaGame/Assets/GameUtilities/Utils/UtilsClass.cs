@@ -692,7 +692,7 @@ namespace GameUtilities.Utils {
 
 
 
-        // Returns a random script that can be used to id
+        // Returns a random script that can be used to Id
         public static string GetIdString() {
             string alphabet = "0123456789abcdefghijklmnopqrstuvxywz";
             string ret = "";
@@ -702,12 +702,12 @@ namespace GameUtilities.Utils {
             return ret;
         }
 
-        // Returns a random script that can be used to id (bigger alphabet)
+        // Returns a random script that can be used to Id (bigger alphabet)
         public static string GetIdStringLong() {
             return GetIdStringLong(10);
         }
 
-        // Returns a random script that can be used to id (bigger alphabet)
+        // Returns a random script that can be used to Id (bigger alphabet)
         public static string GetIdStringLong(int chars) {
             string alphabet = "0123456789abcdefghijklmnopqrstuvxywzABCDEFGHIJKLMNOPQRSTUVXYWZ";
             string ret = "";
@@ -719,7 +719,7 @@ namespace GameUtilities.Utils {
 
 
 
-        // Get a random male name and optionally single letter surname
+        // Get a random male Name and optionally single letter surname
         public static string GetRandomName(bool withSurname = false) {
             List<string> firstNameList = new List<string>(){"Gabe","Cliff","Tim","Ron","Jon","John","Mike","Seth","Alex","Steve","Chris","Will","Bill","James","Jim",
                                         "Ahmed","Omar","Peter","Pierre","George","Lewis","Lewie","Adam","William","Ali","Eddie","Ed","Dick","Robert","Bob","Rob",

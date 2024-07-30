@@ -7,7 +7,7 @@ namespace GameUtilities.MonoBehaviours {
      * */
     public class PositionRendererSorter : MonoBehaviour {
 
-        [SerializeField] private int sortingOrderBase = 5000; // This number should be higher than what any of your sprites will be on the position.y
+        [SerializeField] private int sortingOrderBase = 5000; // This number should be higher than what any of your sprites will be on the position.Y
         [SerializeField] private int offset = 0;
         [SerializeField] private bool runOnlyOnce = false;
 

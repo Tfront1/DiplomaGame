@@ -33,6 +33,7 @@ namespace GameUtilities.MonoBehaviours {
             if (instantZoom) {
                 myCamera.orthographicSize = GetCameraZoomFunc();
             }
+
         }
 
         private void Awake() {

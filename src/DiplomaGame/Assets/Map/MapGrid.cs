@@ -55,7 +55,7 @@ public class MapGrid<TGridObject>
 
 				OnGridValueChanged += (_, eventArgs) =>
 				{
-					_debugTextArray[eventArgs.x, eventArgs.y].text = _gridArray[eventArgs.x, eventArgs.y]?.ToString();
+					_debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y]?.ToString();
 				};
 			}
 		}
@@ -75,7 +75,7 @@ public class MapGrid<TGridObject>
 
 	public void TriggerGridObjectChanged(int x, int y)
 	{
-		OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { x = x, y = y });
+		OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { X = x, Y = y });
 	}
 
 	private void SetGridObject(int x, int y, TGridObject value)
@@ -83,7 +83,7 @@ public class MapGrid<TGridObject>
 		if (x >= 0 && x < Width && y >= 0 && y < Height)
 		{
 			_gridArray[x, y] = value;
-			OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { x = x, y = y });
+			OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { X = x, Y = y });
 
 			//Debug
 			_debugTextArray[x, y].text = _gridArray[x, y].ToString();

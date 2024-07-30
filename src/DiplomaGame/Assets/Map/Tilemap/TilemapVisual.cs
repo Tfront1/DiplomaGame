@@ -1,103 +1,105 @@
 using GameUtilities.Utils;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TilemapVisual : MonoBehaviour
 {
-	[Serializable]
-	public struct TilemapSpriteUV 
-	{
-		public TilemapSprite tilemapSprite;
-		public Vector2Int uv00Pixels;
-		public Vector2Int uv11Pixels;
-	}
-
-	private struct UVCoords 
-	{
-		public Vector2 uv00;
-		public Vector2 uv11;
-	}
-
-	[SerializeField]
-	private TilemapSpriteUV[] _tilemapSpriteUVArray;
-
 	private MapGrid<TilemapObject> _grid;
-	private Mesh _mesh;
 	private bool _updateMesh;
 
-	private Dictionary<TilemapSprite, UVCoords> _uvCoordsDictionary;
+    public TilemapChunkManager _chunkManager;
+
+    private int _x, _y;
 
 	private void Awake()
-	{
-		_mesh = new Mesh();
-		GetComponent<MeshFilter>().mesh = _mesh;
+    {
+        LoadTilemapChunks();
 
-		Texture texture = GetComponent<MeshRenderer>().material.mainTexture;
-		_uvCoordsDictionary = new Dictionary<TilemapSprite, UVCoords>();
-		foreach (TilemapSpriteUV tilemapSpriteUV in _tilemapSpriteUVArray) 
-		{
-			_uvCoordsDictionary[tilemapSpriteUV.tilemapSprite] = new UVCoords
-			{
-				uv00 = new Vector2(tilemapSpriteUV.uv00Pixels.x / (float)texture.width, tilemapSpriteUV.uv00Pixels.y / (float)texture.height),
-				uv11 = new Vector2(tilemapSpriteUV.uv11Pixels.x / (float)texture.width, tilemapSpriteUV.uv11Pixels.y / (float)texture.height),
-			};
-		}
 	}
 
 	public void SetGrid(MapGrid<TilemapObject> grid) 
 	{
 		_grid = grid;
-		UpdateTilemapVisual();
+		UpdateTilemapVisual(_x, _y);
 
 		_grid.OnGridValueChanged += MapGrid_OnGridValueChanged;
 	}
 
-	private void MapGrid_OnGridValueChanged(object sender, OnGridValueChangedEventArgs e) 
+    /// <summary>
+    /// Handles changes in the grid value, triggering a mesh update.
+    /// </summary>
+    /// <param name="sender">The source of the event.</param>
+    /// <param name="e">Event arguments containing the X and Y coordinates of the changed grid value.</param>
+    /// <remarks>
+    /// This method sets a flag to indicate that the mesh needs to be updated and stores the coordinates 
+    /// of the changed grid value. It is intended to respond to updates in the grid data and refresh the mesh accordingly.
+    /// </remarks>
+    private void MapGrid_OnGridValueChanged(object sender, OnGridValueChangedEventArgs e) 
 	{
 		_updateMesh = true;
-	}
+        _x = e.X;
+        _y = e.Y;
+    }
 
 	private void LateUpdate()
 	{
 		if(_updateMesh) 
 		{
 			_updateMesh = false;
-			UpdateTilemapVisual();
+			UpdateTilemapVisual(_x, _y);
 		}
 	}
 
-	private void UpdateTilemapVisual()
-	{
-		MeshUtils.CreateEmptyMeshArrays(_grid.Width * _grid.Height, out Vector3[] vertices, out Vector2[] uv, out int[] triangles);
+    /// <summary>
+    /// Updates the tilemap visual at the specified grid coordinates.
+    /// </summary>
+    /// <param name="x">The X-coordinate of the grid point.</param>
+    /// <param name="y">The Y-coordinate of the grid point.</param>
+    /// <remarks>
+    /// This method updates the mesh for a specific tile in the tilemap. It calculates the necessary UV coordinates,
+    /// updates the mesh arrays with new vertices, UVs, and triangles, and then applies the updated mesh to the `combinedMesh`.
+    /// </remarks>
+    private void UpdateTilemapVisual(int x, int y)
+    {
+        var gridPointCoords = new Vector3(x, y);
+        var chunkPointCoords = _chunkManager.GetLocalPositionInChunk(gridPointCoords);
 
-		for(int x = 0; x < _grid.Width; x++) 
-		{
-			for (int y = 0; y < _grid.Height; y++) 
-			{
-				int index = x * _grid.Height + y;
-				Vector3 quadSize = new Vector3(1,1) * _grid.CellSize;
+        var tilemapData = _chunkManager.GetTilemapDataAtChunkPoint(gridPointCoords);
+        
+        var index = _chunkManager.GetGridPositionChunkIndex(gridPointCoords);
+        var quadSize = new Vector3(1, 1) * _grid.CellSize;
 
-				TilemapObject gridObject = _grid.GetGridObject(x, y);
-				var tilemapSprite = gridObject.GetTilemapSprite();
-				Vector2 gridValueUV00 = new(), gridValueUV11 = new();
+        var gridObject = _grid.GetGridObject(x, y);
+        var tilemapSprite = gridObject.GetTilemapSprite();
+        Vector2 gridValueUV00;
+        Vector2 gridValueUV11;
+        
+        if (tilemapData._uvCoordsDictionary.TryGetValue(tilemapSprite._id, out var uvCoords))
+        {
+            gridValueUV00 = uvCoords.uv00;
+            gridValueUV11 = uvCoords.uv11;
+        }
+        else
+        {
+            tilemapData._uvCoordsDictionary.TryGetValue(0,
+                out var nullUvCoords);
+            Debug.LogWarning($"UV coordinates not found for texture ID: {tilemapSprite._id}");
+            gridValueUV00 = nullUvCoords.uv00;
+            gridValueUV11 = nullUvCoords.uv11;
+        }
+        
+        MeshUtils.AddToMeshArrays(tilemapData._vertices, tilemapData._uv, tilemapData._triangles, index, chunkPointCoords * _grid.CellSize + quadSize * 0.5f, 0f, quadSize,  gridValueUV00, gridValueUV11);
 
-				if (tilemapSprite == TilemapSprite.None)
-				{
-					quadSize = Vector2.zero;
-				}
-				else 
-				{
-					UVCoords uvCoords = _uvCoordsDictionary[tilemapSprite];
-					gridValueUV00 = uvCoords.uv00;
-					gridValueUV11 = uvCoords.uv11;
-				}
-				MeshUtils.AddToMeshArrays(vertices, uv, triangles, index, _grid.GetWorldPosition(x, y) + quadSize * 0.5f, 0f, quadSize, gridValueUV00, gridValueUV11);
-			}
-		}
+        tilemapData._combinedMesh.vertices = tilemapData._vertices;
+        tilemapData._combinedMesh.uv = tilemapData._uv;
+        tilemapData._combinedMesh.triangles = tilemapData._triangles;
+        
+        //Recalculate bounds for property rendering. Must have
+        tilemapData._combinedMesh.RecalculateBounds();
+    }
 
-		_mesh.vertices = vertices;
-		_mesh.uv = uv;
-		_mesh.triangles = triangles;
-	}
+
+    private void LoadTilemapChunks()
+    {
+        _chunkManager = TilemapChunkManager.Instance;
+    }
 }

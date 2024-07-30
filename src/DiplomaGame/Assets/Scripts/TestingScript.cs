@@ -9,38 +9,44 @@ public class TestingScript : MonoBehaviour
 	private Tilemap _tilemap;
 	private TilemapSprite _tilemapSprite;
 
+	private TilemapChunkManager _tilemapChunkManager;
+
 	private void Start()
 	{
-		_tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.SellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
+		_tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.CellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
+        _tilemapChunkManager = TilemapChunkManager.Instance;
 
-		_tilemap.SetTilemapVisual(_tilemapVisual);
+        _tilemapSprite = _tilemapChunkManager.GetTilemapDataAtChunkPoint(new Vector3(0, 0))._tilemapSprites[0];
+
+        _tilemap.SetTilemapVisual(_tilemapVisual);
 	}
 
 	private void Update()
 	{
 		if (Input.GetMouseButtonDown(0))
-		{
-			_tilemap.SetTilemapSprite(UtilsClass.GetMouseWorldPosition(), _tilemapSprite);
+        {
+            _tilemap.SetTilemapSprite(UtilsClass.GetMouseWorldPosition(), _tilemapSprite);
 		}
 
 		if (Input.GetKeyDown(KeyCode.F1)) 
 		{
-			_tilemapSprite = TilemapSprite.None;
-			CMDebug.TextPopupMouse(_tilemapSprite.ToString());
+            _tilemapSprite = _tilemapChunkManager.GetTilemapDataAtChunkPoint(new Vector3(0, 0))._tilemapSprites[1];
+
+            CMDebug.TextPopupMouse(_tilemapSprite.ToString());
 		}
 		if (Input.GetKeyDown(KeyCode.F2))
 		{
-			_tilemapSprite = TilemapSprite.Ground;
-			CMDebug.TextPopupMouse(_tilemapSprite.ToString());
+            _tilemapSprite = _tilemapChunkManager.GetTilemapDataAtChunkPoint(new Vector3(0, 0))._tilemapSprites[2];
+            CMDebug.TextPopupMouse(_tilemapSprite.ToString());
 		}
 		if (Input.GetKeyDown(KeyCode.F3))
 		{
-			_tilemapSprite = TilemapSprite.Dirt;
-			CMDebug.TextPopupMouse(_tilemapSprite.ToString());
+            _tilemapSprite = _tilemapChunkManager.GetTilemapDataAtChunkPoint(new Vector3(0, 0))._tilemapSprites[3];
+            CMDebug.TextPopupMouse(_tilemapSprite.ToString());
 		}
 		if (Input.GetKeyDown(KeyCode.F4))
 		{
-			_tilemapSprite = TilemapSprite.Sand;
+            _tilemapSprite = _tilemapChunkManager.GetTilemapDataAtChunkPoint(new Vector3(0, 0))._tilemapSprites[0];
 			CMDebug.TextPopupMouse(_tilemapSprite.ToString());
 		}
 	}

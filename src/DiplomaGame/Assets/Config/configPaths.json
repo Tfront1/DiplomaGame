@@ -1,4 +1,5 @@
 ﻿{
-  "cameraConfigPath": "Assets/Config/camera/cameraConfig.json",
-  "mapConfigPath": "Assets/Config/map/mapConfig.json"
+  "CameraConfigPath": "Assets/Config/camera/cameraConfig.json",
+  "MapConfigPath": "Assets/Config/map/mapConfig.json",
+  "TexturesPath": "Assets/Config/textures/terrain/terrainTexturesConfig.json"
 }
