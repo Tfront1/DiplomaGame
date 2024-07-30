@@ -1,6 +1,6 @@
 ﻿{
-	"mapWidth": 128.0,
-	"mapHeight": 128.0,
+	"mapWidth": 300.0,
+	"mapHeight": 300.0,
 	"mapStartPointX": -150.0,
 	"mapStartPointY": -150.0,
 	"sellSize": 10.0

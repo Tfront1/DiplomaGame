@@ -3,8 +3,8 @@
 	"edgeSize": 20.0,
 	"middleMouseSpeed": 10.0,
 	"minZoom": 5.0,
-	"maxZoom": 50.0,
+	"maxZoom": 100.0,
 	"stepZoom": 5.0,
-	"currentZoom": 5.0,
+	"currentZoom": 20.0,
 	"zoomSpeed": 200.0
 }

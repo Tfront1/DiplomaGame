@@ -54,11 +54,21 @@ public class ConfigManager : MonoBehaviour
         MapConfig.MapHeight = mapConfigData.mapHeight;
         MapConfig.MapStartPointX = mapConfigData.mapStartPointX;
         MapConfig.MapStartPointY = mapConfigData.mapStartPointY;
-        MapConfig.SellSize = mapConfigData.sellSize;
+        MapConfig.CellSize = mapConfigData.sellSize;
 
         Debug.Log("Map config loaded");
     }
 
+    /// <summary>
+    /// Loads and parses terrain textures configuration from a JSON file.
+    /// </summary>
+    /// <remarks>
+    /// This method reads the JSON configuration file for terrain textures, parses it into a `TerrainTexturesData` object,
+    /// and validates the texture data. It checks if the texture resolution matches the expected size and if there are any duplicate texture IDs.
+    /// If there are any issues, exceptions are thrown to indicate the errors. If everything is valid, it updates the `TerrainTexturesConfig`
+    /// with the loaded texture data and logs a success message.
+    /// </remarks>
+    /// <exception cref="System.Exception"></exception>
     void LoadTerrainTexturesConfig()
     {
 
