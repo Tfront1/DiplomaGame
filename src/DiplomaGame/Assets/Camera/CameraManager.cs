@@ -40,6 +40,28 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private Vector3 _positionToMove;
 
+    public GameplayInputHandler inputHandler;
+
+    private void OnEnable()
+    {
+        if (inputHandler != null)
+        {
+            inputHandler.OnMiddleMouseHold += HandleMiddleMouseMovement;
+            inputHandler.OnScroll += HandleZoom;
+            inputHandler.OnMouseNearEdge += HandleEdgeMovement;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (inputHandler != null)
+        {
+            inputHandler.OnMiddleMouseHold -= HandleMiddleMouseMovement;
+            inputHandler.OnScroll -= HandleZoom;
+            inputHandler.OnMouseNearEdge -= HandleEdgeMovement;
+        }
+    }
+
     void Start()
     {
         LoadAllVariables();
@@ -53,77 +75,44 @@ public class CameraManager : MonoBehaviour
         cameraFollow.SetCameraZoom(_currentZoom);
     }
 
-    void Update()
+    //    //For testing
+    //    if (Input.GetKeyDown(KeyCode.T))
+    //    {
+    //        SetCameraPositionToMove(new Vector3(2845, 2845, 0));
+    //    }
+    //    //Debug
+
+    private void HandleEdgeMovement(Vector2 mousePosition)
     {
-
-        //For testing
-        if (Input.GetKeyDown(KeyCode.T))
+        if (_isMiddleMousePressed)
         {
-            SetCameraPositionToMove(new Vector3(2845, 2845, 0));
-        }
-        //Debug
-
-        if (_isCameraMovingToPosition)
-        {
-            MoveCameraToPosition();
-            _isCameraMovingToPosition = false;
-        }
-        else
-        {
-            HandleEdgeMovement();
-            HandleMiddleMouseMovement();
-            HandleZoom();
+            return;
         }
 
-        cameraFollow.SetCameraFollowPosition(_targetPosition);
-        cameraFollow.SetCameraZoom(_currentZoom);
-    }
+        var mousePositionV3 = new Vector3(mousePosition.x, mousePosition.y, 0);
+        var screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
+        var mousePositionRelativeToCenter = mousePositionV3 - screenCenter;
+        var moveDirection = mousePositionRelativeToCenter.normalized;
 
-    /// <summary>
-    /// Handles camera movement when the mouse is near the edges of the screen.
-    /// </summary>
-    /// <remarks>
-    /// This method moves the camera in the direction relative to the screen center when the mouse pointer is close to the screen edges.
-    /// The camera movement speed is adjusted based on the current zoom level and normalized to stay within map boundaries.
-    /// It only activates if the middle mouse button is not pressed.
-    /// </remarks>
-    private void HandleEdgeMovement()
-    {
-        if (!_isMiddleMousePressed)
+        if (Input.mousePosition.x >= Screen.width - _edgeSize ||
+            Input.mousePosition.x <= _edgeSize ||
+            Input.mousePosition.y >= Screen.height - _edgeSize ||
+            Input.mousePosition.y <= _edgeSize)
         {
-            var screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-            var mousePositionRelativeToCenter = Input.mousePosition - screenCenter;
-            var moveDirection = mousePositionRelativeToCenter.normalized;
-
-            if (Input.mousePosition.x >= Screen.width - _edgeSize ||
-                Input.mousePosition.x <= _edgeSize ||
-                Input.mousePosition.y >= Screen.height - _edgeSize ||
-                Input.mousePosition.y <= _edgeSize)
-            {
-                _targetPosition += moveDirection * _edgeMoveSpeed * Time.deltaTime * _currentZoom / _minZoom;
-                NormalizeCameraMapPosition();
-            }
-
+            _targetPosition += moveDirection * _edgeMoveSpeed * Time.deltaTime * _currentZoom / _minZoom;
+            UpdateCameraData();
         }
     }
 
-    /// <summary>
-    /// Handles camera movement using the middle mouse button.
-    /// </summary>
-    /// <remarks>
-    /// This method allows the user to move the camera by holding down the middle mouse button and dragging the mouse.
-    /// It calculates the movement direction and distance based on the change in mouse position and updates the camera's 
-    /// target position accordingly. The camera's position is then normalized to ensure it stays within map boundaries.
-    /// </remarks>
-    private void HandleMiddleMouseMovement()
+    private void HandleMiddleMouseMovement(bool isHolding)
     {
-        if (Input.GetMouseButtonDown(2))
+        if (isHolding && !_isMiddleMousePressed)
         {
             _isMiddleMousePressed = true;
             _lastMousePosition = Input.mousePosition;
         }
 
-        if (Input.GetMouseButtonUp(2))
+        if(!isHolding && _isMiddleMousePressed)
         {
             _isMiddleMousePressed = false;
         }
@@ -141,22 +130,13 @@ public class CameraManager : MonoBehaviour
 
             _targetPosition += toAddPosition;
 
-            NormalizeCameraMapPosition();
+            UpdateCameraData();
         }
     }
 
-    /// <summary>
-    /// Handles the zooming functionality of the camera based on mouse scroll input.
-    /// </summary>
-    /// <remarks>
-    /// This method adjusts the camera's zoom level and updates its position accordingly. If the new zoom level causes the camera 
-    /// to collide with the map borders, it moves the camera away from the borders and normalizes its position. 
-    /// If the zoom level changes and the mouse is not near the center of the screen, the camera also moves towards or away 
-    /// from the mouse position.
-    /// </remarks>
-    private void HandleZoom()
+    private void HandleZoom(int scrollValue)
     {
-        var zoomChange = -Input.GetAxis("Mouse ScrollWheel") * _stepZoom;
+        var zoomChange = -scrollValue * _stepZoom;
         var newZoom = Mathf.Clamp(_currentZoom + zoomChange, _minZoom, _maxZoom);
 
         if (CheckCameraMapBordersCollision(newZoom))
@@ -177,17 +157,16 @@ public class CameraManager : MonoBehaviour
                 {
                     _targetPosition += _zoomSpeed * Time.deltaTime * -moveDirection;
 
-                    NormalizeCameraMapPosition();
                 }
                 else if (zoomChange < 0)
                 {
                     _targetPosition += _zoomSpeed * Time.deltaTime * moveDirection;
-
-                    NormalizeCameraMapPosition();
                 }
             }
             _currentZoom = newZoom;
         }
+
+        UpdateCameraData();
     }
 
     /// <summary>
@@ -232,7 +211,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Checks if the camera's new position and zoom level cause it to collide with the map borders.
     /// </summary>
-    /// <param Name="newZoom">The new zoom level of the camera.</param>
+    /// <param name="newZoom">The new zoom level of the camera.</param>
     /// <returns>True if the camera collides with the map borders; otherwise, false.</returns>
     /// <remarks>
     /// This method calculates the aspect ratio of the screen, determines the camera's dimensions based on the provided zoom level,
@@ -260,7 +239,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Calculates the vector required to move the camera away from the map borders.
     /// </summary>
-    /// <param Name="newZoom">The new zoom level of the camera.</param>
+    /// <param name="newZoom">The new zoom level of the camera.</param>
     /// <returns>A vector indicating the direction and distance to move the camera to stay within the map borders.</returns>
     /// <remarks>
     /// This method determines the camera's dimensions based on the new zoom level and calculates the necessary adjustments 
@@ -314,7 +293,7 @@ public class CameraManager : MonoBehaviour
     /// <summary>
     /// Sets the target position for the camera to move to and starts the movement process.
     /// </summary>
-    /// <param Name="finalPosition">The position to move the camera to.</param>
+    /// <param name="finalPosition">The position to move the camera to.</param>
     /// <remarks>
     /// This method updates the camera's target position and flags that the camera is moving to this new position.
     /// </remarks>
@@ -346,5 +325,13 @@ public class CameraManager : MonoBehaviour
         _mapHeight = MapConfig.MapHeight * MapConfig.CellSize;
         _mapWidth = MapConfig.MapWidth * MapConfig.CellSize;
         _mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+    }
+
+    private void UpdateCameraData()
+    {
+        NormalizeCameraMapPosition();
+
+        cameraFollow.SetCameraFollowPosition(_targetPosition);
+        cameraFollow.SetCameraZoom(_currentZoom);
     }
 }
