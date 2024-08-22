@@ -1,0 +1,42 @@
+﻿{
+  "Maps": [
+    {
+      "name": "Gameplay",
+      "actions": [
+        {
+          "name": "CameraMiddleMouseMovement",
+          "type": "Button",
+          "expectedControlType": "",
+          "bindings": [
+            {
+              "path": "<Mouse>/middleButton",
+              "group": "Keyboard&Mouse"
+            }
+          ]
+        },
+        {
+          "name": "MouseScroll",
+          "type": "Value",
+          "expectedControlType": "Vector2",
+          "bindings": [
+            {
+              "path": "<Mouse>/scroll",
+              "group": "Keyboard&Mouse"
+            }
+          ]
+        },
+        {
+          "name": "MousePosition",
+          "type": "Value",
+          "expectedControlType": "Vector2",
+          "bindings": [
+            {
+              "path": "<Mouse>/position",
+              "group": "Keyboard&Mouse"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

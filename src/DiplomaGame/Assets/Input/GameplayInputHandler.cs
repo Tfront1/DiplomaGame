@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class GameplayInputHandler : MonoBehaviour
 {
-    public InputActionAsset _inputActions;
+    private InputActionAsset _inputActions;
 
     // Middle mouse
     public delegate void MiddleMouseHoldHandler(bool flag);
@@ -27,11 +28,13 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void OnEnable()
     {
-        var playerActions = _inputActions.FindActionMap("Gameplay");
+        SetupInputAction();
 
-        _holdMiddleClickAction = playerActions.FindAction("CameraMiddleMouseMovement");
-        _scrollWheelAction = playerActions.FindAction("MouseScroll");
-        _mousePositionAction = playerActions.FindAction("MousePosition");
+        var playerActions = _inputActions.FindActionMap("Gameplay") ?? throw new Exception();
+
+        _holdMiddleClickAction = playerActions.FindAction("CameraMiddleMouseMovement") ?? throw new Exception();
+        _scrollWheelAction = playerActions.FindAction("MouseScroll") ?? throw new Exception();
+        _mousePositionAction = playerActions.FindAction("MousePosition") ?? throw new Exception();
 
         _holdMiddleClickAction.performed += OnHoldMiddleClick;
         _holdMiddleClickAction.canceled += OnReleaseMiddleClick;
@@ -92,5 +95,10 @@ public class GameplayInputHandler : MonoBehaviour
         {
             OnMouseNearEdge?.Invoke(_mousePosition);
         }
+    }
+
+    private void SetupInputAction()
+    {
+        _inputActions = InputSystemSetup._instance._inputActionAsset;
     }
 }

@@ -14,6 +14,7 @@ public class ConfigManager : MonoBehaviour
         LoadCameraConfig();
         LoadMapConfig();
         LoadTerrainTexturesConfig();
+        LoadInputSystemConfig();
     }
 
     void LoadConfigPaths()
@@ -24,6 +25,7 @@ public class ConfigManager : MonoBehaviour
         ConfigPaths.CameraConfigPath = configPathsData.CameraConfigPath;
         ConfigPaths.MapConfigPath = configPathsData.MapConfigPath;
         ConfigPaths.TerrainTexturesPath = configPathsData.TexturesPath;
+        ConfigPaths.InputActionPath = configPathsData.InputSystemPath;
 
         Debug.Log("Config paths loaded");
     }
@@ -32,6 +34,12 @@ public class ConfigManager : MonoBehaviour
     {
         var json = File.ReadAllText(ConfigPaths.CameraConfigPath);
         var cameraConfigData = JsonUtility.FromJson<CameraConfigData>(json);
+
+        if (cameraConfigData == null)
+        {
+            Debug.Log("Error camera config");
+            return;
+        }
 
         CameraConfig.EdgeMoveSpeed = cameraConfigData.EdgeMoveSpeed;
         CameraConfig.EdgeSize = cameraConfigData.EdgeSize;
@@ -49,6 +57,12 @@ public class ConfigManager : MonoBehaviour
     {
         var json = File.ReadAllText(ConfigPaths.MapConfigPath);
         var mapConfigData = JsonUtility.FromJson<MapConfigData>(json);
+
+        if (mapConfigData == null)
+        {
+            Debug.Log("Error map config");
+            return;
+        }
 
         MapConfig.MapWidth = mapConfigData.MapWidth;
         MapConfig.MapHeight = mapConfigData.MapHeight;
@@ -74,6 +88,12 @@ public class ConfigManager : MonoBehaviour
 
         var json = File.ReadAllText(ConfigPaths.TerrainTexturesPath);
         var terrainTexturesData = JsonUtility.FromJson<TerrainTexturesData>(json);
+
+        if (terrainTexturesData == null)
+        {
+            Debug.Log("Error terrain textures config");
+            return;
+        }
 
         TerrainTexturesConfig.TexturesPath = terrainTexturesData.TexturesPath;
         TerrainTexturesConfig.DefaultTextureSize = terrainTexturesData.DefaultTextureSize;
@@ -103,7 +123,62 @@ public class ConfigManager : MonoBehaviour
 
         Debug.Log("Terrain textures config loaded and mesh created");
     }
+
+    void LoadInputSystemConfig()
+    {
+        var json = File.ReadAllText(ConfigPaths.InputActionPath);
+        var inputSystemData = JsonUtility.FromJson<InputSystemData>(json);
+
+        if (inputSystemData == null)
+        {
+            Debug.Log("Error input system config");
+            return;
+        }
+
+        InputSystemConfig.ActionMap = new List<InputSystemConfig.ActionMapConfig>();
+
+        foreach (var map in inputSystemData.Maps)
+        {
+            var actionMapConfig = new InputSystemConfig.ActionMapConfig
+            {
+                MapName = map.name,
+                Actions = new List<InputSystemConfig.ActionsConfig>()
+            };
+
+            foreach (var action in map.actions)
+            {
+                var actionsConfig = new InputSystemConfig.ActionsConfig
+                {
+                    ActionName = action.name,
+                    ActionType = action.type,
+                    ExpectedControlType = action.expectedControlType,
+                    ActionBindings = new List<InputSystemConfig.ActionBindingsConfig>()
+                };
+
+                foreach (var binding in action.bindings)
+                {
+                    var actionBindingsConfig = new InputSystemConfig.ActionBindingsConfig
+                    {
+                        BindingPath = binding.path,
+                        BindingGroup = binding.group
+                    };
+
+                    actionsConfig.ActionBindings.Add(actionBindingsConfig);
+                }
+
+                actionMapConfig.Actions.Add(actionsConfig);
+            }
+
+            InputSystemConfig.ActionMap.Add(actionMapConfig);
+        }
+
+        Debug.Log("Input System config loaded");
+
+    }
 }
+
+//Classes for json reading
+#region
 
 [System.Serializable]
 public class ConfigPathsData
@@ -111,6 +186,7 @@ public class ConfigPathsData
     public string CameraConfigPath;
     public string MapConfigPath;
     public string TexturesPath;
+    public string InputSystemPath;
 }
 
 [System.Serializable]
@@ -152,3 +228,37 @@ public class TerrainTexturesSprite
     public string TextureFileName;
     public int TextureResolution;
 }
+
+
+[System.Serializable]
+public class InputSystemData
+{
+    public List<ActionMapData> Maps;
+}
+
+[System.Serializable]
+public class ActionMapData
+{
+    public string name;
+    public List<ActionsData> actions;
+}
+
+[System.Serializable]
+public class ActionsData
+{
+    public string name;
+    public string type;
+    public string expectedControlType;
+
+    public List<ActionBindingsData> bindings;
+
+}
+
+[System.Serializable]
+public class ActionBindingsData
+{
+    public string path;
+    public string group;
+}
+
+#endregion
