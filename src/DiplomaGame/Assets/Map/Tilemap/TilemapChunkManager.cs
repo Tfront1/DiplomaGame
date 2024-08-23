@@ -6,7 +6,7 @@ public class TilemapChunkManager
 {
     private static TilemapChunkManager _instance;
 
-    public static int _chunkSize = 128;
+    public static int _chunkSize = 20;
     public static Dictionary<Vector3, TilemapData> _chunks = new();
 
     public static TilemapChunkManager Instance
@@ -116,8 +116,8 @@ public class TilemapChunkManager
     {
         var tilemap = GetTilemapDataAtChunkPoint(gridPosition);
 
-        var chunkX = (int)gridPosition.x % tilemap._height;
-        var chunkY = (int)gridPosition.y % tilemap._width;
+        var chunkX = (int)gridPosition.x % tilemap._width;
+        var chunkY = (int)gridPosition.y % tilemap._height;
 
         var chunkHeight = tilemap._height;
 

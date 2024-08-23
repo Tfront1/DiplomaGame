@@ -15,6 +15,7 @@ public class ConfigManager : MonoBehaviour
         LoadMapConfig();
         LoadTerrainTexturesConfig();
         LoadInputSystemConfig();
+        LoadBiomesConfig();
     }
 
     void LoadConfigPaths()
@@ -25,7 +26,8 @@ public class ConfigManager : MonoBehaviour
         ConfigPaths.CameraConfigPath = configPathsData.CameraConfigPath;
         ConfigPaths.MapConfigPath = configPathsData.MapConfigPath;
         ConfigPaths.TerrainTexturesPath = configPathsData.TexturesPath;
-        ConfigPaths.InputActionPath = configPathsData.InputSystemPath;
+        ConfigPaths.InputActionConfigPath = configPathsData.InputSystemPath;
+        ConfigPaths.BiomesConfigPath = configPathsData.BiomesConfigPath;
 
         Debug.Log("Config paths loaded");
     }
@@ -126,7 +128,7 @@ public class ConfigManager : MonoBehaviour
 
     void LoadInputSystemConfig()
     {
-        var json = File.ReadAllText(ConfigPaths.InputActionPath);
+        var json = File.ReadAllText(ConfigPaths.InputActionConfigPath);
         var inputSystemData = JsonUtility.FromJson<InputSystemData>(json);
 
         if (inputSystemData == null)
@@ -175,6 +177,45 @@ public class ConfigManager : MonoBehaviour
         Debug.Log("Input System config loaded");
 
     }
+
+    void LoadBiomesConfig()
+    {
+        var json = File.ReadAllText(ConfigPaths.BiomesConfigPath);
+        var biomesData = JsonUtility.FromJson<BiomesData>(json);
+
+        if (biomesData == null)
+        {
+            Debug.Log("Error biomes config");
+            return;
+        }
+
+        var hasDuplicates = biomesData.Biomes
+            .GroupBy(x => x.Id)
+            .Any(group => group.Count() > 1);
+
+        var repeatedIds = biomesData.Biomes
+            .GroupBy(x => x.Id)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToList();
+
+        if (hasDuplicates)
+        {
+            throw new System.Exception($"Biomes Id repeats: {repeatedIds}");
+        }
+
+
+        BiomesConfig.NoiseMult = biomesData.NoiseMult;
+        BiomesConfig.NoiseDist = biomesData.NoiseDist;
+        BiomesConfig.BiomeRange = biomesData.BiomeRange;
+
+        biomesData.Biomes.ForEach(x => BiomesConfig.BiomesList.Add(new BiomesConfig.Biome
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Weight = x.Weight
+        }));
+    }
 }
 
 //Classes for json reading
@@ -187,6 +228,7 @@ public class ConfigPathsData
     public string MapConfigPath;
     public string TexturesPath;
     public string InputSystemPath;
+    public string BiomesConfigPath;
 }
 
 [System.Serializable]
@@ -224,7 +266,6 @@ public class TerrainTexturesData
 public class TerrainTexturesSprite
 {
     public int Id;
-    public string Name;
     public string TextureFileName;
     public int TextureResolution;
 }
@@ -259,6 +300,23 @@ public class ActionBindingsData
 {
     public string path;
     public string group;
+}
+
+[System.Serializable]
+public class BiomesData
+{
+    public float NoiseMult;
+    public float NoiseDist;
+    public int BiomeRange;
+    public List<BiomeData> Biomes;
+}
+
+[System.Serializable]
+public class BiomeData
+{
+    public int Id;
+    public string Name;
+    public float Weight;
 }
 
 #endregion
