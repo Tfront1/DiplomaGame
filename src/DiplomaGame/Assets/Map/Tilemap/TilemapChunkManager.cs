@@ -6,7 +6,7 @@ public class TilemapChunkManager
 {
     private static TilemapChunkManager _instance;
 
-    public static int _chunkSize = 128;
+    public static int _chunkSize = 20;
     public static Dictionary<Vector3, TilemapData> _chunks = new();
 
     public static TilemapChunkManager Instance

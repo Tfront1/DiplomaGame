@@ -1,0 +1,22 @@
+﻿{
+  "NoiseMult": 37500,
+  "NoiseDist": 0.7,
+  "BiomeRange": 300,
+  "Biomes": [
+    {
+      "Id": 1,
+      "Name": "Grass",
+      "Weight": 1
+    },
+    {
+      "Id": 2,
+      "Name": "Desert",
+      "Weight": 1
+    },
+    {
+      "Id": 3,
+      "Name": "Dirt",
+      "Weight": 1
+    }
+  ]
+}

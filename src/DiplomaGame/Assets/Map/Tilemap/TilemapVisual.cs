@@ -1,7 +1,7 @@
 using GameUtilities.Utils;
 using UnityEngine;
 
-public class TilemapVisual : MonoBehaviour
+public class TilemapVisual
 {
 	private MapGrid<TilemapObject> _grid;
 	private bool _updateMesh;
@@ -10,11 +10,10 @@ public class TilemapVisual : MonoBehaviour
 
     private int _x, _y;
 
-	private void Awake()
+    public TilemapVisual()
     {
         LoadTilemapChunks();
-
-	}
+    }
 
 	public void SetGrid(MapGrid<TilemapObject> grid) 
 	{
@@ -35,19 +34,10 @@ public class TilemapVisual : MonoBehaviour
     /// </remarks>
     private void MapGrid_OnGridValueChanged(object sender, OnGridValueChangedEventArgs e) 
 	{
-		_updateMesh = true;
         _x = e.X;
         _y = e.Y;
+        UpdateTilemapVisual(_x, _y);
     }
-
-	private void LateUpdate()
-	{
-		if(_updateMesh) 
-		{
-			_updateMesh = false;
-			UpdateTilemapVisual(_x, _y);
-		}
-	}
 
     /// <summary>
     /// Updates the tilemap visual at the specified grid coordinates.

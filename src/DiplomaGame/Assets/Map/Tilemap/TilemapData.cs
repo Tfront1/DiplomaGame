@@ -213,7 +213,7 @@ public class TilemapData
         var terrainTextures = TerrainTexturesConfig.TerrainTextures;
 
         _tilemapSprites = new List<TilemapSprite>();
-        terrainTextures.ForEach(x => _tilemapSprites.Add(new TilemapSprite(x.Id, x.Name)));
+        terrainTextures.ForEach(x => _tilemapSprites.Add(new TilemapSprite(x.Id)));
     }
 }
 

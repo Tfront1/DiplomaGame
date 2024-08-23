@@ -1,16 +1,14 @@
 ﻿public class TilemapSprite
 {
     public int _id;
-    public string _name;
 
     public override string ToString()
     {
-        return _id + " " + _name;
+        return _id.ToString();
     }
 
-    public TilemapSprite(int id, string name)
+    public TilemapSprite(int id)
     {
         _id = id;
-        _name = name;
     }
 }

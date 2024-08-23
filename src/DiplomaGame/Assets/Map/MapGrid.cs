@@ -34,7 +34,7 @@ public class MapGrid<TGridObject>
 		}
 
 		//Debug code, please enable gizmos in unity to see grid
-		bool isDebugMode = true;
+		bool isDebugMode = false;
 		if (isDebugMode)
 		{
 			_debugTextArray = new TextMesh[width, height];
