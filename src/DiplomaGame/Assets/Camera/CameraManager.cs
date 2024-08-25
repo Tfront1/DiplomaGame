@@ -6,16 +6,7 @@ public class CameraManager : MonoBehaviour
 {
     [SerializeField] private CameraFollow cameraFollow;
 
-    private float _edgeMoveSpeed;
-    private float _edgeSize;
-
-    private float _middleMouseSpeed;
-
-    private float _minZoom;
-    private float _maxZoom;
-    private float _stepZoom;
     private float _currentZoom;
-    private float _zoomSpeed;
 
     public static float _mapHeight;
     public static float _mapWidth;
@@ -26,14 +17,8 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private Vector3 _targetPosition;
 
-
     private bool _isMiddleMousePressed;
     private Vector3 _lastMousePosition;
-
-    /// <summary>
-    /// If camera moving to the set point of the map
-    /// </summary>
-    private bool _isCameraMovingToPosition = false;
 
     /// <summary>
     /// New mouse position to move for middle mouse movement
@@ -94,12 +79,12 @@ public class CameraManager : MonoBehaviour
         var mousePositionRelativeToCenter = mousePositionV3 - screenCenter;
         var moveDirection = mousePositionRelativeToCenter.normalized;
 
-        if (Input.mousePosition.x >= Screen.width - _edgeSize ||
-            Input.mousePosition.x <= _edgeSize ||
-            Input.mousePosition.y >= Screen.height - _edgeSize ||
-            Input.mousePosition.y <= _edgeSize)
+        if (Input.mousePosition.x >= Screen.width - CameraConfig.EdgeSize ||
+            Input.mousePosition.x <= CameraConfig.EdgeSize ||
+            Input.mousePosition.y >= Screen.height - CameraConfig.EdgeSize ||
+            Input.mousePosition.y <= CameraConfig.EdgeSize)
         {
-            _targetPosition += moveDirection * _edgeMoveSpeed * Time.deltaTime * _currentZoom / _minZoom;
+            _targetPosition += moveDirection * CameraConfig.EdgeMoveSpeed * Time.deltaTime * _currentZoom / CameraConfig.MinZoom;
             UpdateCameraData();
         }
     }
@@ -123,10 +108,10 @@ public class CameraManager : MonoBehaviour
             var mouseDelta = currentMousePosition - _lastMousePosition;
 
             var moveDirection = new Vector3(mouseDelta.x, mouseDelta.y, 0).normalized;
-            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / _middleMouseSpeed / 2;
+            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / CameraConfig.MiddleMouseSpeed / 2;
 
 
-            var toAddPosition = moveDirection * _middleMouseSpeed * Time.deltaTime * distance;
+            var toAddPosition = moveDirection * CameraConfig.MiddleMouseSpeed * Time.deltaTime * distance;
 
             _targetPosition += toAddPosition;
 
@@ -136,8 +121,8 @@ public class CameraManager : MonoBehaviour
 
     private void HandleZoom(int scrollValue)
     {
-        var zoomChange = -scrollValue * _stepZoom;
-        var newZoom = Mathf.Clamp(_currentZoom + zoomChange, _minZoom, _maxZoom);
+        var zoomChange = -scrollValue * CameraConfig.StepZoom;
+        var newZoom = Mathf.Clamp(_currentZoom + zoomChange, CameraConfig.MinZoom, CameraConfig.MaxZoom);
 
         if (CheckCameraMapBordersCollision(newZoom))
         {
@@ -145,7 +130,7 @@ public class CameraManager : MonoBehaviour
             NormalizeCameraMapPosition();
             _currentZoom = newZoom;
         }
-        else if (Math.Abs(_currentZoom - newZoom) > 10e-15 && Math.Abs(newZoom - _maxZoom) > 10e-15 && Math.Abs(newZoom - _minZoom) > 10e-15)
+        else if (Math.Abs(_currentZoom - newZoom) > 10e-15 && Math.Abs(newZoom - CameraConfig.MaxZoom) > 10e-15 && Math.Abs(newZoom - CameraConfig.MinZoom) > 10e-15)
         {
             var screenCenter = new Vector3(Screen.width / 2, Screen.height / 2, 0);
             var mousePositionRelativeToCenter = Input.mousePosition - screenCenter;
@@ -155,12 +140,12 @@ public class CameraManager : MonoBehaviour
 
                 if (zoomChange > 0)
                 {
-                    _targetPosition += _zoomSpeed * Time.deltaTime * -moveDirection;
+                    _targetPosition += CameraConfig.ZoomSpeed * Time.deltaTime * -moveDirection;
 
                 }
                 else if (zoomChange < 0)
                 {
-                    _targetPosition += _zoomSpeed * Time.deltaTime * moveDirection;
+                    _targetPosition += CameraConfig.ZoomSpeed * Time.deltaTime * moveDirection;
                 }
             }
             _currentZoom = newZoom;
@@ -300,31 +285,6 @@ public class CameraManager : MonoBehaviour
     public void SetCameraPositionToMove(Vector3 finalPosition)
     {
         _positionToMove = finalPosition;
-        _isCameraMovingToPosition = true;
-    }
-
-    /// <summary>
-    /// Loads all configuration variables for the camera and map from their respective configuration classes.
-    /// </summary>
-    /// <remarks>
-    /// This method initializes local variables for managing the camera and map parameters using the values defined in CameraConfig and MapConfig.
-    /// </remarks>
-    private void LoadAllVariables()
-    {
-        _edgeMoveSpeed = CameraConfig.EdgeMoveSpeed;
-        _edgeSize = CameraConfig.EdgeSize;
-
-        _middleMouseSpeed = CameraConfig.MiddleMouseSpeed;
-
-        _minZoom = CameraConfig.MinZoom;
-        _maxZoom = CameraConfig.MaxZoom;
-        _stepZoom = CameraConfig.StepZoom;
-        _currentZoom = CameraConfig.CurrentZoom;
-        _zoomSpeed = CameraConfig.ZoomSpeed;
-
-        _mapHeight = MapConfig.MapHeight * MapConfig.CellSize;
-        _mapWidth = MapConfig.MapWidth * MapConfig.CellSize;
-        _mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
     }
 
     private void UpdateCameraData()
@@ -334,4 +294,19 @@ public class CameraManager : MonoBehaviour
         cameraFollow.SetCameraFollowPosition(_targetPosition);
         cameraFollow.SetCameraZoom(_currentZoom);
     }
+
+	/// <summary>
+	/// Loads all configuration variables for the camera and map from their respective configuration classes.
+	/// </summary>
+	/// <remarks>
+	/// This method initializes local variables for managing the camera and map parameters using the values defined in CameraConfig and MapConfig.
+	/// </remarks>
+	private void LoadAllVariables()
+	{
+		_currentZoom = CameraConfig.CurrentZoom;
+
+		_mapHeight = MapConfig.MapHeight * MapConfig.CellSize;
+		_mapWidth = MapConfig.MapWidth * MapConfig.CellSize;
+		_mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+	}
 }

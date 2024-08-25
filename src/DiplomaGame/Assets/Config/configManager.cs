@@ -1,3 +1,4 @@
+using Biomes;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -189,6 +190,13 @@ public class ConfigManager : MonoBehaviour
             return;
         }
 
+        if (biomesData.ValidationWeightPercentageDifference < 0 || 
+            biomesData.ValidationWeightPercentageDifference > 100) 
+        {
+			throw new System.Exception($"Invalid ValidationWeightPercentageDifference: " +
+                $"{biomesData.ValidationWeightPercentageDifference}");
+		}
+
         var hasDuplicates = biomesData.Biomes
             .GroupBy(x => x.Id)
             .Any(group => group.Count() > 1);
@@ -208,8 +216,9 @@ public class ConfigManager : MonoBehaviour
         BiomesConfig.NoiseMult = biomesData.NoiseMult;
         BiomesConfig.NoiseDist = biomesData.NoiseDist;
         BiomesConfig.BiomeRange = biomesData.BiomeRange;
-
-        biomesData.Biomes.ForEach(x => BiomesConfig.BiomesList.Add(new BiomesConfig.Biome
+		BiomesConfig.ValidationWeightPercentageDifference = biomesData.ValidationWeightPercentageDifference;
+		
+        biomesData.Biomes.ForEach(x => BiomesConfig.Biomes.Add(new Biome
         {
             Id = x.Id,
             Name = x.Name,
@@ -308,6 +317,7 @@ public class BiomesData
     public float NoiseMult;
     public float NoiseDist;
     public int BiomeRange;
+    public int ValidationWeightPercentageDifference;
     public List<BiomeData> Biomes;
 }
 

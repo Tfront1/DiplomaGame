@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using UnityEngine;
 
-public class MapDisplay
+public class TilemapDisplay
 {
 
     /// <summary>
