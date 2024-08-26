@@ -13,7 +13,7 @@ namespace GameUtilities.MonoBehaviours {
         public static CameraFollow Instance { get; private set; }
 
         [SerializeField] private float distanceCof = 1.001f;
-        [SerializeField] private float cameraMoveSpeed = 10f;
+        [SerializeField] private float cameraMoveSpeed = 20f;
         [SerializeField] private float cameraZoomSpeed = 10f;
         
         private Camera myCamera;

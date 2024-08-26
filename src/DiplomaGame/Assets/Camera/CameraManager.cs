@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
-    [SerializeField] private CameraFollow cameraFollow;
+    private CameraFollow cameraFollow;
 
     private float _currentZoom;
 

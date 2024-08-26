@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,7 +11,7 @@ namespace Biomes
 			List<Biome> biomes,
 			int validationWeightPercentageDifference) 
 		{
-			int totalElements = biomeMap.Length;
+			var totalElements = biomeMap.Length;
 
 			var biomeCounts = new Dictionary<int, int>();
 
@@ -21,11 +20,11 @@ namespace Biomes
 				biomeCounts[biome.Id] = 0;
 			}
 
-			for (int i = 0; i < biomeMap.GetLength(0); i++)
+			for (var i = 0; i < biomeMap.GetLength(0); i++)
 			{
-				for (int j = 0; j < biomeMap.GetLength(1); j++)
+				for (var j = 0; j < biomeMap.GetLength(1); j++)
 				{
-					int biomeId = biomeMap[i, j];
+					var biomeId = biomeMap[i, j];
 					if (biomeCounts.ContainsKey(biomeId))
 					{
 						biomeCounts[biomeId]++;
@@ -35,10 +34,10 @@ namespace Biomes
 
 			foreach (var biome in biomes)
 			{
-				int biomeId = biome.Id;
-				double actualPercentage = (double)biomeCounts[biomeId] / totalElements * 100;
-				double expectedPercentage = (double)biome.Weight / biomes.Sum(b => b.Weight) * 100;
-				double percentageDifference = Math.Abs(actualPercentage - expectedPercentage);
+				var biomeId = biome.Id;
+				var actualPercentage = (double)biomeCounts[biomeId] / totalElements * 100;
+				var expectedPercentage = (double)biome.Weight / biomes.Sum(b => b.Weight) * 100;
+				var percentageDifference = Math.Abs(actualPercentage - expectedPercentage);
 
 				if (percentageDifference > validationWeightPercentageDifference)
 				{
