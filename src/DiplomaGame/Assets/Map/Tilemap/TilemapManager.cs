@@ -13,7 +13,7 @@ public class TilemapManager : MonoBehaviour
         _tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.CellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
         _tilemap.SetTilemapVisual(_tilemapVisual);
 
-        _map = BiomeManager.GetBiomeMap();
+        _map = BiomeManager.GetBiomeMap(new System.Random().Next(1000000, 10000000));
 
         TilemapDisplay.DisplayMap(_map, _tilemap);
     }

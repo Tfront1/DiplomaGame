@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using static BiomesConfig;
 
 namespace Biomes
 {

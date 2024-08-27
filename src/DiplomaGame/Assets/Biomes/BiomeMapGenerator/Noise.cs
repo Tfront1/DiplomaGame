@@ -5,16 +5,13 @@ namespace Biomes
 {
 	internal static class Noise
 	{
-		internal static int[,] GenerateBiomeMap(int mapWidth, int mapHeight, int seed, int biomeRange, List<Biome> biomes, float noiseMult, float noiseDist)
+        internal static int[,] GenerateBiomeMap(int mapWidth, int mapHeight, int seed, int biomeRange, List<Biome> biomes, float noiseMult, float noiseDist)
 		{
-			var biomesNum = biomes.Count;
-			var biomesMap = new int[mapWidth, mapHeight];
+            var biomesNum = biomes.Count;
+            var biomesMap = new int[mapWidth, mapHeight];
 
-			var prng = new System.Random(seed);
-			SeedRandom.SetSeed(seed);
-
-			var xS = prng.Next(10, 20);
-			var yS = prng.Next(10, 20);
+            var prng = new System.Random(seed);
+            SeedRandom.SetSeed(seed);
 
 			float offsetX = prng.Next(-100000, 100000);
 			float offsetY = prng.Next(-100000, 100000);

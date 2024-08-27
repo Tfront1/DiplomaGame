@@ -1,12 +1,14 @@
-﻿namespace Biomes
+﻿using System;
+
+namespace Biomes
 {
 	internal static class SeedRandom
-
 	{
 		static int _seed;
 		static int _mod = 1000000007;
 		static long _cur;
-		internal static void SetSeed(int newSeed)
+
+        internal static void SetSeed(int newSeed)
 		{
 			_seed = newSeed;
 			_cur = _seed % _mod;
@@ -26,5 +28,12 @@
 
 			return (int)ret;
 		}
-	}
+
+        internal static int GenerateNewSeed(int currentSeed)
+        {
+            var random = new Random(currentSeed);
+			
+            return random.Next(1000000, 10000000);
+        }
+    }
 }
