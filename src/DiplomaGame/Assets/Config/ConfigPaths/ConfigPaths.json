@@ -3,5 +3,6 @@
   "MapConfigPath": "Assets/Config/Map/MapConfig.json",
   "TexturesPath": "Assets/Config/Textures/Terrain/TerrainTexturesConfig.json",
   "InputSystemPath": "Assets/Config/InputSystem/InputSystemConfig.json",
-  "BiomesConfigPath": "Assets/Config/Biomes/BiomesConfig.json"
+  "BiomesConfigPath": "Assets/Config/Biomes/BiomesConfig.json",
+  "BuildingsConfigPaths": "Assets/Config/Buildings/BuildingsConfig.json"
 }

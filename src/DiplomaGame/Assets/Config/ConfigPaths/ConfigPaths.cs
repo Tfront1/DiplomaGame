@@ -5,4 +5,5 @@ public static class ConfigPaths
     public static string TerrainTexturesPath { get; set;}
     public static string InputActionConfigPath { get; set; }
     public static string BiomesConfigPath { get; set; }
+	public static string BuildingsConfigPath { get; set; }
 }
