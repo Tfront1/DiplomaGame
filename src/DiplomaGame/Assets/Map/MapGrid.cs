@@ -34,7 +34,7 @@ public class MapGrid<TGridObject>
 		}
 
 		//Debug code, please enable gizmos in unity to see grid
-		bool isDebugMode = false;
+		bool isDebugMode = true;
 		if (isDebugMode)
 		{
 			_debugTextArray = new TextMesh[width, height];
@@ -66,7 +66,7 @@ public class MapGrid<TGridObject>
 		return new Vector3(x, y) * CellSize + OriginPosition;
 	}
 
-	private Vector2Int GetXY(Vector3 wordPosition)
+	public Vector2Int GetCellGridPosition(Vector3 wordPosition)
 	{
 		return new Vector2Int(
 			Mathf.FloorToInt((wordPosition - OriginPosition).x / CellSize),
@@ -92,7 +92,7 @@ public class MapGrid<TGridObject>
 
 	public void SetGridObject(Vector3 wordPosition, TGridObject value)
 	{
-		var cellPosition = GetXY(wordPosition);
+		var cellPosition = GetCellGridPosition(wordPosition);
 
 		SetGridObject(cellPosition.x, cellPosition.y, value);
 	}
@@ -108,7 +108,7 @@ public class MapGrid<TGridObject>
 
 	public TGridObject GetGridObject(Vector3 wordPosition)
 	{
-		var cellPosition = GetXY(wordPosition);
+		var cellPosition = GetCellGridPosition(wordPosition);
 
 		return GetGridObject(cellPosition.x, cellPosition.y);
 	}

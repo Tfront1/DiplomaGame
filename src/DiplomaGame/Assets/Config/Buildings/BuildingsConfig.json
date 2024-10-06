@@ -1,0 +1,28 @@
+{
+  "Buildings": [
+    {
+      "Id": 1,
+      "Name": "B1",
+      "Weight": 100.0,
+      "Height": 10.0,
+      "WeightCell": 2,
+      "HeightCell": 2
+    },
+    {
+      "Id": 2,
+      "Name": "B2",
+      "Weight": 10.0,
+      "Height": 10.0,
+      "WeightCell": 2,
+      "HeightCell": 2
+    },
+    {
+      "Id": 3,
+      "Name": "B3",
+      "Weight": 10.0,
+      "Height": 10.0,
+      "WeightCell": 3,
+      "HeightCell": 1
+    }
+  ]
+}
