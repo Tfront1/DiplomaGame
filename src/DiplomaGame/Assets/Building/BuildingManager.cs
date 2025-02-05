@@ -102,11 +102,17 @@ public class BuildingManager : MonoBehaviour
 
     private (float finalScale, Vector2 objectSize) CalculateBuildingScale()
     {
+        var margin = 0.0f;
+        if (selectedBuilding.Margin)
+        {
+            margin = MapConfig.CellSize * 0.05f;
+        }
+
         var textureUnitWidth = texture.width / 100.0f;
         var textureUnitHeight = texture.height / 100.0f;
 
-        var totalVisualWidthInUnits = MapConfig.CellSize * selectedBuilding.VisualWidthCell;
-        var totalVisualHeightInUnits = MapConfig.CellSize * selectedBuilding.VisualHeightCell;
+        var totalVisualWidthInUnits = MapConfig.CellSize * selectedBuilding.VisualWidthCell - (margin * 2);
+        var totalVisualHeightInUnits = MapConfig.CellSize * selectedBuilding.VisualHeightCell - (margin * 2);
 
         var scaleToFitCellX = totalVisualWidthInUnits / textureUnitWidth;
         var scaleToFitCellY = totalVisualHeightInUnits / textureUnitHeight;
@@ -133,8 +139,8 @@ public class BuildingManager : MonoBehaviour
     private void SetBuildingPosition(GameObject buildingObject, Vector2Int gridPosition)
     {
         var worldPosition = _grid.GetWorldPosition(gridPosition.x, gridPosition.y);
-        var (finalScale, objectSize) = CalculateBuildingScale();
-
+        var (_, objectSize) = CalculateBuildingScale();
+        
         var offset = CalculateOffset(objectSize);
         worldPosition.x += offset.x;
         worldPosition.y += offset.y;
@@ -145,17 +151,26 @@ public class BuildingManager : MonoBehaviour
 
     private Vector2 CalculateOffset(Vector2 objectSize)
     {
-        var defaultOffsetX = (MapConfig.CellSize * selectedBuilding.VisualWidthCell - objectSize.x) / 2;
-        var defaultOffsetY = (MapConfig.CellSize * selectedBuilding.VisualHeightCell - objectSize.y) / 2;
+        var margin = 0.0f;
+        if (selectedBuilding.Margin)
+        {
+            margin = MapConfig.CellSize * 0.05f;
+        }
+
+        var availableWidth = (MapConfig.CellSize * selectedBuilding.VisualWidthCell) - (margin * 2);
+        var availableHeight = (MapConfig.CellSize * selectedBuilding.VisualHeightCell) - (margin * 2);
+
+        var defaultOffsetX = margin + (availableWidth - objectSize.x) / 2;
+        var defaultOffsetY = margin + (availableHeight - objectSize.y) / 2;
 
         if (!selectedBuilding.RandomPos) return new Vector2(defaultOffsetX, defaultOffsetY);
 
-        var maxOffsetX = MapConfig.CellSize * selectedBuilding.VisualWidthCell - objectSize.x;
-        var maxOffsetY = MapConfig.CellSize * selectedBuilding.VisualHeightCell - objectSize.y;
+        var maxOffsetX = availableWidth - objectSize.x;
+        var maxOffsetY = availableHeight - objectSize.y;
 
         return new Vector2(
-            Random.Range(0, maxOffsetX),
-            Random.Range(0, maxOffsetY)
+            margin + Random.Range(0, maxOffsetX),
+            margin + Random.Range(0, maxOffsetY)
         );
     }
 

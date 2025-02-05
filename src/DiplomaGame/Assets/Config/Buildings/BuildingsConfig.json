@@ -8,7 +8,8 @@
       "VisualWidthCell": 1,
       "VisualHeightCell": 2,
       "Scale": 0.8,
-      "RandomPos": true
+      "RandomPos": true,
+      "margin": true
     },
     {
       "Id": 2,
@@ -18,7 +19,8 @@
       "VisualWidthCell": 1,
       "VisualHeightCell": 2,
       "Scale": 1.0,
-      "RandomPos": false
+      "RandomPos": false,
+      "margin": false
     },
     {
       "Id": 3,
@@ -28,7 +30,8 @@
       "VisualWidthCell": 1,
       "VisualHeightCell": 1,
       "Scale": 1.0,
-      "RandomPos": true
+      "RandomPos": true,
+      "margin": true
     }
   ]
 }

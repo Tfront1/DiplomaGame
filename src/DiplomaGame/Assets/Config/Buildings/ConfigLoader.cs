@@ -40,7 +40,8 @@ public static partial class ConfigLoader
             VisualWidthCell = x.VisualWidthCell,
 			VisualHeightCell = x.VisualHeightCell,
 			Scale = x.Scale,
-			RandomPos = x.RandomPos
+			RandomPos = x.RandomPos,
+			Margin = x.Margin
 		}));
 	}
 }

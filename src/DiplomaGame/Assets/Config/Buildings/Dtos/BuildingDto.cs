@@ -9,4 +9,5 @@ public class BuildingDto
     public int VisualHeightCell;
     public float Scale;
     public bool RandomPos;
+    public bool Margin;
 }

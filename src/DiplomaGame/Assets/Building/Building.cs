@@ -8,4 +8,5 @@
     public int VisualHeightCell { get; set; }
     public float Scale { get; set; }
 	public bool RandomPos { get; set; }
+	public bool Margin { get; set; }
 }
