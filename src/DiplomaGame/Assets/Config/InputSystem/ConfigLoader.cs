@@ -54,6 +54,5 @@ public static partial class ConfigLoader
 		}
 
 		Debug.Log("Input System config loaded");
-
 	}
 }

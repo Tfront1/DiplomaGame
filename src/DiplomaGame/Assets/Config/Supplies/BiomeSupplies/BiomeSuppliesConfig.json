@@ -1,0 +1,64 @@
+﻿{
+  "BiomeSupplies": [
+    {
+      "BiomeId": 1,
+      "SupplyId": 1,
+      "SpawnChance": 0.20
+    },
+    {
+      "BiomeId": 1,
+      "SupplyId": 2,
+      "SpawnChance": 0.15
+    },
+    {
+      "BiomeId": 1,
+      "SupplyId": 3,
+      "SpawnChance": 0.10
+    },
+    {
+      "BiomeId": 1,
+      "SupplyId": 4,
+      "SpawnChance": 0.05
+    },
+    {
+      "BiomeId": 2,
+      "SupplyId": 1,
+      "SpawnChance": 0.05
+    },
+    {
+      "BiomeId": 2,
+      "SupplyId": 2,
+      "SpawnChance": 0.10
+    },
+    {
+      "BiomeId": 2,
+      "SupplyId": 3,
+      "SpawnChance": 0.10
+    },
+    {
+      "BiomeId": 2,
+      "SupplyId": 4,
+      "SpawnChance": 0.30
+    },
+    {
+      "BiomeId": 3,
+      "SupplyId": 1,
+      "SpawnChance": 0.30
+    },
+    {
+      "BiomeId": 3,
+      "SupplyId": 2,
+      "SpawnChance": 0.10
+    },
+    {
+      "BiomeId": 3,
+      "SupplyId": 3,
+      "SpawnChance": 0.10
+    },
+    {
+      "BiomeId": 3,
+      "SupplyId": 4,
+      "SpawnChance": 0.05
+    }
+  ]
+}

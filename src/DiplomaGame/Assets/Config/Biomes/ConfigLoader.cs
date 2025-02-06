@@ -50,5 +50,7 @@ public static partial class ConfigLoader
 			Name = x.Name,
 			Weight = x.Weight
 		}));
-	}
+
+        Debug.Log("Biomes config loaded");
+    }
 }

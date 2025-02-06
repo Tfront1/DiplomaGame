@@ -1,0 +1,47 @@
+﻿using System.IO;
+using System.Linq;
+using Supplies;
+using UnityEngine;
+
+public static partial class ConfigLoader
+{
+	public static void LoadSuppliesConfig()
+	{
+		var json = File.ReadAllText(ConfigPaths.SuppliesConfigPath);
+		var suppliesDto = JsonUtility.FromJson<SuppliesDto>(json);
+
+		if (suppliesDto == null)
+		{
+			Debug.Log("Error supplies config");
+			return;
+		}
+
+		var hasDuplicates = suppliesDto.Supplies
+			.GroupBy(x => x.Id)
+			.Any(group => group.Count() > 1);
+
+		var repeatedIds = suppliesDto.Supplies
+            .GroupBy(x => x.Id)
+			.Where(group => group.Count() > 1)
+			.Select(group => group.Key)
+			.ToList();
+
+		if (hasDuplicates)
+		{
+			throw new System.Exception($"Supplies Id repeats: {repeatedIds}");
+		}
+
+        SuppliesConfig.SupplyPerBlocks = suppliesDto.SupplyPerBlocks;
+
+        suppliesDto.Supplies.ForEach(x => SuppliesConfig.Supplies.Add(new Supply
+		{
+			Id = x.Id,
+			Name = x.Name,
+			Type = x.Type,
+			Ratio = x.Ratio,
+			Texture = x.Texture
+		}));
+
+        Debug.Log("Supplies config loaded");
+    }
+}

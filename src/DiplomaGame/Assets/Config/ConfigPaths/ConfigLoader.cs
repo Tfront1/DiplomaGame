@@ -11,10 +11,13 @@ public static partial class ConfigLoader
 
 		ConfigPaths.CameraConfigPath = configPathsDto.CameraConfigPath;
 		ConfigPaths.MapConfigPath = configPathsDto.MapConfigPath;
-		ConfigPaths.TerrainTexturesPath = configPathsDto.TexturesPath;
+		ConfigPaths.TerrainTexturesPath = configPathsDto.TerrainTexturesPath;
+		ConfigPaths.SupplyTexturesPath = configPathsDto.SupplyTexturesPath;
 		ConfigPaths.InputActionConfigPath = configPathsDto.InputSystemPath;
 		ConfigPaths.BiomesConfigPath = configPathsDto.BiomesConfigPath;
-		ConfigPaths.BuildingsConfigPath = configPathsDto.BuildingsConfigPaths;
+        ConfigPaths.SuppliesConfigPath = configPathsDto.SuppliesConfigPath;
+        ConfigPaths.BiomeSuppliesConfigPath = configPathsDto.BiomeSuppliesConfigPath;
+        ConfigPaths.BuildingsConfigPath = configPathsDto.BuildingsConfigPath;
 
 		Debug.Log("Config paths loaded");
 	}

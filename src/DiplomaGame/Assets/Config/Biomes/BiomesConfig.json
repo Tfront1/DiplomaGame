@@ -6,7 +6,7 @@
   "Biomes": [
     {
       "Id": 1,
-      "Name": "Grass",
+      "Name": "Plain",
       "Weight": 1
     },
     {
@@ -16,7 +16,7 @@
     },
     {
       "Id": 3,
-      "Name": "Dirt",
+      "Name": "Forest",
       "Weight": 1
     }
   ]

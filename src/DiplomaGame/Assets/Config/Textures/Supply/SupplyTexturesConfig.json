@@ -1,0 +1,26 @@
+﻿{
+  "TexturesPath": "Assets/Textures/Supply/",
+  "DefaultTextureSize": 64,
+  "TilemapSprites": [
+    {
+      "Id": 1,
+      "TextureFileName": "TreeSup.png",
+      "TextureResolution": 64
+    },
+    {
+      "Id": 2,
+      "TextureFileName": "StoneSup.png",
+      "TextureResolution": 64
+    },
+    {
+      "Id": 3,
+      "TextureFileName": "IronSup.png",
+      "TextureResolution": 64
+    },
+    {
+      "Id": 4,
+      "TextureFileName": "GoldSup.png",
+      "TextureResolution": 64
+    }
+  ]
+}

@@ -43,5 +43,7 @@ public static partial class ConfigLoader
 			RandomPos = x.RandomPos,
 			Margin = x.Margin
 		}));
-	}
+
+        Debug.Log("Buildings config loaded");
+    }
 }
