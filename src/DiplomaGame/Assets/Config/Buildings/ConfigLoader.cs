@@ -35,10 +35,13 @@ public static partial class ConfigLoader
 		{
 			Id = x.Id,
 			Name = x.Name,
-			Weight = x.Weight,
-			Height = x.Height,
-			WeightCell = x.WeightCell,
-			HeightCell = x.HeightCell
+            WidthCell = x.WidthCell,
+			HeightCell = x.HeightCell,
+            VisualWidthCell = x.VisualWidthCell,
+			VisualHeightCell = x.VisualHeightCell,
+			Scale = x.Scale,
+			RandomPos = x.RandomPos,
+			Margin = x.Margin
 		}));
 	}
 }

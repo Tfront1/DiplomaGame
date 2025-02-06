@@ -15,8 +15,9 @@ public class MapGrid<TGridObject>
 
 	//Debug
 	private readonly TextMesh[,] _debugTextArray;
+    bool isDebugMode = false;
 
-	public MapGrid(int width, int height, float cellSize, Vector3 originPosition,
+    public MapGrid(int width, int height, float cellSize, Vector3 originPosition,
 		Func<MapGrid<TGridObject>, int, int, TGridObject> createGridObject)
 	{
 		Width = width;
@@ -34,7 +35,7 @@ public class MapGrid<TGridObject>
 		}
 
 		//Debug code, please enable gizmos in unity to see grid
-		bool isDebugMode = true;
+		
 		if (isDebugMode)
 		{
 			_debugTextArray = new TextMesh[width, height];
@@ -85,9 +86,12 @@ public class MapGrid<TGridObject>
 			_gridArray[x, y] = value;
 			OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { X = x, Y = y });
 
-			//Debug
-			_debugTextArray[x, y].text = _gridArray[x, y].ToString();
-		}
+            //Debug
+            if (isDebugMode)
+            {
+                _debugTextArray[x, y].text = _gridArray[x, y].ToString();
+            }
+        }
 	}
 
 	public void SetGridObject(Vector3 wordPosition, TGridObject value)

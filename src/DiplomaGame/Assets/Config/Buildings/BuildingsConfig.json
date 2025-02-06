@@ -3,26 +3,35 @@
     {
       "Id": 1,
       "Name": "B1",
-      "Weight": 100.0,
-      "Height": 10.0,
-      "WeightCell": 2,
-      "HeightCell": 2
+      "WidthCell": 1,
+      "HeightCell": 1,
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 2,
+      "Scale": 0.8,
+      "RandomPos": true,
+      "margin": true
     },
     {
       "Id": 2,
       "Name": "B2",
-      "Weight": 10.0,
-      "Height": 10.0,
-      "WeightCell": 2,
-      "HeightCell": 2
+      "WidthCell": 1,
+      "HeightCell": 2,
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 2,
+      "Scale": 1.0,
+      "RandomPos": false,
+      "margin": false
     },
     {
       "Id": 3,
       "Name": "B3",
-      "Weight": 10.0,
-      "Height": 10.0,
-      "WeightCell": 3,
-      "HeightCell": 1
+      "WidthCell": 1,
+      "HeightCell": 1,
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 1,
+      "Scale": 1.0,
+      "RandomPos": true,
+      "margin": true
     }
   ]
 }
