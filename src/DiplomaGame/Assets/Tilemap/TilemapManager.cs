@@ -36,7 +36,7 @@ public class TilemapManager : MonoBehaviour
             (g, x, y) => new BuildingGridObject(g, x, y)
         );
 
-        //SupplyDisplay.DisplayMap(supplyMap, _grid);
+        SupplyDisplay.DisplayMap(supplyMap, _grid);
 
         //End Test
 
