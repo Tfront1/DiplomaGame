@@ -20,10 +20,16 @@ public static partial class ConfigLoader
 			return;
 		}
 
-        var errors = ValidateSupplies(biomeSuppliesDto);
-        if (errors != null)
+        var biomeIdErrors = ValidateBiomes(biomeSuppliesDto);
+        if (biomeIdErrors != null)
         {
-            throw new System.Exception(string.Join("\n", errors));
+            throw new System.Exception(string.Join("\n", biomeIdErrors));
+        }
+
+        var supplyIdErrors = ValidateSupplies(biomeSuppliesDto);
+        if (supplyIdErrors != null)
+        {
+            throw new System.Exception(string.Join("\n", supplyIdErrors));
         }
 
         biomeSuppliesDto.BiomeSupplies.ForEach(x => BiomeSuppliesConfig.BiomeSupplies.Add(new BiomeSupply()
@@ -35,24 +41,24 @@ public static partial class ConfigLoader
 
         Debug.Log("Biome supplies config loaded");
     }
-    
-    public static List<string> ValidateSupplies(BiomeSuppliesDto biomeSupplies)
+
+    private static List<string> ValidateBiomes(BiomeSuppliesDto biomeSupplies)
     {
         var isValid = true;
         var errors = new List<string>();
 
-        biomeSupplies.BiomeSupplies.ForEach(supply =>
+        biomeSupplies.BiomeSupplies.ForEach(biome =>
         {
-            if (!IsBiomeExists(supply.BiomeId))
+            if (!IsBiomeExists(biome.BiomeId))
             {
                 isValid = false;
-                errors.Add($"BiomeId {supply.BiomeId} does not exist in BiomesConfig");
+                errors.Add($"BiomeId {biome.BiomeId} does not exist in BiomesConfig");
             }
 
-            if (supply.SpawnChance < 0 || supply.SpawnChance > 1)
+            if (biome.SpawnChance < 0 || biome.SpawnChance > 1)
             {
                 isValid = false;
-                errors.Add($"SpawnChance for BiomeId {supply.BiomeId} must be between 0 and 1");
+                errors.Add($"SpawnChance for BiomeId {biome.BiomeId} must be between 0 and 1");
             }
         });
 
@@ -62,5 +68,33 @@ public static partial class ConfigLoader
     private static bool IsBiomeExists(int biomeId)
     {
         return BiomesConfig.Biomes.Any(b => b.Id == biomeId);
+    }
+
+    private static List<string> ValidateSupplies(BiomeSuppliesDto biomeSupplies)
+    {
+        var isValid = true;
+        var errors = new List<string>();
+
+        biomeSupplies.BiomeSupplies.ForEach(supply =>
+        {
+            if (!IsSupplyExists(supply.SupplyId))
+            {
+                isValid = false;
+                errors.Add($"SupplyId {supply.SupplyId} does not exist in SuppliesConfig");
+            }
+
+            if (supply.SpawnChance < 0 || supply.SpawnChance > 1)
+            {
+                isValid = false;
+                errors.Add($"SpawnChance for SupplyId {supply.SupplyId} must be between 0 and 1");
+            }
+        });
+
+        return !isValid ? errors : null;
+    }
+
+    private static bool IsSupplyExists(int supplyId)
+    {
+        return SuppliesConfig.Supplies.Any(b => b.Id == supplyId);
     }
 }

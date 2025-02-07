@@ -4,21 +4,25 @@
   "TilemapSprites": [
     {
       "Id": 1,
+      "SupplyId": 1,
       "TextureFileName": "TreeSup.png",
       "TextureResolution": 64
     },
     {
       "Id": 2,
+      "SupplyId": 2,
       "TextureFileName": "StoneSup.png",
       "TextureResolution": 64
     },
     {
       "Id": 3,
+      "SupplyId": 3,
       "TextureFileName": "IronSup.png",
       "TextureResolution": 64
     },
     {
       "Id": 4,
+      "SupplyId": 4,
       "TextureFileName": "GoldSup.png",
       "TextureResolution": 64
     }

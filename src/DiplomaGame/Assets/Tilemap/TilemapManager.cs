@@ -15,6 +15,7 @@ public class TilemapManager : MonoBehaviour
         _tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.CellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
         _tilemap.SetTilemapVisual(_tilemapVisual);
 
+
         _map = BiomeManager.GetBiomeMap(new System.Random().Next(1000000, 10000000));
 
         //Test
@@ -35,9 +36,7 @@ public class TilemapManager : MonoBehaviour
             (g, x, y) => new BuildingGridObject(g, x, y)
         );
 
-        SupplyDisplay.DisplayMap(supplyMap, _grid);
-
-        TestBitmapMatrix.SaveMatrixAsTexture(supplyMap, "matrix.png");
+        //SupplyDisplay.DisplayMap(supplyMap, _grid);
 
         //End Test
 

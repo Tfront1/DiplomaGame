@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Supplies;
 using UnityEngine;
@@ -51,13 +52,22 @@ public static partial class ConfigLoader
         }
 
         SupplyTexturesConfig.SupplyTexturesSprite = supplyTexturesDto.TilemapSprites;
+
+        var suppliesIdErrors = ValidateSupplies(supplyTexturesDto);
+
+        if (suppliesIdErrors != null)
+        {
+            throw new System.Exception(string.Join("\n", suppliesIdErrors));
+        }
+
         supplyTexturesDto.TilemapSprites.ForEach(x => SupplyTexturesConfig.SupplyTextures.Add(new SupplyTexture()
         {
             Id = x.Id,
+            SupplyId = x.SupplyId,
             Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName)
         }));
 
-        Debug.Log("Supply textures config loaded and mesh created");
+        Debug.Log("Supply textures config loaded");
     }
     private static Texture2D LoadTextureFromFile(string path)
     {
@@ -76,5 +86,22 @@ public static partial class ConfigLoader
 
         Debug.LogError("Error during creating texture (Supply)");
         return null;
+    }
+
+    private static List<string> ValidateSupplies(SupplyTexturesDto suppliesTextures)
+    {
+        var isValid = true;
+        var errors = new List<string>();
+
+        suppliesTextures.TilemapSprites.ForEach(supply =>
+        {
+            if (!IsSupplyExists(supply.SupplyId))
+            {
+                isValid = false;
+                errors.Add($"SupplyId {supply.SupplyId} does not exist in SuppliesConfig");
+            }
+        });
+
+        return !isValid ? errors : null;
     }
 }

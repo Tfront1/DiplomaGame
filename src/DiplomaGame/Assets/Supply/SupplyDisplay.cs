@@ -24,7 +24,7 @@ namespace Supplies
                     var resourceId = System.Guid.NewGuid();
                     var newResourceObject = CreateBuildingGameObject(SuppliesConfig.Supplies.Find(ob => ob.Id == map[x, y]).Name);
                     var gridPosition = new Vector2Int(x, y);
-                    var texture = SupplyTexturesConfig.SupplyTextures.Find(ob => ob.Id == map[x, y]).Texture;
+                    var texture = SupplyTexturesConfig.SupplyTextures.Find(ob => ob.SupplyId == map[x, y]).Texture;
 
                     SetupResourceSprite(newResourceObject, texture);
                     //PlaceBuildingInGrid(gridPosition, resourceId);

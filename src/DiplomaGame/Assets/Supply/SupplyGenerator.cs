@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GameUtilities.Utils.MapUtils;
 
 namespace Supplies
 {
@@ -100,7 +101,7 @@ namespace Supplies
 
             while (count > 0 && attempts < maxAttempts)
             {
-                var position = GetRandomPosition(mapWidth, mapHeight, random);
+                var position = MapUtils.GetRandomPosition(mapWidth, mapHeight, random);
 
                 if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap))
                 {
@@ -135,7 +136,7 @@ namespace Supplies
             var attempts = 0;
             while (count > 0 && attempts < maxAttempts)
             {
-                var position = GetRandomPosition(mapWidth, mapHeight, random);
+                var position = MapUtils.GetRandomPosition(mapWidth, mapHeight, random);
 
                 if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap))
                 {
@@ -145,11 +146,6 @@ namespace Supplies
 
                 attempts++;
             }
-        }
-
-        private static (int x, int y) GetRandomPosition(int width, int height, Random random)
-        {
-            return (random.Next(width), random.Next(height));
         }
 
         private static bool CanPlaceSupplyAtPosition(int x, int y, int[,] supplyMap)
