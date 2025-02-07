@@ -3,9 +3,12 @@ public class ConfigPathsDto
 {
 	public string CameraConfigPath;
 	public string MapConfigPath;
-	public string TexturesPath;
-	public string InputSystemPath;
+	public string TerrainTexturesPath;
+    public string SupplyTexturesPath;
+    public string InputSystemPath;
 	public string BiomesConfigPath;
-	public string BuildingsConfigPaths;
+    public string SuppliesConfigPath;
+    public string BiomeSuppliesConfigPath;
+    public string BuildingsConfigPath;
 }
 

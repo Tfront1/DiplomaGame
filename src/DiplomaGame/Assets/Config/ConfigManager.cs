@@ -10,9 +10,14 @@ public class ConfigManager : MonoBehaviour
 
 		ConfigLoader.LoadCameraConfig();
 		ConfigLoader.LoadMapConfig();
-		ConfigLoader.LoadTerrainTexturesConfig();
+        ConfigLoader.LoadTerrainTexturesConfig();
 		ConfigLoader.LoadInputSystemConfig();
-		ConfigLoader.LoadBiomesConfig();
-		ConfigLoader.LoadBuildingsConfig();
+
+        ConfigLoader.LoadSuppliesConfig();
+        ConfigLoader.LoadBiomesConfig();
+        ConfigLoader.LoadBiomeSuppliesConfig();
+        ConfigLoader.LoadSupplyTexturesConfig();
+
+        ConfigLoader.LoadBuildingsConfig();
 	}
 }
