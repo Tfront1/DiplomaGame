@@ -6,25 +6,37 @@
       "Id": 1,
       "SupplyId": 1,
       "TextureFileName": "TreeSup.png",
-      "TextureResolution": 64
+      "WidthCell": 1,
+      "HeightCell": 1,
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 2
     },
     {
       "Id": 2,
       "SupplyId": 2,
       "TextureFileName": "StoneSup.png",
-      "TextureResolution": 64
+      "WidthCell": 2,
+      "HeightCell": 2,
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2
     },
     {
       "Id": 3,
       "SupplyId": 3,
       "TextureFileName": "IronSup.png",
-      "TextureResolution": 64
+      "WidthCell": 2,
+      "HeightCell": 1,
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2
     },
     {
       "Id": 4,
       "SupplyId": 4,
       "TextureFileName": "GoldSup.png",
-      "TextureResolution": 64
+      "WidthCell": 2,
+      "HeightCell": 1,
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2
     }
   ]
 }

@@ -32,17 +32,31 @@ namespace Supplies
         private static Dictionary<Texture2D, Sprite> _spriteCache = new();
 
         /// <summary>
+        /// Cache for supply texture configurations to avoid repeated searches
+        /// </summary>
+        private static Dictionary<int, SupplyTexture> _supplyTextureConfigCache;
+
+        /// <summary>
         /// Reference to parent GameObject that organizes all Supply objects in hierarchy
         /// </summary>
-        private static Transform _SuppliesFolder;
+        private static Transform _suppliesFolder;
 
+        /// <summary>
+        /// Initializes supply caches with data from configs
+        /// </summary>
         public static void InitializeCaches()
         {
             _suppliesCache = SuppliesConfig.Supplies.ToDictionary(s => s.Id);
             _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
+            _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
         }
 
-        public static void DisplayMap(int[,] map, MapGrid<BuildingGridObject> grid)
+        /// <summary>
+        /// Displays supplies on the map based on provided grid data
+        /// </summary>
+        /// <param name="map">2D array with supply IDs</param>
+        /// <param name="grid">Target grid for supplies</param>
+        public static void DisplayMap(int[,] map, MapGrid<SupplyGridObject> grid)
         {
             InitializeCaches();
 
@@ -50,10 +64,11 @@ namespace Supplies
             {
                 for (var y = 0; y < MapConfig.MapHeight; y++)
                 {
-                    if (map[x, y] == -1) continue;
+                    if (map[x, y] == -1 || map[x, y] == 0) continue;
 
                     var supplyId = map[x, y];
                     var resourceId = System.Guid.NewGuid();
+                    var supplyTexture = _supplyTextureConfigCache[supplyId];
 
                     var supplyName = _suppliesCache[supplyId].Name;
                     var texture = _texturesCache[supplyId];
@@ -61,35 +76,51 @@ namespace Supplies
                     var newResourceObject = CreateSupplyGameObject(supplyName);
                     var gridPosition = new Vector2Int(x, y);
 
-                    SetupResourceSprite(newResourceObject, texture);
-                    SetSupplyPosition(newResourceObject, gridPosition, texture, grid);
-                    SetupSupplyCollider(newResourceObject, gridPosition, texture, grid);
+                    SetupResourceSprite(newResourceObject, texture, supplyTexture);
+                    PlaceSupplyInGrid(gridPosition, resourceId, grid, supplyTexture);
+                    SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
+                    SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supplyTexture);
                 }
             }
         }
 
+        /// <summary>
+        /// Gets or creates supplies parent folder
+        /// </summary>
+        /// <returns>Transform of supplies folder</returns>
         private static Transform GetSuppliesFolder()
         {
-            if (_SuppliesFolder != null) return _SuppliesFolder;
+            if (_suppliesFolder != null) return _suppliesFolder;
             var folderGO = GameObject.Find("Supplies");
             if (folderGO == null)
             {
                 folderGO = new GameObject("Supplies");
             }
-            _SuppliesFolder = folderGO.transform;
-            return _SuppliesFolder;
+            _suppliesFolder = folderGO.transform;
+            return _suppliesFolder;
         }
 
-        private static GameObject CreateSupplyGameObject(string SupplyName)
+        /// <summary>
+        /// Creates a new supply GameObject
+        /// </summary>
+        /// <param name="supplyName">Name for the supply</param>
+        /// <returns>Created supply GameObject</returns>
+        private static GameObject CreateSupplyGameObject(string supplyName)
         {
-            var Supply = new GameObject(SupplyName);
-            Supply.transform.SetParent(GetSuppliesFolder());
-            return Supply;
+            var supply = new GameObject(supplyName);
+            supply.transform.SetParent(GetSuppliesFolder());
+            return supply;
         }
 
-        private static void SetupResourceSprite(GameObject SupplyObject, Texture2D spriteTexture)
+        /// <summary>
+        /// Sets up sprite renderer and scale for supply
+        /// </summary>
+        /// <param name="supplyObject">Target supply object</param>
+        /// <param name="spriteTexture">Texture for sprite</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        private static void SetupResourceSprite(GameObject supplyObject, Texture2D spriteTexture, SupplyTexture supplyTexture)
         {
-            var renderer = SupplyObject.AddComponent<SpriteRenderer>();
+            var renderer = supplyObject.AddComponent<SpriteRenderer>();
 
             if (!_spriteCache.TryGetValue(spriteTexture, out var sprite))
             {
@@ -103,19 +134,25 @@ namespace Supplies
 
             renderer.sprite = sprite;
 
-            var (finalScale, _) = CalculateSupplyScale(spriteTexture);
-            SupplyObject.transform.localScale = new Vector3(finalScale, finalScale, 1);
+            var (finalScale, _) = CalculateSupplyScale(spriteTexture, supplyTexture);
+            supplyObject.transform.localScale = new Vector3(finalScale, finalScale, 1);
         }
 
-        private static (float finalScale, Vector2 objectSize) CalculateSupplyScale(Texture2D texture)
+        /// <summary>
+        /// Calculates supply scale and size with margins
+        /// </summary>
+        /// <param name="texture">Supply texture</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        /// <returns>Scale and size vector</returns>
+        private static (float finalScale, Vector2 objectSize) CalculateSupplyScale(Texture2D texture, SupplyTexture supplyTexture)
         {
             var margin = MapConfig.CellSize * _defaultOffset;
 
             var textureUnitWidth = texture.width / _unitPerCell;
             var textureUnitHeight = texture.height / _unitPerCell;
 
-            var totalVisualWidthInUnits = MapConfig.CellSize - (margin * 2);
-            var totalVisualHeightInUnits = MapConfig.CellSize - (margin * 2);
+            var totalVisualWidthInUnits = MapConfig.CellSize * supplyTexture.VisualWidthCell - (margin * 2);
+            var totalVisualHeightInUnits = MapConfig.CellSize * supplyTexture.VisualHeightCell - (margin * 2);
 
             var scaleToFitCellX = totalVisualWidthInUnits / textureUnitWidth;
             var scaleToFitCellY = totalVisualHeightInUnits / textureUnitHeight;
@@ -126,38 +163,59 @@ namespace Supplies
             return (finalScale, new Vector2(textureUnitWidth * finalScale, textureUnitHeight * finalScale));
         }
 
-        //private static void PlaceSupplyInGrid(Vector2Int gridPosition, System.Guid SupplyId)
-        //{
-        //    for (var x = gridPosition.x; x < gridPosition.x + selectedSupply.WidthCell; x++)
-        //    {
-        //        for (var y = gridPosition.y; y < gridPosition.y + selectedSupply.HeightCell; y++)
-        //        {
-        //            var SupplyGridObject = new SupplyGridObject(grid, x, y, SupplyId);
-        //            var worldPosition = grid.GetWorldPosition(x, y);
-        //            grid.SetGridObject(worldPosition, SupplyGridObject);
-        //        }
-        //    }
-        //}
+        /// <summary>
+        /// Places supply in grid and creates grid objects
+        /// </summary>
+        /// <param name="gridPosition">Position to place at</param>
+        /// <param name="supplyGuid">Supply's unique ID</param>
+        /// <param name="grid">Target grid</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        private static void PlaceSupplyInGrid(Vector2Int gridPosition, System.Guid supplyGuid, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
+        {
+            for (var x = gridPosition.x; x < gridPosition.x + supplyTexture.WidthCell; x++)
+            {
+                for (var y = gridPosition.y; y < gridPosition.y + supplyTexture.HeightCell; y++)
+                {
+                    var SupplyGridObject = new SupplyGridObject(grid, x, y, supplyGuid);
+                    var worldPosition = grid.GetWorldPosition(x, y);
+                    grid.SetGridObject(worldPosition, SupplyGridObject);
+                }
+            }
+        }
 
-        private static void SetSupplyPosition(GameObject SupplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<BuildingGridObject> grid)
+        /// <summary>
+        /// Sets supply position in world space
+        /// </summary>
+        /// <param name="supplyObject">Supply to position</param>
+        /// <param name="gridPosition">Grid position</param>
+        /// <param name="texture">Supply texture</param>
+        /// <param name="grid">Target grid</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        private static void SetSupplyPosition(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
         {
             var worldPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
-            var (_, objectSize) = CalculateSupplyScale(texture);
+            var (_, objectSize) = CalculateSupplyScale(texture, supplyTexture);
 
-            var offset = CalculateOffset(objectSize);
+            var offset = CalculateOffset(objectSize, supplyTexture);
             worldPosition.x += offset.x;
             worldPosition.y += offset.y;
             worldPosition.z = CalculateZOffset(gridPosition);
 
-            SupplyObject.transform.position = worldPosition;
+            supplyObject.transform.position = worldPosition;
         }
 
-        private static Vector2 CalculateOffset(Vector2 objectSize)
+        /// <summary>
+        /// Calculates offset for supply position
+        /// </summary>
+        /// <param name="objectSize">Supply's size</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        /// <returns>Offset vector</returns>
+        private static Vector2 CalculateOffset(Vector2 objectSize, SupplyTexture supplyTexture)
         {
             var margin = MapConfig.CellSize * _defaultOffset;
 
-            var availableWidth = MapConfig.CellSize - margin * 2;
-            var availableHeight = MapConfig.CellSize - margin * 2;
+            var availableWidth = (MapConfig.CellSize * supplyTexture.VisualWidthCell) - (margin * 2);
+            var availableHeight = (MapConfig.CellSize * supplyTexture.VisualHeightCell) - (margin * 2);
 
             var defaultOffsetX = margin + (availableWidth - objectSize.x) / 2;
             var defaultOffsetY = margin + (availableHeight - objectSize.y) / 2;
@@ -165,32 +223,53 @@ namespace Supplies
             return new Vector2(defaultOffsetX, defaultOffsetY);
         }
 
+        /// <summary>
+        /// Calculates Z offset for sprite layering
+        /// </summary>
+        /// <param name="gridPosition">Grid position</param>
+        /// <returns>Z coordinate offset</returns>
         private static float CalculateZOffset(Vector2Int gridPosition)
         {
             return (MapConfig.MapHeight * MapConfig.CellSize - gridPosition.y) * -0.001f;
         }
 
-        private static void SetupSupplyCollider(GameObject SupplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<BuildingGridObject> grid)
+        /// <summary>
+        /// Sets up supply's BoxCollider2D
+        /// </summary>
+        /// <param name="supplyObject">Target supply</param>
+        /// <param name="gridPosition">Grid position</param>
+        /// <param name="texture">Supply texture</param>
+        /// <param name="grid">Target grid</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        private static void SetupSupplyCollider(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
         {
-            var collider = SupplyObject.AddComponent<BoxCollider2D>();
-            var (finalScale, _) = CalculateSupplyScale(texture);
+            var collider = supplyObject.AddComponent<BoxCollider2D>();
+            var (finalScale, _) = CalculateSupplyScale(texture, supplyTexture);
 
-            var colliderWidth = MapConfig.CellSize;
-            var colliderHeight = MapConfig.CellSize;
+            var colliderWidth = MapConfig.CellSize * supplyTexture.WidthCell;
+            var colliderHeight = MapConfig.CellSize * supplyTexture.HeightCell;
             collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
             var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
-            var SupplyPosition = SupplyObject.transform.position;
-            var colliderOffset = CalculateColliderOffset(SupplyPosition, colliderPosition, finalScale);
+            var supplyPosition = supplyObject.transform.position;
+            var colliderOffset = CalculateColliderOffset(supplyPosition, colliderPosition, finalScale, supplyTexture);
             collider.offset = colliderOffset;
         }
 
-        private static Vector2 CalculateColliderOffset(Vector3 SupplyPosition, Vector3 colliderPosition, float finalScale)
+        /// <summary>
+        /// Calculates collider offset relative to supply
+        /// </summary>
+        /// <param name="supplyPosition">Supply's position</param>
+        /// <param name="colliderPosition">Base collider position</param>
+        /// <param name="finalScale">Supply's scale</param>
+        /// <param name="supplyTexture">Supply texture config</param>
+        /// <returns>Collider offset vector</returns>
+        private static Vector2 CalculateColliderOffset(Vector3 supplyPosition, Vector3 colliderPosition, float finalScale, SupplyTexture supplyTexture)
         {
-            var offset = new Vector2(SupplyPosition.x - colliderPosition.x, SupplyPosition.y - colliderPosition.y);
+            var offset = new Vector2(supplyPosition.x - colliderPosition.x, supplyPosition.y - colliderPosition.y);
             return new Vector2(
-                MapConfig.CellSize / 2 / finalScale - offset.x / finalScale,
-                MapConfig.CellSize / 2 / finalScale - offset.y / finalScale
+                MapConfig.CellSize * supplyTexture.WidthCell / 2 / finalScale - offset.x / finalScale,
+                MapConfig.CellSize * supplyTexture.HeightCell / 2 / finalScale - offset.y / finalScale
             );
         }
     }

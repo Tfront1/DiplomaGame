@@ -31,18 +31,19 @@ public class TilemapManager : MonoBehaviour
             new System.Random().Next(1000000, 10000000),
             SuppliesConfig.Supplies,
             BiomeSuppliesConfig.BiomeSupplies,
+            SupplyTexturesConfig.SupplyTextures,
             SuppliesConfig.SupplyPerBlocks,
             _map);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"SupplyMap generation time: {(endTime - startTime) * 1000:F2}ms");
 
         startTime = Time.realtimeSinceStartup;
-        var _grid = new MapGrid<BuildingGridObject>(
+        var _grid = new MapGrid<SupplyGridObject>(
             MapConfig.MapWidth,
             MapConfig.MapHeight,
             MapConfig.CellSize,
             new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-            (g, x, y) => new BuildingGridObject(g, x, y)
+            (g, x, y) => new SupplyGridObject(g, x, y)
         );
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Grid creation time: {(endTime - startTime) * 1000:F2}ms");

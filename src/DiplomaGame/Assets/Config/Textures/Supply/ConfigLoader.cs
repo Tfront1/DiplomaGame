@@ -28,13 +28,17 @@ public static partial class ConfigLoader
             return;
         }
 
+        var nonPositiveIds = supplyTexturesDto.TilemapSprites
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+        if (nonPositiveIds.Any())
+        {
+            throw new System.Exception($"Supply textures Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
         SupplyTexturesConfig.TexturesPath = supplyTexturesDto.TexturesPath;
         SupplyTexturesConfig.DefaultTextureSize = supplyTexturesDto.DefaultTextureSize;
-
-        if (supplyTexturesDto.TilemapSprites.Any(x => x.TextureResolution != SupplyTexturesConfig.DefaultTextureSize))
-        {
-            throw new System.Exception($"Wrong texture resolution. Expected {SupplyTexturesConfig.DefaultTextureSize}X{SupplyTexturesConfig.DefaultTextureSize}");
-        }
 
         var hasDuplicates = supplyTexturesDto.TilemapSprites
             .GroupBy(x => x.Id)
@@ -64,7 +68,11 @@ public static partial class ConfigLoader
         {
             Id = x.Id,
             SupplyId = x.SupplyId,
-            Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName)
+            Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName),
+            WidthCell = x.WidthCell,
+            HeightCell = x.HeightCell,
+            VisualWidthCell = x.VisualWidthCell,
+            VisualHeightCell = x.VisualHeightCell
         }));
 
         Debug.Log("Supply textures config loaded");

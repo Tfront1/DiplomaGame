@@ -1,12 +1,21 @@
-﻿using System.Threading;
-using Assets.GameUtilities.Utils;
+﻿using Assets.GameUtilities.Utils;
 using Supplies;
 using UnityEngine;
 
 public class SupplyManager : MonoBehaviour
 {
+    private MapGrid<SupplyGridObject> _grid;
+
     private void Start()
     {
+        _grid = new MapGrid<SupplyGridObject>(
+            MapConfig.MapWidth,
+            MapConfig.MapHeight,
+            MapConfig.CellSize,
+            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+            (g, x, y) => new SupplyGridObject(g, x, y)
+        );
+
         /*var _biomeMap = SupplyGenerator.GenerateSupply(
             MapConfig.MapWidth,
             MapConfig.MapHeight,

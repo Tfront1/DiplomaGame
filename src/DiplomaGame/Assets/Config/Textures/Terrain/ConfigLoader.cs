@@ -29,7 +29,18 @@ public static partial class ConfigLoader
 		TerrainTexturesConfig.TexturesPath = terrainTexturesDto.TexturesPath;
         TerrainTexturesConfig.DefaultTextureSize = terrainTexturesDto.DefaultTextureSize;
 
-		if (terrainTexturesDto.TilemapSprites.Any(x => x.TextureResolution != TerrainTexturesConfig.DefaultTextureSize))
+        var nonPositiveIds = terrainTexturesDto.TilemapSprites
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+
+		//Texture of `None` have ID 0
+        if (nonPositiveIds.Count > 1)
+        {
+            throw new System.Exception($"Terrain textures Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
+        if (terrainTexturesDto.TilemapSprites.Any(x => x.TextureResolution != TerrainTexturesConfig.DefaultTextureSize))
 		{
 			throw new System.Exception($"Wrong texture resolution. Expected {TerrainTexturesConfig.DefaultTextureSize}X{TerrainTexturesConfig.DefaultTextureSize}");
 		}
