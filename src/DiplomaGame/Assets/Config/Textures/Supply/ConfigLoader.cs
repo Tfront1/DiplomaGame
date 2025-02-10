@@ -31,11 +31,6 @@ public static partial class ConfigLoader
         SupplyTexturesConfig.TexturesPath = supplyTexturesDto.TexturesPath;
         SupplyTexturesConfig.DefaultTextureSize = supplyTexturesDto.DefaultTextureSize;
 
-        if (supplyTexturesDto.TilemapSprites.Any(x => x.TextureResolution != SupplyTexturesConfig.DefaultTextureSize))
-        {
-            throw new System.Exception($"Wrong texture resolution. Expected {SupplyTexturesConfig.DefaultTextureSize}X{SupplyTexturesConfig.DefaultTextureSize}");
-        }
-
         var hasDuplicates = supplyTexturesDto.TilemapSprites
             .GroupBy(x => x.Id)
             .Any(group => group.Count() > 1);
@@ -64,7 +59,11 @@ public static partial class ConfigLoader
         {
             Id = x.Id,
             SupplyId = x.SupplyId,
-            Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName)
+            Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName),
+            WidthCell = x.WidthCell,
+            HeightCell = x.HeightCell,
+            VisualWidthCell = x.VisualWidthCell,
+            VisualHeightCell = x.VisualHeightCell
         }));
 
         Debug.Log("Supply textures config loaded");

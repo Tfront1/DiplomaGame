@@ -13,6 +13,7 @@ namespace Supplies
             int seed,
             List<Supply> supplies,
             List<BiomeSupply> biomeSupplies,
+            List<SupplyTexture> suppliesTexture,
             int SupplyPerBlocks,
             int[,] map)
         {
@@ -22,11 +23,14 @@ namespace Supplies
 
             var supplyMap = InitializeSupplyMap(mapWidth, mapHeight);
 
+            var supplyTextureCache = suppliesTexture.ToDictionary(t => t.SupplyId);
+
             SpawnSuppliesOnMap(
                 distribution,
                 supplyMap,
                 map,
                 biomeSupplies,
+                supplyTextureCache,
                 mapWidth,
                 mapHeight,
                 random);
@@ -48,6 +52,7 @@ namespace Supplies
             int[,] supplyMap,
             int[,] biomeMap,
             List<BiomeSupply> biomeSupplies,
+            Dictionary<int, SupplyTexture> supplyTextureCache,
             int mapWidth,
             int mapHeight,
             Random random)
@@ -66,6 +71,7 @@ namespace Supplies
                     supplyMap,
                     biomeMap,
                     biomeSupplies,
+                    supplyTextureCache,
                     mapWidth,
                     mapHeight,
                     maxAttempts,
@@ -78,6 +84,7 @@ namespace Supplies
                         supplyId,
                         remainingCount,
                         supplyMap,
+                        supplyTextureCache,
                         mapWidth,
                         mapHeight,
                         maxAttempts,
@@ -91,6 +98,7 @@ namespace Supplies
             int[,] supplyMap,
             int[,] biomeMap,
             List<BiomeSupply> biomeSupplies,
+            Dictionary<int, SupplyTexture> supplyTextureCache,
             int mapWidth,
             int mapHeight,
             int maxAttempts,
@@ -103,20 +111,34 @@ namespace Supplies
             {
                 var position = MapUtils.GetRandomPosition(mapWidth, mapHeight, random);
 
-                if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap))
+                var biomeId = biomeMap[position.x, position.y];
+                var biomeSupply = GetBiomeSupply(biomeSupplies, biomeId, supplyId);
+                var supplyTexture = supplyTextureCache[biomeSupply.SupplyId];
+                
+                if (biomeSupply != null)
                 {
-                    var biomeId = biomeMap[position.x, position.y];
-                    var biomeSupply = GetBiomeSupply(biomeSupplies, biomeId, supplyId);
+                    if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supplyTexture))
+                    {
+                        if (ShouldSpawnBasedOnChance(biomeSupply.SpawnChance, attemptsPerItem, random))
+                        {
+                            supplyMap[position.x, position.y] = supplyId;
+                            for (var i = position.x; i < position.x + supplyTexture.WidthCell; i++)
+                            {
+                                for (var j = position.y; j < position.y + supplyTexture.HeightCell; j++)
+                                {
+                                    if (i == position.x && j == position.y)
+                                        continue;
 
-                    if (biomeSupply != null && ShouldSpawnBasedOnChance(biomeSupply.SpawnChance, attemptsPerItem, random))
-                    {
-                        supplyMap[position.x, position.y] = supplyId;
-                        count--;
-                        attemptsPerItem = 0;
-                    }
-                    else
-                    {
-                        attemptsPerItem++;
+                                    supplyMap[i, j] = 0;
+                                }
+                            }
+                            count--;
+                            attemptsPerItem = 0;
+                        }
+                        else
+                        {
+                            attemptsPerItem++;
+                        }
                     }
                 }
                 attempts++;
@@ -128,6 +150,7 @@ namespace Supplies
             int supplyId,
             int count,
             int[,] supplyMap,
+            Dictionary<int, SupplyTexture> supplyTextureCache,
             int mapWidth,
             int mapHeight,
             int maxAttempts,
@@ -138,7 +161,7 @@ namespace Supplies
             {
                 var position = MapUtils.GetRandomPosition(mapWidth, mapHeight, random);
 
-                if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap))
+                if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supplyTextureCache[supplyMap[position.x, position.y]]))
                 {
                     supplyMap[position.x, position.y] = supplyId;
                     count--;
@@ -148,9 +171,36 @@ namespace Supplies
             }
         }
 
-        private static bool CanPlaceSupplyAtPosition(int x, int y, int[,] supplyMap)
+        private static bool CanPlaceSupplyAtPosition(int x, int y, int[,] supplyMap, SupplyTexture supplyTexture)
         {
-            return supplyMap[x, y] == -1;
+            var mapWidth = supplyMap.GetLength(0);
+            var mapHeight = supplyMap.GetLength(1);
+
+            if (x < 0 || y < 0 ||
+                x + supplyTexture.WidthCell > mapWidth ||
+                y + supplyTexture.HeightCell > mapHeight)
+            {
+                return false;
+            }
+
+            if (x + supplyTexture.VisualWidthCell > mapWidth ||
+                y + supplyTexture.VisualHeightCell > mapHeight)
+            {
+                return false;
+            }
+
+            for (var i = x; i < x + supplyTexture.WidthCell; i++)
+            {
+                for (var j = y; j < y + supplyTexture.HeightCell; j++)
+                {
+                    if (supplyMap[i, j] != -1)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private static BiomeSupply GetBiomeSupply(
