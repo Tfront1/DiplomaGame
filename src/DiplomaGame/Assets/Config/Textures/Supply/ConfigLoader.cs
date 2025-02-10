@@ -28,6 +28,15 @@ public static partial class ConfigLoader
             return;
         }
 
+        var nonPositiveIds = supplyTexturesDto.TilemapSprites
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+        if (nonPositiveIds.Any())
+        {
+            throw new System.Exception($"Supply textures Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
         SupplyTexturesConfig.TexturesPath = supplyTexturesDto.TexturesPath;
         SupplyTexturesConfig.DefaultTextureSize = supplyTexturesDto.DefaultTextureSize;
 

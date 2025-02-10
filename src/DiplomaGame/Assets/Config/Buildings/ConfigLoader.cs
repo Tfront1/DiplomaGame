@@ -16,7 +16,16 @@ public static partial class ConfigLoader
 			return;
 		}
 
-		var hasDuplicates = buildingsDto.Buildings
+        var nonPositiveIds = buildingsDto.Buildings
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+        if (nonPositiveIds.Any())
+        {
+            throw new System.Exception($"Buildings Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
+        var hasDuplicates = buildingsDto.Buildings
 			.GroupBy(x => x.Id)
 			.Any(group => group.Count() > 1);
 

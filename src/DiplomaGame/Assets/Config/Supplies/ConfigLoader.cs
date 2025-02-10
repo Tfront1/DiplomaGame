@@ -16,7 +16,16 @@ public static partial class ConfigLoader
 			return;
 		}
 
-		var hasDuplicates = suppliesDto.Supplies
+        var nonPositiveIds = suppliesDto.Supplies
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+        if (nonPositiveIds.Any())
+        {
+            throw new System.Exception($"Supplies Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
+        var hasDuplicates = suppliesDto.Supplies
 			.GroupBy(x => x.Id)
 			.Any(group => group.Count() > 1);
 

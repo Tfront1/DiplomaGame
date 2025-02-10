@@ -16,7 +16,16 @@ public static partial class ConfigLoader
 			return;
 		}
 
-		if (biomesDto.ValidationWeightPercentageDifference < 0 ||
+        var nonPositiveIds = biomesDto.Biomes
+            .Where(x => x.Id <= 0)
+            .Select(x => x.Id)
+            .ToList();
+        if (nonPositiveIds.Any())
+        {
+            throw new System.Exception($"Biomes Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+        }
+
+        if (biomesDto.ValidationWeightPercentageDifference < 0 ||
 			biomesDto.ValidationWeightPercentageDifference > 100)
 		{
 			throw new System.Exception($"Invalid ValidationWeightPercentageDifference: " +
