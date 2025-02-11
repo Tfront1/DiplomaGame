@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TilemapVisual
 {
-	private MapGrid<TilemapObject> _grid;
+	private MapGrid<TilemapGridObject> _grid;
 	private bool _updateMesh;
 
     public TilemapChunkManager _chunkManager;
@@ -15,7 +15,7 @@ public class TilemapVisual
         LoadTilemapChunks();
     }
 
-	public void SetGrid(MapGrid<TilemapObject> grid) 
+	public void SetGrid(MapGrid<TilemapGridObject> grid) 
 	{
 		_grid = grid;
 		UpdateTilemapVisual(_x, _y);

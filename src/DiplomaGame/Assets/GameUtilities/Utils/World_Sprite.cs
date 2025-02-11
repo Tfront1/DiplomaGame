@@ -1,8 +1,8 @@
 ﻿using System;
-using GameUtilities;
 using UnityEngine;
 
-namespace GameUtilities.Utils {
+namespace GameUtilities.Utils
+{
 
     /*
      * Sprite in the World

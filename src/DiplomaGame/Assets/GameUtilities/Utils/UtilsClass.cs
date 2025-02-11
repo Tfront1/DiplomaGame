@@ -109,7 +109,13 @@ namespace GameUtilities.Utils {
         public static void CreateWorldTextPopup(string text, Vector3 localPosition, float popupTime = 1f) {
             CreateWorldTextPopup(null, text, localPosition, 40, Color.white, localPosition + new Vector3(0, 20), popupTime);
         }
-        
+
+        // Create a coloured Text Popup in the World, no parent
+        public static void CreateWorldTextPopup(string text, Vector3 localPosition, Color color, float popupTime = 1f)
+        {
+            CreateWorldTextPopup(null, text, localPosition, 40, color, localPosition + new Vector3(0, 20), popupTime);
+        }
+
         // Create a Text Popup in the World
         public static void CreateWorldTextPopup(Transform parent, string text, Vector3 localPosition, int fontSize, Color color, Vector3 finalPopupPosition, float popupTime) {
             TextMesh textMesh = CreateWorldText(parent, text, localPosition, fontSize, color, TextAnchor.LowerLeft, TextAlignment.Left, sortingOrderDefault);

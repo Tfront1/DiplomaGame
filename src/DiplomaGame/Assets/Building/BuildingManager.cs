@@ -63,15 +63,32 @@ public class BuildingManager : MonoBehaviour
         var clickPosition = GameUtilities.Utils.UtilsClass.GetMouseWorldPosition();
         var gridPosition = _grid.GetCellGridPosition(clickPosition);
 
-        if (!CanPlaceBuilding(gridPosition, _grid, selectedBuilding)) return;
+        if (!CanPlaceBuilding(gridPosition, _grid, selectedBuilding))
+        {
+            GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
+                "Cannot build here!",
+                clickPosition,
+                Color.red,
+                1f
+            );
+            return;
+        }
 
         var buildingId = System.Guid.NewGuid();
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInGrid(gridPosition, buildingId,_grid, selectedBuilding);
+        PlaceBuildingInLocalGrid(gridPosition, buildingId,_grid, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
+        if (GridRegistry.HasGrid<BuildingGridObject>())
+        {
+            GridRegistry.UpdateGrid(_grid);
+        }
+        else 
+        {
+            GridRegistry.RegisterGrid(_grid);
+        }
     }
 
     /// <summary>
@@ -83,34 +100,20 @@ public class BuildingManager : MonoBehaviour
     /// <returns>True if can place, false if occupied</returns>
     private bool CanPlaceBuilding(Vector2Int gridPosition, MapGrid<BuildingGridObject> grid, Building building)
     {
-        var gridWidth = grid.Width;
-        var gridHeight = grid.Height;
-
-        if (gridPosition.x < 0 || gridPosition.y < 0 ||
-            gridPosition.x + building.WidthCell > gridWidth ||
-            gridPosition.y + building.HeightCell > gridHeight)
+        // Check visual bounds
+        if (gridPosition.x + building.VisualWidthCell > grid.Width ||
+            gridPosition.y + building.VisualHeightCell > grid.Height)
         {
             return false;
         }
 
-        if (gridPosition.x + building.VisualWidthCell > gridWidth ||
-            gridPosition.y + building.VisualHeightCell > gridHeight)
-        {
-            return false;
-        }
+        // Create availability grid for building size
+        var availabilityGrid = GridService.CreateAvailabilityGrid(
+            new Vector2Int(building.WidthCell, building.HeightCell),
+            GridRegistry.GetAllGridsList().ToArray()
+        );
 
-        for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
-        {
-            for (var y = gridPosition.y; y < gridPosition.y + building.HeightCell; y++)
-            {
-                if (grid.GetGridObject(x, y).GetGuid() != System.Guid.Empty)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return availabilityGrid.GetGridObject(gridPosition.x, gridPosition.y);
     }
 
     /// <summary>
@@ -197,7 +200,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingId">Building's unique ID</param>
     /// <param name="grid">Target grid</param>
     /// <param name="building">Building to place</param>
-    private void PlaceBuildingInGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
+    private void PlaceBuildingInLocalGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
     {
         for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
         {

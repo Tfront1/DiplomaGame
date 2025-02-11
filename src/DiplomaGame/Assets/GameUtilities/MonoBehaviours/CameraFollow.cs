@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace GameUtilities.MonoBehaviours {
+namespace GameUtilities.MonoBehaviours
+{
 
     /*
      * Script to handle Camera Movement and Zoom

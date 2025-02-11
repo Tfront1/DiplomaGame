@@ -49,7 +49,7 @@ public class TilemapManager : MonoBehaviour
         Debug.Log($"Grid creation time: {(endTime - startTime) * 1000:F2}ms");
 
         startTime = Time.realtimeSinceStartup;
-        SupplyDisplay.DisplayMap(supplyMap, _grid);
+        SupplyManager.DisplaySupplyMap(supplyMap, _grid);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
 
