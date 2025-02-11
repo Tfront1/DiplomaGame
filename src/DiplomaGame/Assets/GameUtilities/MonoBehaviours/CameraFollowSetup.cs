@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace GameUtilities.MonoBehaviours {
+namespace GameUtilities.MonoBehaviours
+{
 
     /*
      * Easy set up for CameraFollow, it will follow the transform with zoom

@@ -1,10 +1,14 @@
 ﻿using System;
 
-public class SupplyGridObject
+public class SupplyGridObject : IGridObject
 {
     private int _x;
     private int _y;
     private Guid _guid;
+
+    public int X => _x;
+    public int Y => _y;
+    public Guid Guid => _guid;
 
     public SupplyGridObject(MapGrid<SupplyGridObject> grid, int x, int y, Guid guid = default)
     {
@@ -13,13 +17,13 @@ public class SupplyGridObject
         _guid = guid;
     }
 
-    public override string ToString()
-    {
-        return _x + ", " + _y;
-    }
-
     public Guid GetGuid()
     {
         return _guid;
+    }
+
+    public override string ToString()
+    {
+        return _x + ", " + _y;
     }
 }
