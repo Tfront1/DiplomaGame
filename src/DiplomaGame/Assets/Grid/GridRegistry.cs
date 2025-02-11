@@ -74,6 +74,29 @@ public static class GridRegistry
     }
 
     /// <summary>
+    /// Adds a new grid to the registry or updates an existing one.
+    /// </summary>
+    /// <typeparam name="T">The type of objects stored in the grid. Must implement IGridObject.</typeparam>
+    /// <param name="newGrid">The grid instance to add or update</param>
+    /// <returns>True if the grid was successfully upserted</returns>
+    /// <remarks>
+    /// - If a grid for type T doesn't exist, creates a new entry in the registry
+    /// - If a grid already exists, updates it with the new instance
+    /// - The term "upsert" comes from combining "update" and "insert" operations
+    /// </remarks>
+    public static bool UpsertGrid<T>(MapGrid<T> newGrid) where T : IGridObject
+    {
+        var type = typeof(T);
+        if (!_grids.ContainsKey(type))
+        {
+            RegisterGrid(newGrid);
+            return true;
+        }
+        _grids[type] = new TypedGridAdapter<T>(newGrid);
+        return true;
+    }
+
+    /// <summary>
     /// Gets a read-only dictionary of all registered grids.
     /// </summary>
     /// <returns>A dictionary where the key is the grid object type and the value is the corresponding grid instance</returns>

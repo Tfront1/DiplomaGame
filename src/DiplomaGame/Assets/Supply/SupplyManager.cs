@@ -80,14 +80,7 @@ namespace Supplies
                     PlaceSupplyInGrid(gridPosition, resourceId, grid, supplyTexture);
                     SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
                     SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supplyTexture);
-                    if (GridRegistry.HasGrid<SupplyGridObject>())
-                    {
-                        GridRegistry.UpdateGrid(grid);
-                    }
-                    else
-                    {
-                        GridRegistry.RegisterGrid(grid);
-                    }
+                    GridRegistry.UpsertGrid(grid);
                 }
             }
         }

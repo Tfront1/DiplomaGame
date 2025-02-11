@@ -81,14 +81,7 @@ public class BuildingManager : MonoBehaviour
         PlaceBuildingInLocalGrid(gridPosition, buildingId,_grid, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
-        if (GridRegistry.HasGrid<BuildingGridObject>())
-        {
-            GridRegistry.UpdateGrid(_grid);
-        }
-        else 
-        {
-            GridRegistry.RegisterGrid(_grid);
-        }
+        GridRegistry.UpsertGrid(_grid);
     }
 
     /// <summary>
