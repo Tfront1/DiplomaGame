@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -67,14 +68,26 @@ namespace Supplies
                     if (map[x, y] == -1 || map[x, y] == 0) continue;
 
                     var supplyId = map[x, y];
+                    var gridPosition = new Vector2Int(x, y);
                     var resourceId = System.Guid.NewGuid();
                     var supplyTexture = _supplyTextureConfigCache[supplyId];
+
+                    if (GridService.CanPlaceAtPosition(
+                            gridPosition,
+                            new Vector2Int(supplyTexture.WidthCell, supplyTexture.HeightCell),
+                            GridRegistry.GetAllGridsList().ToArray()))
+                    {
+                        //TODO: To do...
+                        Debug.Log($"Supply overlaps on object, X: {x}, Y: {y}");
+                        continue;
+                    }
 
                     var supplyName = _suppliesCache[supplyId].Name;
                     var texture = _texturesCache[supplyId];
 
                     var newResourceObject = CreateSupplyGameObject(supplyName);
-                    var gridPosition = new Vector2Int(x, y);
+
+                    
 
                     SetupResourceSprite(newResourceObject, texture, supplyTexture);
                     PlaceSupplyInGrid(gridPosition, resourceId, grid, supplyTexture);
