@@ -34,8 +34,8 @@ public class BuildingManager : MonoBehaviour
 			(g, x, y) => new BuildingGridObject(g, x, y)
 		);
 
-		// Example: Select the first building from the configuration list (you can change this logic)
-		selectedBuilding = BuildingsConfig.Buildings.First();
+        // Example: Select the first building from the configuration list (you can change this logic)
+        selectedBuilding = BuildingsConfig.Buildings.First();
 	}
 
 	private void Update()
@@ -63,7 +63,10 @@ public class BuildingManager : MonoBehaviour
         var clickPosition = GameUtilities.Utils.UtilsClass.GetMouseWorldPosition();
         var gridPosition = _grid.GetCellGridPosition(clickPosition);
 
-        if (!CanPlaceBuilding(gridPosition, _grid, selectedBuilding))
+        if (!GridService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                GridRegistry.GetAllGridsList().ToArray()))
         {
             GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
                 "Cannot build here!",
@@ -82,31 +85,6 @@ public class BuildingManager : MonoBehaviour
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
         GridRegistry.UpsertGrid(_grid);
-    }
-
-    /// <summary>
-    /// Checks if a building can be placed at the grid position
-    /// </summary>
-    /// <param name="gridPosition">Target position in grid</param>
-    /// <param name="grid">Grid to place on</param>
-    /// <param name="building">Building to place</param>
-    /// <returns>True if can place, false if occupied</returns>
-    private bool CanPlaceBuilding(Vector2Int gridPosition, MapGrid<BuildingGridObject> grid, Building building)
-    {
-        // Check visual bounds
-        if (gridPosition.x + building.VisualWidthCell > grid.Width ||
-            gridPosition.y + building.VisualHeightCell > grid.Height)
-        {
-            return false;
-        }
-
-        // Create availability grid for building size
-        var availabilityGrid = GridService.CreateAvailabilityGrid(
-            new Vector2Int(building.WidthCell, building.HeightCell),
-            GridRegistry.GetAllGridsList().ToArray()
-        );
-
-        return availabilityGrid.GetGridObject(gridPosition.x, gridPosition.y);
     }
 
     /// <summary>
