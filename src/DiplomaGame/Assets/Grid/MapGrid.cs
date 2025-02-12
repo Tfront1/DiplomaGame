@@ -80,7 +80,7 @@ public class MapGrid<TGridObject> : IBaseGrid
 		OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { X = x, Y = y });
 	}
 
-    public void SetGridObject(int x, int y, TGridObject value)
+    private void SetGridObject(int x, int y, TGridObject value)
 	{
 		if (x >= 0 && x < Width && y >= 0 && y < Height)
 		{
