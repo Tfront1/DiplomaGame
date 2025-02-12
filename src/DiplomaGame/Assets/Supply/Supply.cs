@@ -7,5 +7,7 @@
         public string Type { get; set; }
         public int Ratio { get; set; }
         public string Texture { get; set; }
+        public int WidthCell { get; set; }
+        public int HeightCell { get; set; }
     }
 }

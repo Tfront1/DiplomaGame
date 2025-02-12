@@ -37,7 +37,6 @@ public class TilemapManager : MonoBehaviour
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"SupplyMap generation time: {(endTime - startTime) * 1000:F2}ms");
 
-        startTime = Time.realtimeSinceStartup;
         var _grid = new MapGrid<SupplyGridObject>(
             MapConfig.MapWidth,
             MapConfig.MapHeight,
@@ -45,11 +44,11 @@ public class TilemapManager : MonoBehaviour
             new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
             (g, x, y) => new SupplyGridObject(g, x, y)
         );
-        endTime = Time.realtimeSinceStartup;
-        Debug.Log($"Grid creation time: {(endTime - startTime) * 1000:F2}ms");
+
+        var supplyItemList = new ItemList<SupplyItem>();
 
         startTime = Time.realtimeSinceStartup;
-        SupplyManager.DisplaySupplyMap(supplyMap, _grid);
+        SupplyManager.DisplaySupplyMap(supplyMap, _grid, supplyItemList);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
 

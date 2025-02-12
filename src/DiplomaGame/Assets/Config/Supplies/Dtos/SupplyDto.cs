@@ -6,4 +6,6 @@ public class SupplyDto
 	public string Type;
     public int Ratio;
     public string Texture;
+    public int WidthCell;
+    public int HeightCell;
 }

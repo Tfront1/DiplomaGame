@@ -48,7 +48,9 @@ public static partial class ConfigLoader
 			Name = x.Name,
 			Type = x.Type,
 			Ratio = x.Ratio,
-			Texture = x.Texture
+			Texture = x.Texture,
+            HeightCell = x.HeightCell,
+			WidthCell = x.WidthCell
 		}));
 
         Debug.Log("Supplies config loaded");

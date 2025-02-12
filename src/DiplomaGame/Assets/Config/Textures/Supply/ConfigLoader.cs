@@ -69,8 +69,6 @@ public static partial class ConfigLoader
             Id = x.Id,
             SupplyId = x.SupplyId,
             Texture = LoadTextureFromFile(SupplyTexturesConfig.TexturesPath + x.TextureFileName),
-            WidthCell = x.WidthCell,
-            HeightCell = x.HeightCell,
             VisualWidthCell = x.VisualWidthCell,
             VisualHeightCell = x.VisualHeightCell
         }));

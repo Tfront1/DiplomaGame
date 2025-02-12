@@ -12,7 +12,7 @@ public static class GridRegistry
     /// Internal storage for registered grids. The key is the type of grid object,
     /// and the value is the corresponding typed grid instance.
     /// </summary>
-    private static readonly Dictionary<Type, ITypedGrid> _grids = new Dictionary<Type, ITypedGrid>();
+    private static readonly Dictionary<Type, ITypedGrid> _grids = new ();
 
     /// <summary>
     /// Registers a new grid in the registry or updates an existing one.

@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BuildingManager : MonoBehaviour
 {
@@ -23,6 +25,8 @@ public class BuildingManager : MonoBehaviour
     /// Reference to parent GameObject that organizes all Building objects in hierarchy
     /// </summary>
     private static Transform _buildingFolder;
+
+    private static ItemList<BuildingItem> _buildingItemList = new();
 
     private void Awake()
 	{
@@ -66,7 +70,12 @@ public class BuildingManager : MonoBehaviour
         if (!GridService.CanPlaceAtPosition(
                 gridPosition,
                 new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
-                GridRegistry.GetAllGridsList().ToArray()))
+                GridRegistry.GetAllGridsList().ToArray()) ||
+            !ItemListService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                ItemListRegistry.GetAllListsItemsList().ToArray()
+            ))
         {
             GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
                 "Cannot build here!",
@@ -77,14 +86,16 @@ public class BuildingManager : MonoBehaviour
             return;
         }
 
-        var buildingId = System.Guid.NewGuid();
+        var buildingGuid = Guid.NewGuid();
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInLocalGrid(gridPosition, buildingId,_grid, selectedBuilding);
+        PlaceBuildingInGrid(gridPosition, buildingGuid,_grid, selectedBuilding);
+        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
         GridRegistry.UpsertGrid(_grid);
+        ItemListRegistry.UpsertList(_buildingItemList);
     }
 
     /// <summary>
@@ -171,7 +182,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingId">Building's unique ID</param>
     /// <param name="grid">Target grid</param>
     /// <param name="building">Building to place</param>
-    private void PlaceBuildingInLocalGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
+    private void PlaceBuildingInGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
     {
         for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
         {
@@ -182,6 +193,12 @@ public class BuildingManager : MonoBehaviour
                 grid.SetGridObject(worldPosition, buildingGridObject);
             }
         }
+    }
+
+    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building)
+    {
+        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building);
+        buildingItemList.Add(buildingItemItem);
     }
 
     /// <summary>
