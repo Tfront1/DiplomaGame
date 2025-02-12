@@ -78,21 +78,15 @@ namespace Supplies
                     if (!GridService.CanPlaceAtPosition(
                             gridPosition,
                             new Vector2Int(supply.WidthCell, supply.HeightCell),
-                            GridRegistry.GetAllGridsList().ToArray()))
-                    {
-                        //TODO: To do...
-                        Debug.Log($"Supply overlaps on object, X: {x}, Y: {y}");
-                        continue;
-                    }
-
-                    if (!ItemListService.CanPlaceAtPosition(
+                            GridRegistry.GetAllGridsList().ToArray()) ||
+                        !ItemListService.CanPlaceAtPosition(
                             gridPosition,
                             new Vector2Int(supply.WidthCell, supply.HeightCell),
                             ItemListRegistry.GetAllListsItemsList().ToArray()
                         ))
                     {
                         //TODO: To do...
-                        Debug.Log($"Supply item overlaps on object, X: {x}, Y: {y}");
+                        Debug.Log($"Supply overlaps on object, X: {x}, Y: {y}");
                         continue;
                     }
 
@@ -105,7 +99,7 @@ namespace Supplies
                     AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
                     SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
                     SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supply, supplyTexture);
-                    ItemListRegistry.RegisterList(supplyItemsList);
+                    ItemListRegistry.UpsertList(supplyItemsList);
                 }
             }
 

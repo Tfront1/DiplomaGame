@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 public class TypedItemListAdapter<T> : ITypedItemList where T : IItemListObject
 {
