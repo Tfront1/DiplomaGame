@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BuildingManager : MonoBehaviour
 {
@@ -23,6 +26,8 @@ public class BuildingManager : MonoBehaviour
     /// Reference to parent GameObject that organizes all Building objects in hierarchy
     /// </summary>
     private static Transform _buildingFolder;
+
+    private static ItemList<BuildingItem> _buildingItemList = new();
 
     private void Awake()
 	{
@@ -77,14 +82,30 @@ public class BuildingManager : MonoBehaviour
             return;
         }
 
-        var buildingId = System.Guid.NewGuid();
+        if (!ItemListService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                ItemListRegistry.GetAllListsItemsList().ToArray()
+            ))
+        {
+            GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
+                "Cannot build here!",
+                clickPosition,
+                Color.red,
+                1f
+            );
+            return;
+        }
+
+        var buildingGuid = Guid.NewGuid();
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInLocalGrid(gridPosition, buildingId,_grid, selectedBuilding);
+        PlaceBuildingInLocalGrid(gridPosition, buildingGuid,_grid, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
         GridRegistry.UpsertGrid(_grid);
+        ItemListRegistry.RegisterList(_buildingItemList);
     }
 
     /// <summary>

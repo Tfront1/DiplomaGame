@@ -57,7 +57,8 @@ namespace Supplies
         /// </summary>
         /// <param name="map">2D array with supply IDs</param>
         /// <param name="grid">Target grid for supplies</param>
-        public static void DisplaySupplyMap(int[,] map, MapGrid<SupplyGridObject> grid)
+        /// <param name="supplyItemsList">List of supplies items</param>
+        public static void DisplaySupplyMap(int[,] map, MapGrid<SupplyGridObject> grid, ItemList<SupplyItem> supplyItemsList)
         {
             InitializeCaches();
 
@@ -69,12 +70,14 @@ namespace Supplies
 
                     var supplyId = map[x, y];
                     var gridPosition = new Vector2Int(x, y);
-                    var resourceId = System.Guid.NewGuid();
+                    var supplyGuid = Guid.NewGuid();
                     var supplyTexture = _supplyTextureConfigCache[supplyId];
+                    var supply = _suppliesCache[supplyId];
+                    GridRegistry.UpsertGrid(grid);
 
-                    if (GridService.CanPlaceAtPosition(
+                    if (!GridService.CanPlaceAtPosition(
                             gridPosition,
-                            new Vector2Int(supplyTexture.WidthCell, supplyTexture.HeightCell),
+                            new Vector2Int(supply.WidthCell, supply.HeightCell),
                             GridRegistry.GetAllGridsList().ToArray()))
                     {
                         //TODO: To do...
@@ -82,20 +85,30 @@ namespace Supplies
                         continue;
                     }
 
+                    if (!ItemListService.CanPlaceAtPosition(
+                            gridPosition,
+                            new Vector2Int(supply.WidthCell, supply.HeightCell),
+                            ItemListRegistry.GetAllListsItemsList().ToArray()
+                        ))
+                    {
+                        //TODO: To do...
+                        Debug.Log($"Supply item overlaps on object, X: {x}, Y: {y}");
+                        continue;
+                    }
+
                     var supplyName = _suppliesCache[supplyId].Name;
                     var texture = _texturesCache[supplyId];
-
                     var newResourceObject = CreateSupplyGameObject(supplyName);
 
-                    
-
                     SetupResourceSprite(newResourceObject, texture, supplyTexture);
-                    PlaceSupplyInGrid(gridPosition, resourceId, grid, supplyTexture);
+                    PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
+                    AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
                     SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
-                    SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supplyTexture);
-                    GridRegistry.UpsertGrid(grid);
+                    SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supply, supplyTexture);
+                    ItemListRegistry.RegisterList(supplyItemsList);
                 }
             }
+
         }
 
         /// <summary>
@@ -183,18 +196,24 @@ namespace Supplies
         /// <param name="gridPosition">Position to place at</param>
         /// <param name="supplyGuid">Supply's unique ID</param>
         /// <param name="grid">Target grid</param>
-        /// <param name="supplyTexture">Supply texture config</param>
-        private static void PlaceSupplyInGrid(Vector2Int gridPosition, System.Guid supplyGuid, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
+        /// <param name="supply">Supply config</param>
+        private static void PlaceSupplyInGrid(Vector2Int gridPosition, Guid supplyGuid, MapGrid<SupplyGridObject> grid, Supply supply)
         {
-            for (var x = gridPosition.x; x < gridPosition.x + supplyTexture.WidthCell; x++)
+            for (var x = gridPosition.x; x < gridPosition.x + supply.WidthCell; x++)
             {
-                for (var y = gridPosition.y; y < gridPosition.y + supplyTexture.HeightCell; y++)
+                for (var y = gridPosition.y; y < gridPosition.y + supply.HeightCell; y++)
                 {
                     var SupplyGridObject = new SupplyGridObject(grid, x, y, supplyGuid);
                     var worldPosition = grid.GetWorldPosition(x, y);
                     grid.SetGridObject(worldPosition, SupplyGridObject);
                 }
             }
+        }
+        
+        private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply)
+        {
+            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply);
+            supplyItemList.Add(supplyItem);
         }
 
         /// <summary>
@@ -254,19 +273,20 @@ namespace Supplies
         /// <param name="gridPosition">Grid position</param>
         /// <param name="texture">Supply texture</param>
         /// <param name="grid">Target grid</param>
+        /// <param name="supply">Supply config</param>
         /// <param name="supplyTexture">Supply texture config</param>
-        private static void SetupSupplyCollider(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
+        private static void SetupSupplyCollider(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, Supply supply, SupplyTexture supplyTexture)
         {
             var collider = supplyObject.AddComponent<BoxCollider2D>();
             var (finalScale, _) = CalculateSupplyScale(texture, supplyTexture);
 
-            var colliderWidth = MapConfig.CellSize * supplyTexture.WidthCell;
-            var colliderHeight = MapConfig.CellSize * supplyTexture.HeightCell;
+            var colliderWidth = MapConfig.CellSize * supply.WidthCell;
+            var colliderHeight = MapConfig.CellSize * supply.HeightCell;
             collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
             var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
             var supplyPosition = supplyObject.transform.position;
-            var colliderOffset = CalculateColliderOffset(supplyPosition, colliderPosition, finalScale, supplyTexture);
+            var colliderOffset = CalculateColliderOffset(supplyPosition, colliderPosition, finalScale, supply);
             collider.offset = colliderOffset;
         }
 
@@ -276,14 +296,14 @@ namespace Supplies
         /// <param name="supplyPosition">Supply's position</param>
         /// <param name="colliderPosition">Base collider position</param>
         /// <param name="finalScale">Supply's scale</param>
-        /// <param name="supplyTexture">Supply texture config</param>
+        /// <param name="supply">Supply config</param>
         /// <returns>Collider offset vector</returns>
-        private static Vector2 CalculateColliderOffset(Vector3 supplyPosition, Vector3 colliderPosition, float finalScale, SupplyTexture supplyTexture)
+        private static Vector2 CalculateColliderOffset(Vector3 supplyPosition, Vector3 colliderPosition, float finalScale, Supply supply)
         {
             var offset = new Vector2(supplyPosition.x - colliderPosition.x, supplyPosition.y - colliderPosition.y);
             return new Vector2(
-                MapConfig.CellSize * supplyTexture.WidthCell / 2 / finalScale - offset.x / finalScale,
-                MapConfig.CellSize * supplyTexture.HeightCell / 2 / finalScale - offset.y / finalScale
+                MapConfig.CellSize * supply.WidthCell / 2 / finalScale - offset.x / finalScale,
+                MapConfig.CellSize * supply.HeightCell / 2 / finalScale - offset.y / finalScale
             );
         }
     }

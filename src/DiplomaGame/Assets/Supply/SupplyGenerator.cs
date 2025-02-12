@@ -24,6 +24,7 @@ namespace Supplies
             var supplyMap = InitializeSupplyMap(mapWidth, mapHeight);
 
             var supplyTextureCache = suppliesTexture.ToDictionary(t => t.SupplyId);
+            var supplyCache = supplies.ToDictionary(t => t.Id);
 
             SpawnSuppliesOnMap(
                 distribution,
@@ -31,6 +32,7 @@ namespace Supplies
                 map,
                 biomeSupplies,
                 supplyTextureCache,
+                supplyCache,
                 mapWidth,
                 mapHeight,
                 random);
@@ -53,6 +55,7 @@ namespace Supplies
             int[,] biomeMap,
             List<BiomeSupply> biomeSupplies,
             Dictionary<int, SupplyTexture> supplyTextureCache,
+            Dictionary<int, Supply> supplyCache,
             int mapWidth,
             int mapHeight,
             Random random)
@@ -72,6 +75,7 @@ namespace Supplies
                     biomeMap,
                     biomeSupplies,
                     supplyTextureCache,
+                    supplyCache,
                     mapWidth,
                     mapHeight,
                     maxAttempts,
@@ -85,6 +89,7 @@ namespace Supplies
                         remainingCount,
                         supplyMap,
                         supplyTextureCache,
+                        supplyCache,
                         mapWidth,
                         mapHeight,
                         maxAttempts,
@@ -99,6 +104,7 @@ namespace Supplies
             int[,] biomeMap,
             List<BiomeSupply> biomeSupplies,
             Dictionary<int, SupplyTexture> supplyTextureCache,
+            Dictionary<int, Supply> supplyCache,
             int mapWidth,
             int mapHeight,
             int maxAttempts,
@@ -114,17 +120,19 @@ namespace Supplies
                 var biomeId = biomeMap[position.x, position.y];
                 var biomeSupply = GetBiomeSupply(biomeSupplies, biomeId, supplyId);
                 var supplyTexture = supplyTextureCache[biomeSupply.SupplyId];
-                
+                var supply = supplyCache[biomeSupply.SupplyId];
+
+
                 if (biomeSupply != null)
                 {
-                    if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supplyTexture))
+                    if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supply, supplyTexture))
                     {
                         if (ShouldSpawnBasedOnChance(biomeSupply.SpawnChance, attemptsPerItem, random))
                         {
                             supplyMap[position.x, position.y] = supplyId;
-                            for (var i = position.x; i < position.x + supplyTexture.WidthCell; i++)
+                            for (var i = position.x; i < position.x + supply.WidthCell; i++)
                             {
-                                for (var j = position.y; j < position.y + supplyTexture.HeightCell; j++)
+                                for (var j = position.y; j < position.y + supply.HeightCell; j++)
                                 {
                                     if (i == position.x && j == position.y)
                                         continue;
@@ -151,6 +159,7 @@ namespace Supplies
             int count,
             int[,] supplyMap,
             Dictionary<int, SupplyTexture> supplyTextureCache,
+            Dictionary<int, Supply> supplyCache,
             int mapWidth,
             int mapHeight,
             int maxAttempts,
@@ -161,7 +170,10 @@ namespace Supplies
             {
                 var position = MapUtils.GetRandomPosition(mapWidth, mapHeight, random);
 
-                if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supplyTextureCache[supplyMap[position.x, position.y]]))
+                var supply = supplyCache[supplyMap[position.x, position.y]];
+                var supplyTexture = supplyTextureCache[supplyMap[position.x, position.y]];
+
+                if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supply, supplyTexture))
                 {
                     supplyMap[position.x, position.y] = supplyId;
                     count--;
@@ -171,14 +183,14 @@ namespace Supplies
             }
         }
 
-        private static bool CanPlaceSupplyAtPosition(int x, int y, int[,] supplyMap, SupplyTexture supplyTexture)
+        private static bool CanPlaceSupplyAtPosition(int x, int y, int[,] supplyMap, Supply supply, SupplyTexture supplyTexture)
         {
             var mapWidth = supplyMap.GetLength(0);
             var mapHeight = supplyMap.GetLength(1);
 
             if (x < 0 || y < 0 ||
-                x + supplyTexture.WidthCell > mapWidth ||
-                y + supplyTexture.HeightCell > mapHeight)
+                x + supply.WidthCell > mapWidth ||
+                y + supply.HeightCell > mapHeight)
             {
                 return false;
             }
@@ -189,9 +201,9 @@ namespace Supplies
                 return false;
             }
 
-            for (var i = x; i < x + supplyTexture.WidthCell; i++)
+            for (var i = x; i < x + supply.WidthCell; i++)
             {
-                for (var j = y; j < y + supplyTexture.HeightCell; j++)
+                for (var j = y; j < y + supply.HeightCell; j++)
                 {
                     if (supplyMap[i, j] != -1)
                     {

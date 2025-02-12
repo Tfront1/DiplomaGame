@@ -6,28 +6,36 @@
       "Name": "Tree",
       "Type": "Wood",
       "Ratio": 30,
-      "Texture": "TreeSup.png"
+      "Texture": "TreeSup.png",
+      "WidthCell": 1,
+      "HeightCell": 1
     },
     {
       "Id": 2,
       "Name": "Stone",
       "Type": "Stome",
       "Ratio": 25,
-      "Texture": "StoneSup.png"
+      "Texture": "StoneSup.png",
+      "WidthCell": 2,
+      "HeightCell": 2
     },
     {
       "Id": 3,
       "Name": "Iron",
       "Type": "Iron Ore",
       "Ratio": 20,
-      "Texture": "IronSup.png"
+      "Texture": "IronSup.png",
+      "WidthCell": 2,
+      "HeightCell": 1
     },
     {
       "Id": 4,
       "Name": "Gold",
       "Type": "Gold Ore",
       "Ratio": 10,
-      "Texture": "GoldSup.png"
+      "Texture": "GoldSup.png",
+      "WidthCell": 2,
+      "HeightCell": 1
     }
   ]
 }
