@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using GameUtilities.Utils;
 using Unit.PathFinder;
 using UnityEngine;
@@ -65,9 +66,14 @@ public class BuildingManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            var res = PathFinder.FindPath(new Vector2(15, 15), new Vector2(18000, 18000));
-            UtilsClass.DrawPath(res, Color.black, 2);
+            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(18000, 18000));
         }
+    }
+
+    private async Task FindAndDrawPathAsync(Vector2 start, Vector2 end)
+    {
+        var path = await PathFinder.FindPathAsync(start, end);
+        UtilsClass.DrawPath(path, Color.black, 2);
     }
 
     private void HandleBuildingPlacement()

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using GameUtilities.Utils;
 using UnityEngine;
 
@@ -19,112 +20,115 @@ namespace Unit.PathFinder
         new(-1, -1)
         };
 
-        public static List<Vector2> FindPath(Vector2 worldStart, Vector2 worldEnd)
+        public static async Task<List<Vector2>> FindPathAsync(Vector2 worldStart, Vector2 worldEnd)
         {
-            var gridStart = new Vector2(
-                (float)Math.Floor((worldStart.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
-                (float)Math.Floor((worldStart.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
-            );
-
-            var originalGridEnd = new Vector2(
-                (float)Math.Floor((worldEnd.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
-                (float)Math.Floor((worldEnd.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
-            );
-
-            var (isEndObstacle, _) = CheckObstacle((int)originalGridEnd.x, (int)originalGridEnd.y);
-            var gridEnd = originalGridEnd;
-
-            if (isEndObstacle)
+            return await Task.Run(() =>
             {
-                var nearestPoint = FindNearestAccessiblePoint(originalGridEnd);
-                if (nearestPoint == null)
+                var gridStart = new Vector2(
+                    (float)Math.Floor((worldStart.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
+                    (float)Math.Floor((worldStart.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
+                );
+
+                var originalGridEnd = new Vector2(
+                    (float)Math.Floor((worldEnd.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
+                    (float)Math.Floor((worldEnd.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
+                );
+
+                var (isEndObstacle, _) = CheckObstacle((int)originalGridEnd.x, (int)originalGridEnd.y);
+                var gridEnd = originalGridEnd;
+
+                if (isEndObstacle)
                 {
-                    return new List<Vector2>();
-                }
-                gridEnd = nearestPoint.Value;
-            }
-
-            var startNode = new Node(gridStart, true, false);
-            var endNode = new Node(gridEnd, true, false);
-            var openSet = new List<Node> { startNode };
-            var closedSet = new HashSet<Vector2>();
-            var nodeGrid = new Dictionary<Vector2, Node>();
-
-            startNode.GCost = 0;
-            startNode.HCost = CalculateHCost(startNode.GridPosition, endNode.GridPosition);
-
-            while (openSet.Count > 0)
-            {
-                var currentNode = openSet.OrderBy(n => n.FCost).ThenBy(n => n.HCost).First();
-
-                if (currentNode.GridPosition == endNode.GridPosition)
-                {
-                    var path = RetracePath(startNode, currentNode);
-
-                    return path;
-                }
-
-                openSet.Remove(currentNode);
-                closedSet.Add(currentNode.GridPosition);
-
-                foreach (var direction in Directions)
-                {
-                    var neighborPos = currentNode.GridPosition + direction;
-                    if (closedSet.Contains(neighborPos))
-                        continue;
-
-                    var (isObstacle, hasMargin) = CheckObstacle((int)neighborPos.x, (int)neighborPos.y);
-                    if (isObstacle)
-                        continue;
-
-                    if (direction.x != 0 && direction.y != 0)
+                    var nearestPoint = FindNearestAccessiblePoint(originalGridEnd);
+                    if (nearestPoint == null)
                     {
-                        var (horizontalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x + (int)direction.x, (int)currentNode.GridPosition.y);
-                        var (verticalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x, (int)currentNode.GridPosition.y + (int)direction.y);
-                        if (horizontalObstacle || verticalObstacle)
-                            continue;
+                        return new List<Vector2>();
+                    }
+                    gridEnd = nearestPoint.Value;
+                }
+
+                var startNode = new Node(gridStart, true, false);
+                var endNode = new Node(gridEnd, true, false);
+                var openSet = new List<Node> { startNode };
+                var closedSet = new HashSet<Vector2>();
+                var nodeGrid = new Dictionary<Vector2, Node>();
+
+                startNode.GCost = 0;
+                startNode.HCost = CalculateHCost(startNode.GridPosition, endNode.GridPosition);
+
+                while (openSet.Count > 0)
+                {
+                    var currentNode = openSet.OrderBy(n => n.FCost).ThenBy(n => n.HCost).First();
+
+                    if (currentNode.GridPosition == endNode.GridPosition)
+                    {
+                        var path = RetracePath(startNode, currentNode);
+
+                        return path;
                     }
 
-                    if (hasMargin)
+                    openSet.Remove(currentNode);
+                    closedSet.Add(currentNode.GridPosition);
+
+                    foreach (var direction in Directions)
                     {
-                        var hasAdjacentMargin = false;
-                        for (var dx = -1; dx <= 1 && !hasAdjacentMargin; dx++)
+                        var neighborPos = currentNode.GridPosition + direction;
+                        if (closedSet.Contains(neighborPos))
+                            continue;
+
+                        var (isObstacle, hasMargin) = CheckObstacle((int)neighborPos.x, (int)neighborPos.y);
+                        if (isObstacle)
+                            continue;
+
+                        if (direction.x != 0 && direction.y != 0)
                         {
-                            for (var dy = -1; dy <= 1 && !hasAdjacentMargin; dy++)
+                            var (horizontalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x + (int)direction.x, (int)currentNode.GridPosition.y);
+                            var (verticalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x, (int)currentNode.GridPosition.y + (int)direction.y);
+                            if (horizontalObstacle || verticalObstacle)
+                                continue;
+                        }
+
+                        if (hasMargin)
+                        {
+                            var hasAdjacentMargin = false;
+                            for (var dx = -1; dx <= 1 && !hasAdjacentMargin; dx++)
                             {
-                                if (dx == 0 && dy == 0) continue;
-                                var (_, adjMargin) = CheckObstacle((int)neighborPos.x + dx, (int)neighborPos.y + dy);
-                                if (adjMargin)
+                                for (var dy = -1; dy <= 1 && !hasAdjacentMargin; dy++)
                                 {
-                                    hasAdjacentMargin = true;
-                                    break;
+                                    if (dx == 0 && dy == 0) continue;
+                                    var (_, adjMargin) = CheckObstacle((int)neighborPos.x + dx, (int)neighborPos.y + dy);
+                                    if (adjMargin)
+                                    {
+                                        hasAdjacentMargin = true;
+                                        break;
+                                    }
                                 }
                             }
+                            if (hasAdjacentMargin)
+                                continue;
                         }
-                        if (hasAdjacentMargin)
-                            continue;
-                    }
 
-                    if (!nodeGrid.TryGetValue(neighborPos, out var neighbor))
-                    {
-                        neighbor = new Node(neighborPos, !isObstacle, hasMargin);
-                        nodeGrid[neighborPos] = neighbor;
-                    }
-
-                    var newGCost = currentNode.GCost + UtilsClass.CalculateDistance(currentNode.GridPosition, neighborPos);
-                    if (newGCost < neighbor.GCost)
-                    {
-                        neighbor.Parent = currentNode;
-                        neighbor.GCost = newGCost;
-                        neighbor.HCost = CalculateHCost(neighbor.GridPosition, endNode.GridPosition);
-                        if (!openSet.Contains(neighbor))
+                        if (!nodeGrid.TryGetValue(neighborPos, out var neighbor))
                         {
-                            openSet.Add(neighbor);
+                            neighbor = new Node(neighborPos, !isObstacle, hasMargin);
+                            nodeGrid[neighborPos] = neighbor;
+                        }
+
+                        var newGCost = currentNode.GCost + UtilsClass.CalculateDistance(currentNode.GridPosition, neighborPos);
+                        if (newGCost < neighbor.GCost)
+                        {
+                            neighbor.Parent = currentNode;
+                            neighbor.GCost = newGCost;
+                            neighbor.HCost = CalculateHCost(neighbor.GridPosition, endNode.GridPosition);
+                            if (!openSet.Contains(neighbor))
+                            {
+                                openSet.Add(neighbor);
+                            }
                         }
                     }
                 }
-            }
-            return new List<Vector2>();
+                return new List<Vector2>();
+            });
         }
 
         private static float CalculateHCost(Vector2 start, Vector2 end)

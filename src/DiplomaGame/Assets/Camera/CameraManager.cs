@@ -309,4 +309,14 @@ public class CameraManager : MonoBehaviour
 		_mapWidth = MapConfig.MapWidth * MapConfig.CellSize;
 		_mapStart = new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
 	}
+
+    public static void SubscribeToCameraMove(Action<CameraMoveEventArgs> handler)
+    {
+        CameraFollow.Instance.OnCameraMoved += handler;
+    }
+
+    public static void UnsubscribeFromCameraMove(Action<CameraMoveEventArgs> handler)
+    {
+        CameraFollow.Instance.OnCameraMoved -= handler;
+    }
 }

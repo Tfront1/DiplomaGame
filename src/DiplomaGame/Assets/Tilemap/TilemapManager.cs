@@ -55,7 +55,19 @@ public class TilemapManager : MonoBehaviour
         //End Test
 
         startTime = Time.realtimeSinceStartup;
-        TilemapDisplay.DisplayMap(_map, _tilemap);
+
+        //Debug
+        var displayAll = false;
+        if (!displayAll)
+        {
+            var tilemapViewController = new TilemapViewController();
+            tilemapViewController.Init(_map, _tilemap);
+        }
+        else
+        {
+            TilemapDisplay.DisplayMap(_map, _tilemap);
+        }
+        
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Tilemap display time: {(endTime - startTime) * 1000:F2}ms");
     }
