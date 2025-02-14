@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
+using GameUtilities.Utils;
+using Unit.PathFinder;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Vector2 = UnityEngine.Vector2;
 
 public class BuildingManager : MonoBehaviour
 {
@@ -59,6 +62,11 @@ public class BuildingManager : MonoBehaviour
         else if (Input.GetMouseButtonDown(0))
         {
             HandleBuildingPlacement();
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            var res = PathFinder.FindPath(new Vector2(15, 15), new Vector2(18000, 18000));
+            UtilsClass.DrawPath(res, Color.black, 2);
         }
     }
 

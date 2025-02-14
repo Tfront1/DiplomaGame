@@ -102,7 +102,6 @@ namespace Supplies
                     ItemListRegistry.UpsertList(supplyItemsList);
                 }
             }
-
         }
 
         /// <summary>
