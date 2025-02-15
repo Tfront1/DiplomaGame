@@ -2,7 +2,7 @@
   "NoiseMult": 37500,
   "NoiseDist": 0.7,
   "BiomeRange": 300,
-  "ValidationWeightPercentageDifference": 10,
+  "ValidationWeightPercentageDifference": 15,
   "Biomes": [
     {
       "Id": 1,

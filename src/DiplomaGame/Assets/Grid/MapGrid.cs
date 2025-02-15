@@ -117,4 +117,26 @@ public class MapGrid<TGridObject> : IBaseGrid
 
 		return GetGridObject(cellPosition.x, cellPosition.y);
 	}
+
+    public void RemoveGridObject(int x, int y)
+    {
+        if (x >= 0 && x < Width && y >= 0 && y < Height)
+        {
+            _gridArray[x, y] = default;
+            OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs() { X = x, Y = y });
+
+            //Debug
+            if (isDebugMode)
+            {
+                _debugTextArray[x, y].text = _gridArray[x, y].ToString();
+            }
+        }
+    }
+
+    public void RemoveGridObject(Vector3 wordPosition)
+    {
+        var cellPosition = GetCellGridPosition(wordPosition);
+
+        RemoveGridObject(cellPosition.x, cellPosition.y);
+    }
 }

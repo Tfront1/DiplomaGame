@@ -200,9 +200,62 @@ namespace GameUtilities.Utils {
             return text;
         }
 
+        // Draws a line between two Vector2 points with specified color and width
+        public static void DrawLine(float x1, float y1, float x2, float y2, Color color, float width = 1f)
+        {
+            GameObject lineObject = new GameObject("Line");
+
+            LineRenderer lineRenderer = lineObject.AddComponent<LineRenderer>();
+
+            lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+
+            lineRenderer.startColor = color;
+            lineRenderer.endColor = color;
+
+            lineRenderer.startWidth = width;
+            lineRenderer.endWidth = width;
+
+            lineRenderer.positionCount = 2;
+
+            lineRenderer.SetPosition(0, new Vector3(x1, y1));
+            lineRenderer.SetPosition(1, new Vector3(x2, y2));
+        }
+
+        // Draws a line between two Vector2 points with specified color and width
+        public static void DrawLine(Vector2 start, Vector2 end, Color color, float width = 1f)
+        {
+            DrawLine(start.x, start.y, end.x, end.y, color, width);
+        }
+
+        // Draws a line between two Vector3 points with specified color and width
+        public static void DrawLine(Vector3 start, Vector3 end, Color color, float width = 1f)
+        {
+            DrawLine(start.x, start.y, end.x, end.y, color, width);
+        }
+
+        // Draws connected lines through a sequence of points representing a path
+        public static void DrawPath(List<Vector2> path, Color color, float width = 2f)
+        {
+            if (path == null || path.Count < 2)
+                return;
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                var current = path[i];
+                var next = path[i + 1];
+
+                DrawLine(
+                    current,
+                    next,
+                    color,
+                    width
+                );
+            }
+        }
+
 
         // Parse a float, return default if failed
-	    public static float Parse_Float(string txt, float _default) {
+        public static float Parse_Float(string txt, float _default) {
 		    float f;
 		    if (!float.TryParse(txt, out f)) {
 			    f = _default;
@@ -442,6 +495,12 @@ namespace GameUtilities.Utils {
             int angle = Mathf.RoundToInt(n);
 
             return angle;
+        }
+        public static float CalculateDistance(Vector2 a, Vector2 b)
+        {
+            var dx = Math.Abs(a.x - b.x);
+            var dy = Math.Abs(a.y - b.y);
+            return (float)(Math.Sqrt(2) * Math.Min(dx, dy) + Math.Abs(dx - dy));
         }
 
         public static Vector3 ApplyRotationToVector(Vector3 vec, Vector3 vecRotation) {

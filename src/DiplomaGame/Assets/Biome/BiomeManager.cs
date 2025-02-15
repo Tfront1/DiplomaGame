@@ -1,4 +1,6 @@
-﻿namespace Biomes
+﻿using UnityEngine;
+
+namespace Biomes
 {
 	public static class BiomeManager
 	{
@@ -9,6 +11,7 @@
 			if (_biomeMap is null || _biomeMap.Length == 0)
 			{
 				var isBiomeMapValid = false;
+				var generateCount = 0;
 
                 while (!isBiomeMapValid)
 				{
@@ -27,6 +30,9 @@
 						validationWeightPercentageDifference: BiomesConfig.ValidationWeightPercentageDifference);
 
                     seed = SeedRandom.GenerateNewSeed(seed);
+
+                    generateCount++;
+                    Debug.Log($"BiomeMap generated for {generateCount} times");
 
                 }
             }

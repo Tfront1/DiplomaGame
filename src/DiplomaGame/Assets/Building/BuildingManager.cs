@@ -1,7 +1,11 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
+using GameUtilities.Utils;
+using Unit.PathFinder;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Vector2 = UnityEngine.Vector2;
 
 public class BuildingManager : MonoBehaviour
 {
@@ -60,11 +64,21 @@ public class BuildingManager : MonoBehaviour
         {
             HandleBuildingPlacement();
         }
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(1000, 1000));
+        }
+    }
+
+    private async Task FindAndDrawPathAsync(Vector2 start, Vector2 end)
+    {
+        var path = await PathFinder.FindPathAsync(start, end);
+        UtilsClass.DrawPath(path, Color.black, 2);
     }
 
     private void HandleBuildingPlacement()
     {
-        var clickPosition = GameUtilities.Utils.UtilsClass.GetMouseWorldPosition();
+        var clickPosition = UtilsClass.GetMouseWorldPosition();
         var gridPosition = _grid.GetCellGridPosition(clickPosition);
 
         if (!GridService.CanPlaceAtPosition(

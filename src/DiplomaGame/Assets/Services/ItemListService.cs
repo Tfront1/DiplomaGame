@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using UnityEngine;
+using System;
 
 /// <summary>
 /// Provides utility methods for creating and managing item list structures.
@@ -16,5 +17,22 @@ public static class ItemListService
     public static bool CanPlaceAtPosition(Vector2Int gridPosition, Vector2Int objectSize, params ITypedItemList[] itemLists)
     {
         return itemLists.All(g => g.IsAreaAvailable(gridPosition, objectSize));
+    }
+
+    /// <summary>
+    /// Gets an object with the specified GUID from any item list where it exists.
+    /// </summary>
+    /// <param name="guid">The unique identifier of the object to find</param>
+    /// <param name="itemLists">Collection of item lists to search in</param>
+    /// <returns>Object with the specified GUID if found, null otherwise</returns>
+    public static object GetObjectByGuid(Guid guid, params ITypedItemList[] itemLists)
+    {
+        foreach (var list in itemLists)
+        {
+            var obj = list.GetItemListObjectInterface(guid);
+            if (obj != null)
+                return obj;
+        }
+        return null;
     }
 }

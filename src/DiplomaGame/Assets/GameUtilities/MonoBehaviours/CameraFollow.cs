@@ -20,6 +20,10 @@ namespace GameUtilities.MonoBehaviours
         private Func<Vector3> GetCameraFollowPositionFunc;
         private Func<float> GetCameraZoomFunc;
 
+        public event Action<CameraMoveEventArgs> OnCameraMoved;
+        private Vector3 _lastPosition;
+        private float _moveThreshold = 10f;
+
         public void Setup(Func<Vector3> GetCameraFollowPositionFunc, Func<float> GetCameraZoomFunc, bool teleportToFollowPosition, bool instantZoom) {
             this.GetCameraFollowPositionFunc = GetCameraFollowPositionFunc;
             this.GetCameraZoomFunc = GetCameraZoomFunc;
@@ -57,8 +61,15 @@ namespace GameUtilities.MonoBehaviours
             this.GetCameraZoomFunc = GetCameraZoomFunc;
         }
 
-
+        
         private void Update() {
+            var moveDelta = Vector3.Distance(transform.position, _lastPosition);
+            if (moveDelta > _moveThreshold)
+            {
+                OnCameraMoved?.Invoke(new CameraMoveEventArgs(_lastPosition, transform.position, myCamera));
+                _lastPosition = transform.position;
+            }
+
             HandleMovement();
             HandleZoom();
         }
@@ -106,5 +117,24 @@ namespace GameUtilities.MonoBehaviours
 
         
     }
-  
+    public class CameraMoveEventArgs : EventArgs
+    {
+        public Vector3 OldPosition { get; private set; }
+        public Vector3 NewPosition { get; private set; }
+        public float ViewportWidth { get; private set; }
+        public float ViewportHeight { get; private set; }
+        public Vector3 BottomLeft { get; private set; }
+        public Vector3 TopRight { get; private set; }
+
+        public CameraMoveEventArgs(Vector3 oldPosition, Vector3 newPosition, Camera camera)
+        {
+            OldPosition = oldPosition;
+            NewPosition = newPosition;
+
+            BottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, 0));
+            TopRight = camera.ViewportToWorldPoint(new Vector3(1, 1, 0));
+            ViewportWidth = Mathf.Abs(TopRight.x - BottomLeft.x);
+            ViewportHeight = Mathf.Abs(TopRight.y - BottomLeft.y);
+        }
+    }
 }

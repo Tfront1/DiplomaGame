@@ -19,6 +19,8 @@ public class TilemapData
 
     public int _width, _height;
 
+    private Transform _terrainFolder;
+
     /// <summary>
     /// Initializes the mesh with specified dimensions and positions the GameObject.
     /// </summary>
@@ -149,22 +151,36 @@ public class TilemapData
     }
 
     /// <summary>
-    /// Creates a new GameObject with a mesh and material applied.
+    /// Creates a new GameObject with a mesh and material applied and puts it in the Terrain folder.
     /// </summary>
     /// <param name="mesh">The mesh to assign to the GameObject's MeshFilter component.</param>
     /// <param name="material">The material to assign to the GameObject's MeshRenderer component.</param>
     /// <returns>The newly created `GameObject` with the specified mesh and material.</returns>
     public GameObject CreateGameObjectWithMeshAndMaterial(Mesh mesh, Material material)
     {
-        var gameObject = new GameObject("TerrainMesh");
-
+        var gameObject = new GameObject($"TerrainMesh");
         var meshFilter = gameObject.AddComponent<MeshFilter>();
         meshFilter.mesh = mesh;
-
         var meshRenderer = gameObject.AddComponent<MeshRenderer>();
         meshRenderer.material = material;
 
+        gameObject.transform.SetParent(GetTerrainFolder());
+
         return gameObject;
+    }
+
+    private Transform GetTerrainFolder()
+    {
+        if (_terrainFolder != null) return _terrainFolder;
+
+        var folderGO = GameObject.Find("Terrain");
+        if (folderGO == null)
+        {
+            folderGO = new GameObject("Terrain");
+        }
+
+        _terrainFolder = folderGO.transform;
+        return _terrainFolder;
     }
 
     /// <summary>
