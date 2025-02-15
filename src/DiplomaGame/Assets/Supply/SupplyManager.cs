@@ -55,52 +55,53 @@ namespace Supplies
         /// <summary>
         /// Displays supplies on the map based on provided grid data
         /// </summary>
-        /// <param name="map">2D array with supply IDs</param>
         /// <param name="grid">Target grid for supplies</param>
+        /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
         /// <param name="supplyItemsList">List of supplies items</param>
-        public static void DisplaySupplyMap(int[,] map, MapGrid<SupplyGridObject> grid, ItemList<SupplyItem> supplyItemsList)
+        public static void DisplaySupplyMap(MapGrid<SupplyGridObject> grid, Dictionary<(int, int), int> supplyInts, ItemList<SupplyItem> supplyItemsList)
         {
             InitializeCaches();
-
-            for (var x = 0; x < MapConfig.MapWidth; x++)
+            
+            foreach (var (position, supplyId) in supplyInts)
             {
-                for (var y = 0; y < MapConfig.MapHeight; y++)
+                var x = position.Item1;
+                var y = position.Item2;
+
+                if (supplyId <= 0) continue;
+
+                var gridPosition = new Vector2Int(x, y);
+                var supplyGuid = Guid.NewGuid();
+                var supplyTexture = _supplyTextureConfigCache[supplyId];
+                var supply = _suppliesCache[supplyId];
+
+                GridRegistry.UpsertGrid(grid);
+
+                if (!GridService.CanPlaceAtPosition(
+                        gridPosition,
+                        new Vector2Int(supply.WidthCell, supply.HeightCell),
+                        GridRegistry.GetAllGridsList().ToArray()) ||
+                    !ItemListService.CanPlaceAtPosition(
+                        gridPosition,
+                        new Vector2Int(supply.WidthCell, supply.HeightCell),
+                        ItemListRegistry.GetAllListsItemsList().ToArray()
+                    ))
                 {
-                    if (map[x, y] == -1 || map[x, y] == 0) continue;
-
-                    var supplyId = map[x, y];
-                    var gridPosition = new Vector2Int(x, y);
-                    var supplyGuid = Guid.NewGuid();
-                    var supplyTexture = _supplyTextureConfigCache[supplyId];
-                    var supply = _suppliesCache[supplyId];
-                    GridRegistry.UpsertGrid(grid);
-
-                    if (!GridService.CanPlaceAtPosition(
-                            gridPosition,
-                            new Vector2Int(supply.WidthCell, supply.HeightCell),
-                            GridRegistry.GetAllGridsList().ToArray()) ||
-                        !ItemListService.CanPlaceAtPosition(
-                            gridPosition,
-                            new Vector2Int(supply.WidthCell, supply.HeightCell),
-                            ItemListRegistry.GetAllListsItemsList().ToArray()
-                        ))
-                    {
-                        //TODO: To do...
-                        Debug.Log($"Supply overlaps on object, X: {x}, Y: {y}");
-                        continue;
-                    }
-
-                    var supplyName = _suppliesCache[supplyId].Name;
-                    var texture = _texturesCache[supplyId];
-                    var newResourceObject = CreateSupplyGameObject(supplyName);
-
-                    SetupResourceSprite(newResourceObject, texture, supplyTexture);
-                    PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
-                    AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
-                    SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
-                    SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supply, supplyTexture);
-                    ItemListRegistry.UpsertList(supplyItemsList);
+                    //TODO: To do...
+                    Debug.Log($"Supply overlaps on object, X: {x}, Y: {y}");
+                    continue;
                 }
+
+                var supplyName = _suppliesCache[supplyId].Name;
+                var texture = _texturesCache[supplyId];
+                var newResourceObject = CreateSupplyGameObject(supplyName);
+
+                SetupResourceSprite(newResourceObject, texture, supplyTexture);
+                PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
+                AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
+                SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
+                SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supply, supplyTexture);
+
+                ItemListRegistry.UpsertList(supplyItemsList);
             }
         }
 

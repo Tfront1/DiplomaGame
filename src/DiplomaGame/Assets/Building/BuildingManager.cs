@@ -66,7 +66,7 @@ public class BuildingManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(18000, 18000));
+            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(1000, 1000));
         }
     }
 
@@ -78,7 +78,7 @@ public class BuildingManager : MonoBehaviour
 
     private void HandleBuildingPlacement()
     {
-        var clickPosition = GameUtilities.Utils.UtilsClass.GetMouseWorldPosition();
+        var clickPosition = UtilsClass.GetMouseWorldPosition();
         var gridPosition = _grid.GetCellGridPosition(clickPosition);
 
         if (!GridService.CanPlaceAtPosition(

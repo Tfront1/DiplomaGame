@@ -25,7 +25,7 @@ public class TilemapManager : MonoBehaviour
 
         //Test
         startTime = Time.realtimeSinceStartup;
-        var supplyMap = SupplyGenerator.GenerateSupply(
+        var supplyOut = SupplyGenerator.GenerateSupply(
             MapConfig.MapWidth,
             MapConfig.MapHeight,
             new System.Random().Next(1000000, 10000000),
@@ -46,9 +46,11 @@ public class TilemapManager : MonoBehaviour
         );
 
         var supplyItemList = new ItemList<SupplyItem>();
+        var supplyMap = supplyOut.Item1;
+        var supplyListInt = supplyOut.Item2;
 
         startTime = Time.realtimeSinceStartup;
-        SupplyManager.DisplaySupplyMap(supplyMap, _grid, supplyItemList);
+        SupplyManager.DisplaySupplyMap(_grid, supplyListInt, supplyItemList);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
 

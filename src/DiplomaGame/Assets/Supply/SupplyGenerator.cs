@@ -7,7 +7,7 @@ namespace Supplies
 {
     internal static class SupplyGenerator
     {
-        internal static int[,] GenerateSupply(
+        internal static (int[,], Dictionary<(int, int), int>) GenerateSupply(
             int mapWidth,
             int mapHeight,
             int seed,
@@ -35,9 +35,10 @@ namespace Supplies
                 supplyCache,
                 mapWidth,
                 mapHeight,
-                random);
+                random,
+                out var supplyList);
 
-            return supplyMap;
+            return (supplyMap, supplyList);
         }
 
         private static int[,] InitializeSupplyMap(int width, int height)
@@ -58,9 +59,11 @@ namespace Supplies
             Dictionary<int, Supply> supplyCache,
             int mapWidth,
             int mapHeight,
-            Random random)
+            Random random,
+            out Dictionary<(int, int), int> outSupplyList)
         {
             var maxAttempts = mapWidth * mapHeight;
+            outSupplyList = new Dictionary<(int, int), int>();
 
             for (var i = 0; i < distribution.GetLength(0); i++)
             {
@@ -79,7 +82,8 @@ namespace Supplies
                     mapWidth,
                     mapHeight,
                     maxAttempts,
-                    random);
+                    random,
+                    outSupplyList);
 
                 // Spawn remaining supplies without biome preferences
                 if (remainingCount > 0)
@@ -93,7 +97,8 @@ namespace Supplies
                         mapWidth,
                         mapHeight,
                         maxAttempts,
-                        random);
+                        random,
+                        outSupplyList);
                 }
             }
         }
@@ -108,7 +113,8 @@ namespace Supplies
             int mapWidth,
             int mapHeight,
             int maxAttempts,
-            Random random)
+            Random random,
+            Dictionary<(int, int),int> outSupplyList)
         {
             var attempts = 0;
             var attemptsPerItem = 0;
@@ -122,7 +128,6 @@ namespace Supplies
                 var supplyTexture = supplyTextureCache[biomeSupply.SupplyId];
                 var supply = supplyCache[biomeSupply.SupplyId];
 
-
                 if (biomeSupply != null)
                 {
                     if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supply, supplyTexture))
@@ -130,6 +135,7 @@ namespace Supplies
                         if (ShouldSpawnBasedOnChance(biomeSupply.SpawnChance, attemptsPerItem, random))
                         {
                             supplyMap[position.x, position.y] = supplyId;
+                            outSupplyList.Add((position.x, position.y), supplyId);
                             for (var i = position.x; i < position.x + supply.WidthCell; i++)
                             {
                                 for (var j = position.y; j < position.y + supply.HeightCell; j++)
@@ -163,7 +169,8 @@ namespace Supplies
             int mapWidth,
             int mapHeight,
             int maxAttempts,
-            Random random)
+            Random random,
+            Dictionary<(int, int), int> outSupplyList)
         {
             var attempts = 0;
             while (count > 0 && attempts < maxAttempts)
@@ -176,6 +183,18 @@ namespace Supplies
                 if (CanPlaceSupplyAtPosition(position.x, position.y, supplyMap, supply, supplyTexture))
                 {
                     supplyMap[position.x, position.y] = supplyId;
+                    outSupplyList.Add((position.x, position.y), supplyId);
+
+                    for (var i = position.x; i < position.x + supply.WidthCell; i++)
+                    {
+                        for (var j = position.y; j < position.y + supply.HeightCell; j++)
+                        {
+                            if (i == position.x && j == position.y)
+                                continue;
+
+                            supplyMap[i, j] = 0;
+                        }
+                    }
                     count--;
                 }
 
