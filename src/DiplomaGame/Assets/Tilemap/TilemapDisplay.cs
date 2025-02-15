@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -49,7 +50,7 @@ public class TilemapDisplay
 
     private const int BUFFER_CHUNKS = 1;
 
-    public void DisplayVisibleChunks(int[,] map, Tilemap tilemap, Vector3 bottomLeft, Vector3 topRight)
+    public IEnumerator DisplayVisibleChunksCoroutine(int[,] map, Tilemap tilemap, Vector3 bottomLeft, Vector3 topRight)
     {
         var startChunkX = Mathf.Max(
             Mathf.FloorToInt((bottomLeft.x - MapConfig.MapStartPointX) /
@@ -61,10 +62,8 @@ public class TilemapDisplay
                 (TilemapChunkManager._chunkSize * MapConfig.CellSize)) - BUFFER_CHUNKS,
             0
         );
-
         var maxChunksX = Mathf.CeilToInt(MapConfig.MapWidth / (float)TilemapChunkManager._chunkSize);
         var maxChunksY = Mathf.CeilToInt(MapConfig.MapHeight / (float)TilemapChunkManager._chunkSize);
-
         var endChunkX = Mathf.Min(
             Mathf.CeilToInt((topRight.x - MapConfig.MapStartPointX) /
                 (TilemapChunkManager._chunkSize * MapConfig.CellSize)) + BUFFER_CHUNKS,
@@ -77,34 +76,40 @@ public class TilemapDisplay
         );
 
         var _tilemapChunkManager = TilemapChunkManager.Instance;
-
-        // Кешуємо спрайти один раз для всіх нових чанків
         var spriteCache = _tilemapChunkManager
             .GetTilemapDataAtChunkPoint(new Vector3(startChunkX, startChunkY))
             ._tilemapSprites
             .ToDictionary(sprite => sprite._id, sprite => sprite);
+
+        const int chunksPerFrame = 1;
+        var processedChunks = 0;
 
         for (var chunkX = startChunkX; chunkX <= endChunkX; chunkX++)
         {
             for (var chunkY = startChunkY; chunkY <= endChunkY; chunkY++)
             {
                 var chunkPosition = new Vector3(chunkX, chunkY, 0);
-
-                // Перевіряємо чи чанк вже існує
                 if (!_drawnChunks.ContainsKey(chunkPosition))
                 {
                     DisplayChunk(map, tilemap, spriteCache, chunkX, chunkY);
                     _drawnChunks.Add(chunkPosition, true);
+
+                    processedChunks++;
+                    if (processedChunks >= chunksPerFrame)
+                    {
+                        processedChunks = 0;
+                        yield return null;
+                    }
                 }
             }
         }
     }
 
-    public void DisplayVisibleChunks(int[,] map, Tilemap tilemap, Camera camera)
+    public IEnumerator DisplayVisibleChunksCoroutine(int[,] map, Tilemap tilemap, Camera camera)
     {
         var bottomLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, 0));
         var topRight = camera.ViewportToWorldPoint(new Vector3(1, 1, 0));
-        DisplayVisibleChunks(map, tilemap, bottomLeft, topRight);
+        yield return CoroutineRunner.Instance.StartCoroutine(DisplayVisibleChunksCoroutine(map, tilemap, bottomLeft, topRight));
     }
 
     private void DisplayChunk(int[,] map, Tilemap tilemap, Dictionary<int, TilemapSprite> spriteCache,

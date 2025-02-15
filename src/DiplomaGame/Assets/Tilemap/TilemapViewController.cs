@@ -13,7 +13,7 @@ public class TilemapViewController
         _map = map;
         _tilemap = tilemap;
         CameraManager.SubscribeToCameraMove(OnCameraMoved);
-        _tilemapDisplay.DisplayVisibleChunks(_map, _tilemap, Camera.main);
+        CoroutineRunner.Instance.StartCoroutine(_tilemapDisplay.DisplayVisibleChunksCoroutine(_map, _tilemap, Camera.main));
     }
     
     public void Stop()
@@ -23,11 +23,11 @@ public class TilemapViewController
 
     private void OnCameraMoved(CameraMoveEventArgs args)
     {
-        _tilemapDisplay.DisplayVisibleChunks(
+        CoroutineRunner.Instance.StartCoroutine(_tilemapDisplay.DisplayVisibleChunksCoroutine(
             _map,
             _tilemap,
             args.BottomLeft,
             args.TopRight
-        );
+        ));
     }
 }
