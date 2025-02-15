@@ -10,18 +10,21 @@ namespace Unit.PathFinder
     public static class PathFinder
     {
         private static readonly Vector2[] Directions = {
-        new(0, 1),
-        new(1, 0),
-        new(0, -1),
-        new(-1, 0),
-        new(1, 1),
-        new(-1, 1),
-        new(1, -1),
-        new(-1, -1)
+            new(0, 1),
+            new(1, 0),
+            new(0, -1),
+            new(-1, 0),
+            new(1, 1),
+            new(-1, 1),
+            new(1, -1),
+            new(-1, -1)
         };
 
         public static async Task<List<Vector2>> FindPathAsync(Vector2 worldStart, Vector2 worldEnd)
         {
+            var MAX_ITERATIONS = MapConfig.MapWidth * 2;
+            var iterations = 0;
+
             return await Task.Run(() =>
             {
                 var gridStart = new Vector2(
@@ -52,12 +55,13 @@ namespace Unit.PathFinder
                 var openSet = new List<Node> { startNode };
                 var closedSet = new HashSet<Vector2>();
                 var nodeGrid = new Dictionary<Vector2, Node>();
-
+                
                 startNode.GCost = 0;
                 startNode.HCost = CalculateHCost(startNode.GridPosition, endNode.GridPosition);
 
-                while (openSet.Count > 0)
+                while (openSet.Count > 0 && iterations < MAX_ITERATIONS)
                 {
+                    iterations++;
                     var currentNode = openSet.OrderBy(n => n.FCost).ThenBy(n => n.HCost).First();
 
                     if (currentNode.GridPosition == endNode.GridPosition)
@@ -66,7 +70,7 @@ namespace Unit.PathFinder
 
                         return path;
                     }
-
+                    
                     openSet.Remove(currentNode);
                     closedSet.Add(currentNode.GridPosition);
 
