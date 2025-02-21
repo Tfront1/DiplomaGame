@@ -1,8 +1,6 @@
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using GameUtilities.Utils;
-using Unit.PathFinder;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -64,16 +62,29 @@ public class BuildingManager : MonoBehaviour
         {
             HandleBuildingPlacement();
         }
+
+
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(1000, 1000));
+            FindAndDrawPath(_start, _end);
+        }
+        else if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _start = UtilsClass.GetMouseWorldPosition();
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            _end = UtilsClass.GetMouseWorldPosition();
         }
     }
 
-    private async Task FindAndDrawPathAsync(Vector2 start, Vector2 end)
+    public static Vector2 _start, _end;
+
+
+    private void FindAndDrawPath(Vector2 start, Vector2 end)
     {
-        var path = await PathFinder.FindPathAsync(start, end);
-        UtilsClass.DrawPath(path, Color.black, 2);
+        var path = PathFinder.Instance.FindPath(start, end);
+        UtilsClass.DrawPath(path, Color.black, 1);
     }
 
     private void HandleBuildingPlacement()
@@ -91,11 +102,11 @@ public class BuildingManager : MonoBehaviour
                 ItemListRegistry.GetAllListsItemsList().ToArray()
             ))
         {
-            GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
+            UtilsClass.CreateWorldTextPopup(
                 "Cannot build here!",
                 clickPosition,
                 Color.red,
-                1f
+                1.5f
             );
             return;
         }
@@ -196,7 +207,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingId">Building's unique ID</param>
     /// <param name="grid">Target grid</param>
     /// <param name="building">Building to place</param>
-    private void PlaceBuildingInGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
+    private void PlaceBuildingInGrid(Vector2Int gridPosition, Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
     {
         for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
         {
@@ -289,14 +300,28 @@ public class BuildingManager : MonoBehaviour
         var collider = buildingObject.AddComponent<BoxCollider2D>();
         var (finalScale, _) = CalculateBuildingScale(building, spriteTexture);
 
-        var colliderWidth = MapConfig.CellSize * building.WidthCell;
-        var colliderHeight = MapConfig.CellSize * building.HeightCell;
+        float colliderWidth, colliderHeight;
+
+        if (building.Margin)
+        {
+            var margin = MapConfig.CellSize * _defaultOffset;
+            colliderWidth = MapConfig.CellSize * building.WidthCell - (margin * 2);
+            colliderHeight = MapConfig.CellSize * building.HeightCell - (margin * 2);
+        }
+        else
+        {
+            colliderWidth = MapConfig.CellSize * building.WidthCell;
+            colliderHeight = MapConfig.CellSize * building.HeightCell;
+        }
+
         collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
         var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
         var buildingPosition = buildingObject.transform.position;
         var colliderOffset = CalculateColliderOffset(buildingPosition, colliderPosition, finalScale, building);
         collider.offset = colliderOffset;
+
+        buildingObject.layer = LayerMask.NameToLayer("Objects");
     }
 
     /// <summary>

@@ -274,14 +274,18 @@ namespace Supplies
             var collider = supplyObject.AddComponent<BoxCollider2D>();
             var (finalScale, _) = CalculateSupplyScale(texture, supplyTexture);
 
-            var colliderWidth = MapConfig.CellSize * supply.WidthCell;
-            var colliderHeight = MapConfig.CellSize * supply.HeightCell;
+            var margin = MapConfig.CellSize * _defaultOffset;
+            var colliderWidth = MapConfig.CellSize * supply.WidthCell - (margin * 2);
+            var colliderHeight = MapConfig.CellSize * supply.HeightCell - (margin * 2);
+
             collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
             var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
             var supplyPosition = supplyObject.transform.position;
             var colliderOffset = CalculateColliderOffset(supplyPosition, colliderPosition, finalScale, supply);
             collider.offset = colliderOffset;
+
+            supplyObject.layer = LayerMask.NameToLayer("Objects");
         }
 
         /// <summary>
