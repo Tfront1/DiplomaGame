@@ -15,6 +15,8 @@ public class TilemapTexturesManager
     private Dictionary<int, UVCoords> _uvCoordsDictionary = new();
     private List<TilemapSprite> _tilemapSprites;
 
+    private int _padding = 2;
+
     public static TilemapTexturesManager Instance
     {
         get
@@ -104,21 +106,25 @@ public class TilemapTexturesManager
     /// </remarks>
     private Texture2D CreateCombinedTexture(List<Texture2D> textures, int textureSize)
     {
-        var combinedWidth = textures.Count * textureSize;
+        var combinedWidth = textures.Count * textureSize + (textures.Count - 1) * _padding;
         var combinedTexture = new Texture2D(combinedWidth, textureSize);
+
+        var clearPixels = new Color[combinedWidth * textureSize];
+        for (var i = 0; i < clearPixels.Length; i++)
+            clearPixels[i] = Color.clear;
+        combinedTexture.SetPixels(0, 0, combinedWidth, textureSize, clearPixels);
 
         for (var i = 0; i < textures.Count; i++)
         {
-            var x = i * textureSize;
-            var y = 0;
+            var x = i * (textureSize + _padding);
             var texture = textures[i];
-
             var pixels = texture.GetPixels();
-            combinedTexture.SetPixels(x, y, textureSize, textureSize, pixels);
+            combinedTexture.SetPixels(x, 0, textureSize, textureSize, pixels);
         }
 
+        combinedTexture.filterMode = FilterMode.Point;
+        combinedTexture.wrapMode = TextureWrapMode.Clamp;
         combinedTexture.Apply();
-
         return combinedTexture;
     }
 
@@ -131,28 +137,27 @@ public class TilemapTexturesManager
     /// from the positions of each texture in the combined texture. It maps each texture ID to its UV coordinates for 
     /// accurate texture mapping.
     /// </remarks>
-
     private void InitializeUVCoordsDictionary(Texture2D combinedTexture)
     {
         _uvCoordsDictionary.Clear();
         var terrainTextures = TerrainTexturesConfig.TerrainTextures;
+        var resolution = terrainTextures[0].TextureResolution;
 
-        foreach (var sprite in terrainTextures)
+        for (var i = 0; i < terrainTextures.Count; i++)
         {
+            var sprite = terrainTextures[i];
             var id = sprite.Id;
-            var resolution = sprite.TextureResolution;
 
-            var x = id * resolution;
-            var uv00 = new Vector2(x / (float)combinedTexture.width, 0);
-            var uv11 = new Vector2((x + resolution) / (float)combinedTexture.width, 1);
+            var x = i * (resolution + _padding);
 
+            var uv00 = new Vector2((x + 0.5f) / (float)combinedTexture.width, 0.5f / resolution);
+            var uv11 = new Vector2((x + resolution - 0.5f) / (float)combinedTexture.width, 1 - 0.5f / resolution);
 
             _uvCoordsDictionary[id] = new UVCoords
             {
                 uv00 = uv00,
                 uv11 = uv11
             };
-
         }
     }
 
