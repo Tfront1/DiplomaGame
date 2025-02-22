@@ -55,11 +55,18 @@ namespace Supplies
         /// <summary>
         /// Displays supplies on the map based on provided grid data
         /// </summary>
-        /// <param name="grid">Target grid for supplies</param>
         /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
         /// <param name="supplyItemsList">List of supplies items</param>
-        public static void DisplaySupplyMap(MapGrid<SupplyGridObject> grid, Dictionary<(int, int), int> supplyInts, ItemList<SupplyItem> supplyItemsList)
+        public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts, ItemList<SupplyItem> supplyItemsList)
         {
+            var grid = new MapGrid<SupplyGridObject>(
+                MapConfig.MapWidth,
+                MapConfig.MapHeight,
+                MapConfig.CellSize,
+                new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+                (g, x, y) => new SupplyGridObject(g, x, y)
+            );
+
             InitializeCaches();
             
             foreach (var (position, supplyId) in supplyInts)
@@ -96,10 +103,10 @@ namespace Supplies
                 var newResourceObject = CreateSupplyGameObject(supplyName);
 
                 SetupResourceSprite(newResourceObject, texture, supplyTexture);
-                PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
                 AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
-                SetSupplyPosition(newResourceObject, gridPosition, texture, grid, supplyTexture);
-                SetupSupplyCollider(newResourceObject, gridPosition, texture, grid, supply, supplyTexture);
+                PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
+                SetSupplyPosition(newResourceObject, gridPosition, texture, supplyTexture);
+                SetupSupplyCollider(newResourceObject, gridPosition, texture, supply, supplyTexture);
 
                 ItemListRegistry.UpsertList(supplyItemsList);
             }
@@ -216,11 +223,10 @@ namespace Supplies
         /// <param name="supplyObject">Supply to position</param>
         /// <param name="gridPosition">Grid position</param>
         /// <param name="texture">Supply texture</param>
-        /// <param name="grid">Target grid</param>
         /// <param name="supplyTexture">Supply texture config</param>
-        private static void SetSupplyPosition(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, SupplyTexture supplyTexture)
+        private static void SetSupplyPosition(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, SupplyTexture supplyTexture)
         {
-            var worldPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+            var worldPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
             var (_, objectSize) = CalculateSupplyScale(texture, supplyTexture);
 
             var offset = CalculateOffset(objectSize, supplyTexture);
@@ -266,10 +272,9 @@ namespace Supplies
         /// <param name="supplyObject">Target supply</param>
         /// <param name="gridPosition">Grid position</param>
         /// <param name="texture">Supply texture</param>
-        /// <param name="grid">Target grid</param>
         /// <param name="supply">Supply config</param>
         /// <param name="supplyTexture">Supply texture config</param>
-        private static void SetupSupplyCollider(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, MapGrid<SupplyGridObject> grid, Supply supply, SupplyTexture supplyTexture)
+        private static void SetupSupplyCollider(GameObject supplyObject, Vector2Int gridPosition, Texture2D texture, Supply supply, SupplyTexture supplyTexture)
         {
             var collider = supplyObject.AddComponent<BoxCollider2D>();
             var (finalScale, _) = CalculateSupplyScale(texture, supplyTexture);
@@ -280,7 +285,7 @@ namespace Supplies
 
             collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
-            var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+            var colliderPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
             var supplyPosition = supplyObject.transform.position;
             var colliderOffset = CalculateColliderOffset(supplyPosition, colliderPosition, finalScale, supply);
             collider.offset = colliderOffset;

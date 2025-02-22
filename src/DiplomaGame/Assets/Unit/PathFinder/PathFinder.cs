@@ -232,7 +232,9 @@ public class PathFinder
             }
         }
 
-        return neighbors.ToList();
+        var validNeighbors = neighbors.Where(GridService.IsWorldPositionInMapBounds).ToList();
+
+        return validNeighbors.ToList();
     }
 
     private class NodeWithPriority

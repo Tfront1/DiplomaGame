@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using GameUtilities.Utils;
+using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -9,9 +10,9 @@ public class BuildingManager : MonoBehaviour
 {
 	[SerializeField]
     public Texture2D texture;
-    
-	private MapGrid<BuildingGridObject> _grid;
-	private Building selectedBuilding; // The building selected from the configuration
+
+    private MapGrid<BuildingGridObject> _grid;
+    private Building selectedBuilding; // The building selected from the configuration
 
     /// <summary>
     /// How much percent would be minimum offset
@@ -32,13 +33,13 @@ public class BuildingManager : MonoBehaviour
 
     private void Awake()
 	{
-		_grid = new MapGrid<BuildingGridObject>(
-			MapConfig.MapWidth,
-			MapConfig.MapHeight,
-			MapConfig.CellSize,
-			new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-			(g, x, y) => new BuildingGridObject(g, x, y)
-		);
+        _grid = new MapGrid<BuildingGridObject>(
+            MapConfig.MapWidth,
+            MapConfig.MapHeight,
+            MapConfig.CellSize,
+            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+            (g, x, y) => new BuildingGridObject(g, x, y)
+        );
 
         // Example: Select the first building from the configuration list (you can change this logic)
         selectedBuilding = BuildingsConfig.Buildings.First();
@@ -84,17 +85,27 @@ public class BuildingManager : MonoBehaviour
     private void FindAndDrawPath(Vector2 start, Vector2 end)
     {
         var path = PathFinder.Instance.FindPath(start, end);
+        if (path == null || path.Count() == 0)
+        {
+            UtilsClass.CreateWorldTextPopup(
+                "No path found!",
+                UtilsClass.GetMouseWorldPosition(),
+                Color.red,
+                1.5f
+            );
+        }
         UtilsClass.DrawPath(path, Color.black, 1);
     }
 
     private void HandleBuildingPlacement()
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
-        var gridPosition = _grid.GetCellGridPosition(clickPosition);
+        var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
         if (!GridService.CanPlaceAtPosition(
                 gridPosition,
-                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                new Vector2Int(selectedBuilding.WidthCell,
+                    selectedBuilding.HeightCell),
                 GridRegistry.GetAllGridsList().ToArray()) ||
             !ItemListService.CanPlaceAtPosition(
                 gridPosition,
@@ -115,10 +126,10 @@ public class BuildingManager : MonoBehaviour
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInGrid(gridPosition, buildingGuid,_grid, selectedBuilding);
+        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
         AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
-        SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
+        SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture);
         GridRegistry.UpsertGrid(_grid);
         ItemListRegistry.UpsertList(_buildingItemList);
     }
@@ -235,7 +246,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="spriteTexture">Building's texture</param>
     private void SetBuildingPosition(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
     {
-        var worldPosition = _grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+        var worldPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
         var (_, objectSize) = CalculateBuildingScale(building, spriteTexture);
 
         var offset = CalculateOffset(objectSize, building);
@@ -295,7 +306,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="building">Building data</param>
     /// <param name="spriteTexture">Building's texture</param>
     /// <param name="grid">Target grid</param>
-    private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture, MapGrid<BuildingGridObject> grid)
+    private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
     {
         var collider = buildingObject.AddComponent<BoxCollider2D>();
         var (finalScale, _) = CalculateBuildingScale(building, spriteTexture);
@@ -316,7 +327,7 @@ public class BuildingManager : MonoBehaviour
 
         collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
-        var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+        var colliderPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
         var buildingPosition = buildingObject.transform.position;
         var colliderOffset = CalculateColliderOffset(buildingPosition, colliderPosition, finalScale, building);
         collider.offset = colliderOffset;

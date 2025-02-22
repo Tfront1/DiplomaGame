@@ -14,7 +14,6 @@ public class TilemapManager : MonoBehaviour
         _tilemap = new Tilemap(MapConfig.MapWidth, MapConfig.MapHeight, MapConfig.CellSize, new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
         _tilemap.SetTilemapVisual(_tilemapVisual);
 
-
         float startTime, endTime;
 
         // Start BiomeMap generation timing
@@ -36,21 +35,12 @@ public class TilemapManager : MonoBehaviour
             _map);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"SupplyMap generation time: {(endTime - startTime) * 1000:F2}ms");
-
-        var _grid = new MapGrid<SupplyGridObject>(
-            MapConfig.MapWidth,
-            MapConfig.MapHeight,
-            MapConfig.CellSize,
-            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-            (g, x, y) => new SupplyGridObject(g, x, y)
-        );
-
+        
         var supplyItemList = new ItemList<SupplyItem>();
-        var supplyMap = supplyOut.Item1;
         var supplyListInt = supplyOut.Item2;
 
         startTime = Time.realtimeSinceStartup;
-        SupplyManager.DisplaySupplyMap(_grid, supplyListInt, supplyItemList);
+        SupplyManager.DisplaySupplyMap(supplyListInt, supplyItemList);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
 
