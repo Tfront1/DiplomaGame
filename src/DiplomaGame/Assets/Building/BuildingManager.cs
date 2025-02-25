@@ -217,7 +217,7 @@ public class BuildingManager : MonoBehaviour
     private (float finalScale, Vector2 objectSize) CalculateBuildingScale(Building building, Texture2D spriteTexture)
     {
         var margin = 0.0f;
-        if (building.Margin)
+        if (building.HasMargin)
         {
             margin = MapConfig.CellSize * _defaultOffset;
         }
@@ -292,7 +292,7 @@ public class BuildingManager : MonoBehaviour
     private Vector2 CalculateOffset(Vector2 objectSize, Building building)
     {
         var margin = 0.0f;
-        if (building.Margin)
+        if (building.HasMargin)
         {
             margin = MapConfig.CellSize * _defaultOffset;
         }
@@ -339,7 +339,7 @@ public class BuildingManager : MonoBehaviour
 
         float colliderWidth, colliderHeight;
 
-        if (building.Margin)
+        if (building.HasMargin)
         {
             var margin = MapConfig.CellSize * _defaultOffset;
             colliderWidth = MapConfig.CellSize * building.WidthCell - (margin * 2);
