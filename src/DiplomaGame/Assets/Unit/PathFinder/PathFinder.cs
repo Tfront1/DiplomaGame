@@ -1,221 +1,290 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using GameUtilities.Utils;
 using UnityEngine;
 
-namespace Unit.PathFinder
+public class PathFinder
 {
-    public static class PathFinder
+    private static PathFinder _instance;
+    private static readonly object _lock = new();
+    private static LayerMask _obstacleMask;
+    private static float _avoidanceOffset;
+
+    public static PathFinder Instance
     {
-        private static readonly Vector2[] Directions = {
-            new(0, 1),
-            new(1, 0),
-            new(0, -1),
-            new(-1, 0),
-            new(1, 1),
-            new(-1, 1),
-            new(1, -1),
-            new(-1, -1)
-        };
-
-        public static async Task<List<Vector2>> FindPathAsync(Vector2 worldStart, Vector2 worldEnd)
+        get
         {
-            var MAX_ITERATIONS = MapConfig.MapWidth * 2;
-            var iterations = 0;
-
-            return await Task.Run(() =>
+            lock (_lock)
             {
-                var gridStart = new Vector2(
-                    (float)Math.Floor((worldStart.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
-                    (float)Math.Floor((worldStart.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
-                );
-
-                var originalGridEnd = new Vector2(
-                    (float)Math.Floor((worldEnd.x - MapConfig.MapStartPointX) / MapConfig.CellSize),
-                    (float)Math.Floor((worldEnd.y - MapConfig.MapStartPointY) / MapConfig.CellSize)
-                );
-
-                var (isEndObstacle, _) = CheckObstacle((int)originalGridEnd.x, (int)originalGridEnd.y);
-                var gridEnd = originalGridEnd;
-
-                if (isEndObstacle)
+                if (_instance == null)
                 {
-                    var nearestPoint = FindNearestAccessiblePoint(originalGridEnd);
-                    if (nearestPoint == null)
-                    {
-                        return new List<Vector2>();
-                    }
-                    gridEnd = nearestPoint.Value;
+                    _instance = new PathFinder();
                 }
-
-                var startNode = new Node(gridStart, true, false);
-                var endNode = new Node(gridEnd, true, false);
-                var openSet = new List<Node> { startNode };
-                var closedSet = new HashSet<Vector2>();
-                var nodeGrid = new Dictionary<Vector2, Node>();
-                
-                startNode.GCost = 0;
-                startNode.HCost = CalculateHCost(startNode.GridPosition, endNode.GridPosition);
-
-                while (openSet.Count > 0 && iterations < MAX_ITERATIONS)
-                {
-                    iterations++;
-                    var currentNode = openSet.OrderBy(n => n.FCost).ThenBy(n => n.HCost).First();
-
-                    if (currentNode.GridPosition == endNode.GridPosition)
-                    {
-                        var path = RetracePath(startNode, currentNode);
-
-                        return path;
-                    }
-                    
-                    openSet.Remove(currentNode);
-                    closedSet.Add(currentNode.GridPosition);
-
-                    foreach (var direction in Directions)
-                    {
-                        var neighborPos = currentNode.GridPosition + direction;
-                        if (closedSet.Contains(neighborPos))
-                            continue;
-
-                        var (isObstacle, hasMargin) = CheckObstacle((int)neighborPos.x, (int)neighborPos.y);
-                        if (isObstacle)
-                            continue;
-
-                        if (direction.x != 0 && direction.y != 0)
-                        {
-                            var (horizontalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x + (int)direction.x, (int)currentNode.GridPosition.y);
-                            var (verticalObstacle, _) = CheckObstacle((int)currentNode.GridPosition.x, (int)currentNode.GridPosition.y + (int)direction.y);
-                            if (horizontalObstacle || verticalObstacle)
-                                continue;
-                        }
-
-                        if (hasMargin)
-                        {
-                            var hasAdjacentMargin = false;
-                            for (var dx = -1; dx <= 1 && !hasAdjacentMargin; dx++)
-                            {
-                                for (var dy = -1; dy <= 1 && !hasAdjacentMargin; dy++)
-                                {
-                                    if (dx == 0 && dy == 0) continue;
-                                    var (_, adjMargin) = CheckObstacle((int)neighborPos.x + dx, (int)neighborPos.y + dy);
-                                    if (adjMargin)
-                                    {
-                                        hasAdjacentMargin = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (hasAdjacentMargin)
-                                continue;
-                        }
-
-                        if (!nodeGrid.TryGetValue(neighborPos, out var neighbor))
-                        {
-                            neighbor = new Node(neighborPos, !isObstacle, hasMargin);
-                            nodeGrid[neighborPos] = neighbor;
-                        }
-
-                        var newGCost = currentNode.GCost + UtilsClass.CalculateDistance(currentNode.GridPosition, neighborPos);
-                        if (newGCost < neighbor.GCost)
-                        {
-                            neighbor.Parent = currentNode;
-                            neighbor.GCost = newGCost;
-                            neighbor.HCost = CalculateHCost(neighbor.GridPosition, endNode.GridPosition);
-                            if (!openSet.Contains(neighbor))
-                            {
-                                openSet.Add(neighbor);
-                            }
-                        }
-                    }
-                }
-                return new List<Vector2>();
-            });
-        }
-
-        private static float CalculateHCost(Vector2 start, Vector2 end)
-        {
-            return Math.Abs(start.x - end.x) + Math.Abs(start.y - end.y);
-        }
-
-        private static List<Vector2> RetracePath(Node startNode, Node endNode)
-        {
-            var path = new List<Vector2>();
-            var currentNode = endNode;
-
-            while (currentNode != startNode)
-            {
-                path.Add(new Vector2(
-                    currentNode.GridPosition.x * MapConfig.CellSize + MapConfig.CellSize / 2,
-                    currentNode.GridPosition.y * MapConfig.CellSize + MapConfig.CellSize / 2
-                ));
-                currentNode = currentNode.Parent;
+                return _instance;
             }
+        }
+    }
 
-            path.Add(new Vector2(
-                startNode.GridPosition.x * MapConfig.CellSize + MapConfig.CellSize / 2,
-                startNode.GridPosition.y * MapConfig.CellSize + MapConfig.CellSize / 2
-            ));
+    private PathFinder()
+    {
+        _avoidanceOffset = 0.1f;
+        _obstacleMask = LayerMask.GetMask("Objects");
+    }
 
-            path.Reverse();
+
+    /// <param name="controlPoints">List of path points</param>
+    /// <param name="currentPoint">Current point, where is unit</param>
+    /// <param name="endPoint">End point of path</param>
+    /// <returns></returns>
+    public List<Vector2> RefindPath(List<Vector2> controlPoints, Vector2 currentPoint, Vector2 endPoint)
+    {
+        if (controlPoints == null || controlPoints.Count < 2)
+        {
+            return FindPath(currentPoint, endPoint);
+        }
+
+        var hasObstacles = false;
+
+        for (var i = 0; i < controlPoints.Count - 1; i++)
+        {
+            var current = controlPoints[i];
+            var next = controlPoints[i + 1];
+            
+            var direction = next - current;
+            var distance = direction.magnitude;
+
+            var hit = Physics2D.Raycast(current, direction.normalized, distance, _obstacleMask);
+
+            if (hit.collider != null)
+            {
+                hasObstacles = true;
+                break;
+            }
+        }
+
+        if (!hasObstacles)
+        {
+            return controlPoints;
+        }
+
+        return FindPath(currentPoint, endPoint);
+    }
+
+
+    public List<Vector2> FindPath(Vector2 start, Vector2 end)
+    {
+        if (Physics2D.OverlapPoint(start, _obstacleMask))
+        {
+            Debug.LogWarning("Start point inside of a collision");
+            return null;
+        }
+
+        if (Physics2D.OverlapPoint(end, _obstacleMask))
+        {
+            Debug.LogWarning("End point inside of a collision.");
+            return null;
+        }
+
+        var path = new List<Vector2> { start };
+
+        if (!Physics2D.Raycast(start, end - start, Vector2.Distance(start, end), _obstacleMask))
+        {
+            path.Add(end);
             return path;
         }
 
-        private static (bool isObstacle, bool hasMargin) CheckObstacle(int gridX, int gridY)
+        var visited = new HashSet<Vector2>();
+        var cameFrom = new Dictionary<Vector2, Vector2>();
+
+        var openSet = new List<NodeWithPriority>();
+        var openSetContents = new HashSet<Vector2>();
+
+        openSet.Add(new NodeWithPriority(start, 0, Vector2.Distance(start, end)));
+        openSetContents.Add(start);
+
+        var gScore = new Dictionary<Vector2, float>
         {
-            if (gridX < 0 || gridX >= MapConfig.MapWidth || gridY < 0 || gridY >= MapConfig.MapHeight)
-                return (true, false);
-            if (!GridService.IsEmptyPosition(gridX, gridY, GridRegistry.GetAllGridsList().ToArray()))
+            { start, 0 }
+        };
+
+        var fScore = new Dictionary<Vector2, float>
+        {
+            { start, Vector2.Distance(start, end) }
+        };
+
+        while (openSet.Count > 0)
+        {
+            if (openSet.Count > 10000)
+                return null;
+
+            var current = openSet[0].Position;
+            openSet.RemoveAt(0);
+            openSetContents.Remove(current);
+
+            if (!Physics2D.Raycast(current, end - current, Vector2.Distance(current, end), _obstacleMask))
             {
-                var obj = GridService.GetObjectAtPosition(gridX, gridY, GridRegistry.GetAllGridsList().ToArray());
-                if (obj is BuildingGridObject buildingGrid)
+                var finalPath = ReconstructPath(cameFrom, current);
+                finalPath.Add(end);
+                return finalPath;
+            }
+
+            visited.Add(current);
+
+            var neighbors = FindNeighborsAlongEdges(current, end, visited);
+
+            foreach (var neighbor in neighbors)
+            {
+                if (visited.Contains(neighbor))
+                    continue;
+
+                if (Physics2D.Raycast(current, neighbor - current, Vector2.Distance(current, neighbor), _obstacleMask))
                 {
-                    var objBuilding = ItemListService.GetObjectByGuid(buildingGrid.Guid, ItemListRegistry.GetAllListsItemsList().ToArray());
-                    if (objBuilding is Building building)
-                    {
-                        return (true, building.Margin);
-                    }
-                    return (true, false);
+                    continue;
                 }
-                if (obj is SupplyGridObject)
+
+                var tentativeGScore = gScore[current] + Vector2.Distance(current, neighbor);
+
+                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
                 {
-                    return (true, true);
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + Vector2.Distance(neighbor, end);
+
+                    if (!openSetContents.Contains(neighbor))
+                    {
+                        InsertOrdered(openSet, new NodeWithPriority(neighbor, gScore[neighbor], fScore[neighbor]));
+                        openSetContents.Add(neighbor);
+                    }
                 }
             }
-            return (false, false);
         }
 
-        private static Vector2? FindNearestAccessiblePoint(Vector2 targetPos)
+        return null;
+    }
+    private static void InsertOrdered(List<NodeWithPriority> list, NodeWithPriority node)
+    {
+        var i = 0;
+        while (i < list.Count && list[i].FScore < node.FScore)
         {
-            var minDistance = float.MaxValue;
-            Vector2? nearestPoint = null;
+            i++;
+        }
+        list.Insert(i, node);
+    }
 
-            for (var dx = 0; dx <= MapConfig.MapWidth; dx++)
+    private static List<Vector2> ReconstructPath(Dictionary<Vector2, Vector2> cameFrom, Vector2 current)
+    {
+        var totalPath = new List<Vector2> { current };
+        while (cameFrom.ContainsKey(current))
+        {
+            current = cameFrom[current];
+            totalPath.Insert(0, current);
+        }
+        return totalPath;
+    }
+
+    private static List<Vector2> FindNeighborsAlongEdges(Vector2 current, Vector2 goal, HashSet<Vector2> visited)
+    {
+        var neighbors = new HashSet<Vector2>();
+
+        var hitToGoal = Physics2D.Raycast(current, goal - current, Vector2.Distance(current, goal), _obstacleMask);
+
+        if (hitToGoal)
+        {
+            var obstacle = hitToGoal.collider;
+
+            var exploredColliders = new HashSet<Collider2D> { obstacle };
+
+            var collidersToExplore = new Queue<Collider2D>();
+            collidersToExplore.Enqueue(obstacle);
+
+            while (collidersToExplore.Count > 0)
             {
-                for (var dy = 0; dy <= MapConfig.MapHeight; dy++)
+                var currentObstacle = collidersToExplore.Dequeue();
+                var currentBounds = currentObstacle.bounds;
+
+                var edgePoints = new List<Vector2>
+            {
+                new(currentBounds.min.x - _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                new(currentBounds.max.x + _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                new(currentBounds.min.x - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset),
+                new(currentBounds.max.x + _avoidanceOffset, currentBounds.max.y + _avoidanceOffset)
+            };
+
+                var numPointsPerEdge = 3;
+
+                // Bottom edge
+                for (var i = 1; i < numPointsPerEdge; i++)
                 {
-                    var checkPos = new Vector2(targetPos.x + dx, targetPos.y + dy);
+                    var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(x, currentBounds.min.y - _avoidanceOffset));
+                }
 
-                    if (checkPos.x < 0 || checkPos.x >= MapConfig.MapWidth ||
-                        checkPos.y < 0 || checkPos.y >= MapConfig.MapHeight)
-                        continue;
+                // Top edge
+                for (var i = 1; i < numPointsPerEdge; i++)
+                {
+                    var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(x, currentBounds.max.y + _avoidanceOffset));
+                }
 
-                    var (isObstacle, _) = CheckObstacle((int)checkPos.x, (int)checkPos.y);
-                    if (!isObstacle)
+                // Left edge
+                for (var i = 1; i < numPointsPerEdge; i++)
+                {
+                    var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(currentBounds.min.x - _avoidanceOffset, y));
+                }
+
+                // Right edge
+                for (var i = 1; i < numPointsPerEdge; i++)
+                {
+                    var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(currentBounds.max.x + _avoidanceOffset, y));
+                }
+
+                foreach (var point in edgePoints)
+                {
+                    var nearbyColliders = Physics2D.OverlapCircleAll(point, _avoidanceOffset, _obstacleMask);
+
+                    var shouldAddPoint = true;
+
+                    foreach (var collider in nearbyColliders)
                     {
-                        var distance = Vector2.Distance(targetPos, checkPos);
-                        if (distance < minDistance)
+                        if (collider == currentObstacle)
+                            continue;
+
+                        if (!exploredColliders.Contains(collider))
                         {
-                            minDistance = distance;
-                            nearestPoint = checkPos;
+                            exploredColliders.Add(collider);
+                            collidersToExplore.Enqueue(collider);
                         }
+
+                        shouldAddPoint = false;
+                        break;
+                    }
+
+                    if (shouldAddPoint && !visited.Contains(point) &&
+                        !Physics2D.Raycast(current, point - current, Vector2.Distance(current, point), _obstacleMask))
+                    {
+                        neighbors.Add(point);
                     }
                 }
             }
+        }
 
-            return nearestPoint;
+        var validNeighbors = neighbors.Where(GridService.IsWorldPositionInMapBounds).ToList();
+
+        return validNeighbors.ToList();
+    }
+
+    private class NodeWithPriority
+    {
+        public Vector2 Position;
+        public float GScore;
+        public float FScore;
+
+        public NodeWithPriority(Vector2 position, float gScore, float fScore)
+        {
+            Position = position;
+            GScore = gScore;
+            FScore = fScore;
         }
     }
 }

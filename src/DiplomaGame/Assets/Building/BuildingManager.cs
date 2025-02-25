@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using GameUtilities.Utils;
-using Unit.PathFinder;
+using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -11,9 +11,9 @@ public class BuildingManager : MonoBehaviour
 {
 	[SerializeField]
     public Texture2D texture;
-    
-	private MapGrid<BuildingGridObject> _grid;
-	private Building selectedBuilding; // The building selected from the configuration
+
+    private MapGrid<BuildingGridObject> _grid;
+    private Building selectedBuilding; // The building selected from the configuration
 
     /// <summary>
     /// How much percent would be minimum offset
@@ -34,17 +34,40 @@ public class BuildingManager : MonoBehaviour
 
     private void Awake()
 	{
-		_grid = new MapGrid<BuildingGridObject>(
-			MapConfig.MapWidth,
-			MapConfig.MapHeight,
-			MapConfig.CellSize,
-			new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-			(g, x, y) => new BuildingGridObject(g, x, y)
-		);
+        _grid = new MapGrid<BuildingGridObject>(
+            MapConfig.MapWidth,
+            MapConfig.MapHeight,
+            MapConfig.CellSize,
+            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+            (g, x, y) => new BuildingGridObject(g, x, y)
+        );
 
         // Example: Select the first building from the configuration list (you can change this logic)
         selectedBuilding = BuildingsConfig.Buildings.First();
-	}
+
+        ItemListRegistry.ItemListChanged += (type, action, list) => {
+            Debug.Log($"List of type {type.Name} was {action}");
+        };
+
+        // Subscribe to individual item changes
+        ItemListRegistry.ItemChanged += (type, action, item) => {
+            if (_start != null && _end != null)
+            {
+                _path = PathFinder.Instance.RefindPath(_path, _start, _end);
+                if (_path == null || _path.Count() == 0)
+                {
+                    UtilsClass.CreateWorldTextPopup(
+                        "No path found!",
+                        UtilsClass.GetMouseWorldPosition(),
+                        Color.red,
+                        1.5f
+                    );
+                }
+                UtilsClass.DrawPath(_path, Color.black, 1);
+            }
+            Debug.Log($"Item {item.Guid} of type {type.Name} was {action}");
+        };
+    }
 
 	private void Update()
 	{
@@ -64,26 +87,50 @@ public class BuildingManager : MonoBehaviour
         {
             HandleBuildingPlacement();
         }
+
+
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
-            _ = FindAndDrawPathAsync(new Vector2(15, 15), new Vector2(1000, 1000));
+            FindAndDrawPath(_start, _end);
+        }
+        else if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _start = UtilsClass.GetMouseWorldPosition();
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            _end = UtilsClass.GetMouseWorldPosition();
         }
     }
 
-    private async Task FindAndDrawPathAsync(Vector2 start, Vector2 end)
+    public static Vector2 _start, _end;
+    public static List<Vector2> _path;
+
+
+    private void FindAndDrawPath(Vector2 start, Vector2 end)
     {
-        var path = await PathFinder.FindPathAsync(start, end);
-        UtilsClass.DrawPath(path, Color.black, 2);
+        _path = PathFinder.Instance.FindPath(start, end);
+        if (_path == null || _path.Count() == 0)
+        {
+            UtilsClass.CreateWorldTextPopup(
+                "No path found!",
+                UtilsClass.GetMouseWorldPosition(),
+                Color.red,
+                1.5f
+            );
+        }
+        UtilsClass.DrawPath(_path, Color.black, 1);
     }
 
     private void HandleBuildingPlacement()
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
-        var gridPosition = _grid.GetCellGridPosition(clickPosition);
+        var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
         if (!GridService.CanPlaceAtPosition(
                 gridPosition,
-                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                new Vector2Int(selectedBuilding.WidthCell,
+                    selectedBuilding.HeightCell),
                 GridRegistry.GetAllGridsList().ToArray()) ||
             !ItemListService.CanPlaceAtPosition(
                 gridPosition,
@@ -91,11 +138,11 @@ public class BuildingManager : MonoBehaviour
                 ItemListRegistry.GetAllListsItemsList().ToArray()
             ))
         {
-            GameUtilities.Utils.UtilsClass.CreateWorldTextPopup(
+            UtilsClass.CreateWorldTextPopup(
                 "Cannot build here!",
                 clickPosition,
                 Color.red,
-                1f
+                1.5f
             );
             return;
         }
@@ -104,10 +151,11 @@ public class BuildingManager : MonoBehaviour
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInGrid(gridPosition, buildingGuid,_grid, selectedBuilding);
-        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
-        SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture, _grid);
+        SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture);
+
+        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
+        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         GridRegistry.UpsertGrid(_grid);
         ItemListRegistry.UpsertList(_buildingItemList);
     }
@@ -169,7 +217,7 @@ public class BuildingManager : MonoBehaviour
     private (float finalScale, Vector2 objectSize) CalculateBuildingScale(Building building, Texture2D spriteTexture)
     {
         var margin = 0.0f;
-        if (building.Margin)
+        if (building.HasMargin)
         {
             margin = MapConfig.CellSize * _defaultOffset;
         }
@@ -196,7 +244,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingId">Building's unique ID</param>
     /// <param name="grid">Target grid</param>
     /// <param name="building">Building to place</param>
-    private void PlaceBuildingInGrid(Vector2Int gridPosition, System.Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
+    private void PlaceBuildingInGrid(Vector2Int gridPosition, Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
     {
         for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
         {
@@ -224,7 +272,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="spriteTexture">Building's texture</param>
     private void SetBuildingPosition(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
     {
-        var worldPosition = _grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+        var worldPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
         var (_, objectSize) = CalculateBuildingScale(building, spriteTexture);
 
         var offset = CalculateOffset(objectSize, building);
@@ -244,7 +292,7 @@ public class BuildingManager : MonoBehaviour
     private Vector2 CalculateOffset(Vector2 objectSize, Building building)
     {
         var margin = 0.0f;
-        if (building.Margin)
+        if (building.HasMargin)
         {
             margin = MapConfig.CellSize * _defaultOffset;
         }
@@ -284,19 +332,33 @@ public class BuildingManager : MonoBehaviour
     /// <param name="building">Building data</param>
     /// <param name="spriteTexture">Building's texture</param>
     /// <param name="grid">Target grid</param>
-    private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture, MapGrid<BuildingGridObject> grid)
+    private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
     {
         var collider = buildingObject.AddComponent<BoxCollider2D>();
         var (finalScale, _) = CalculateBuildingScale(building, spriteTexture);
 
-        var colliderWidth = MapConfig.CellSize * building.WidthCell;
-        var colliderHeight = MapConfig.CellSize * building.HeightCell;
+        float colliderWidth, colliderHeight;
+
+        if (building.HasMargin)
+        {
+            var margin = MapConfig.CellSize * _defaultOffset;
+            colliderWidth = MapConfig.CellSize * building.WidthCell - (margin * 2);
+            colliderHeight = MapConfig.CellSize * building.HeightCell - (margin * 2);
+        }
+        else
+        {
+            colliderWidth = MapConfig.CellSize * building.WidthCell;
+            colliderHeight = MapConfig.CellSize * building.HeightCell;
+        }
+
         collider.size = new Vector2(colliderWidth / finalScale, colliderHeight / finalScale);
 
-        var colliderPosition = grid.GetWorldPosition(gridPosition.x, gridPosition.y);
+        var colliderPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
         var buildingPosition = buildingObject.transform.position;
         var colliderOffset = CalculateColliderOffset(buildingPosition, colliderPosition, finalScale, building);
         collider.offset = colliderOffset;
+
+        buildingObject.layer = LayerMask.NameToLayer("Objects");
     }
 
     /// <summary>

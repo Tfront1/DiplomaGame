@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using GameUtilities.MonoBehaviours;
+﻿using GameUtilities.MonoBehaviours;
 using UnityEngine;
 
 public class TilemapViewController
@@ -13,7 +12,11 @@ public class TilemapViewController
         _map = map;
         _tilemap = tilemap;
         CameraManager.SubscribeToCameraMove(OnCameraMoved);
-        CoroutineRunner.Instance.StartCoroutine(_tilemapDisplay.DisplayVisibleChunksCoroutine(_map, _tilemap, Camera.main));
+        CoroutineRunner.Instance.StartCoroutine(_tilemapDisplay.DisplayVisibleChunksCoroutine(
+            _map,
+            _tilemap, 
+            Camera.main
+        ));
     }
     
     public void Stop()

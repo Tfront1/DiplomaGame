@@ -123,6 +123,10 @@ public static class GridService
     /// </remarks>
     private static void ValidateGridDimensions(ITypedGrid[] grids)
     {
+        if (grids.Length == 0)
+        {
+            return;
+        }
         var firstGrid = grids[0];
         foreach (var grid in grids)
         {
@@ -131,5 +135,43 @@ public static class GridService
                 throw new ArgumentException("All grids must have the same dimensions");
             }
         }
+    }
+
+    /// <summary>
+    /// Converts grid coordinates to world position.
+    /// </summary>
+    /// <param name="x">X coordinate in the grid.</param>
+    /// <param name="y">Y coordinate in the grid.</param>
+    /// <returns>World position vector corresponding to the grid cell center.</returns>
+    public static Vector3 GetWorldPosition(int x, int y)
+    {
+        return new Vector3(x, y) * MapConfig.CellSize + new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+    }
+
+    /// <summary>
+    /// Converts world position to grid coordinates.
+    /// </summary>
+    /// <param name="worldPosition">Position in world space.</param>
+    /// <returns>Grid cell coordinates as Vector2Int.</returns>
+    public static Vector2Int GetCellGridPosition(Vector3 worldPosition)
+    {
+        return new Vector2Int(
+            Mathf.FloorToInt((worldPosition - new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY)).x / MapConfig.CellSize),
+            Mathf.FloorToInt((worldPosition - new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY)).y / MapConfig.CellSize));
+    }
+
+    /// <summary>
+    /// Checks if the world position is within the map boundaries.
+    /// </summary>
+    /// <param name="position">Position in world space to check.</param>
+    /// <returns>True if the position is within map bounds, false otherwise.</returns>
+    public static bool IsWorldPositionInMapBounds(Vector2 position)
+    {
+        var gridPosition = GetCellGridPosition(position);
+
+        return gridPosition.x >= 0 &&
+               gridPosition.x < MapConfig.MapWidth * MapConfig.CellSize + MapConfig.MapStartPointX &&
+               gridPosition.y >= 0 &&
+               gridPosition.y < MapConfig.MapHeight * MapConfig.CellSize + MapConfig.MapStartPointY;
     }
 }

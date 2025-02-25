@@ -12,7 +12,53 @@ public class ItemListRegistry
     /// Stores type-list pairs for all registered object types
     /// </summary>
     private static readonly Dictionary<Type, ITypedItemList> _itemLists = new();
-    
+
+    /// <summary>
+    /// Event triggered when an item list is registered, updated, or removed
+    /// </summary>
+    /// <param name="type">Type of the affected item list</param>
+    /// <param name="action">Action performed on the list</param>
+    /// <param name="list">The affected item list</param>
+    public delegate void ItemListChangedEventHandler(Type type, ItemListAction action, ITypedItemList list);
+
+    /// <summary>
+    /// Event triggered when an item list is registered, updated, or removed
+    /// </summary>
+    public static event ItemListChangedEventHandler ItemListChanged;
+
+    /// <summary>
+    /// Event triggered when an item within a list is added, updated, or removed
+    /// </summary>
+    /// <param name="type">Type of the item list</param>
+    /// <param name="action">Action performed on the item</param>
+    /// <param name="item">The affected item</param>
+    public delegate void ItemChangedEventHandler(Type type, ItemAction action, IItemListObject item);
+
+    /// <summary>
+    /// Event triggered when an item within a list is added, updated, or removed
+    /// </summary>
+    public static event ItemChangedEventHandler ItemChanged;
+
+    /// <summary>
+    /// Enum defining possible actions performed on an item list
+    /// </summary>
+    public enum ItemListAction
+    {
+        Registered,
+        Updated,
+        Removed
+    }
+
+    /// <summary>
+    /// Enum defining possible actions performed on an item
+    /// </summary>
+    public enum ItemAction
+    {
+        Added,
+        Updated,
+        Removed
+    }
+
     /// <summary>
     /// Registers a new list of objects of the specified type. If a list for this type already exists,
     /// it will be overwritten with a warning
@@ -27,7 +73,14 @@ public class ItemListRegistry
             //Debug.LogWarning($"List for type {type.Name} is already registered. Overwriting existing list.");
         }
 
-        _itemLists[type] = new TypedItemListAdapter<T>(list);
+        var typedList = new TypedItemListAdapter<T>(list);
+        _itemLists[type] = typedList;
+
+        // Subscribe to the list's events
+        SubscribeToListEvents(type, typedList);
+
+        // Notify about the list registration
+        ItemListChanged?.Invoke(type, ItemListAction.Registered, typedList);
     }
 
     /// <summary>
@@ -64,7 +117,21 @@ public class ItemListRegistry
             return false;
         }
 
-        _itemLists[type] = new TypedItemListAdapter<T>(newList);
+        // Unsubscribe from old list's events
+        if (_itemLists[type] is TypedItemListAdapter<T> oldAdapter)
+        {
+            UnsubscribeFromListEvents(type, oldAdapter);
+        }
+
+        var typedList = new TypedItemListAdapter<T>(newList);
+        _itemLists[type] = typedList;
+
+        // Subscribe to the new list's events
+        SubscribeToListEvents(type, typedList);
+
+        // Notify about the list update
+        ItemListChanged?.Invoke(type, ItemListAction.Updated, typedList);
+
         return true;
     }
 
@@ -78,13 +145,29 @@ public class ItemListRegistry
     public static bool UpsertList<T>(ItemList<T> newList) where T : IItemListObject
     {
         var type = typeof(T);
-        if (!_itemLists.ContainsKey(type))
+        var isNewList = !_itemLists.ContainsKey(type);
+
+        if (isNewList)
         {
             RegisterList(newList);
             return true;
         }
-        
-        _itemLists[type] = new TypedItemListAdapter<T>(newList);
+
+        // Unsubscribe from old list's events
+        if (_itemLists[type] is TypedItemListAdapter<T> oldAdapter)
+        {
+            UnsubscribeFromListEvents(type, oldAdapter);
+        }
+
+        var typedList = new TypedItemListAdapter<T>(newList);
+        _itemLists[type] = typedList;
+
+        // Subscribe to the new list's events
+        SubscribeToListEvents(type, typedList);
+
+        // Notify about the list update
+        ItemListChanged?.Invoke(type, ItemListAction.Updated, typedList);
+
         return true;
     }
 
@@ -113,7 +196,18 @@ public class ItemListRegistry
         var type = typeof(T);
         if (_itemLists.ContainsKey(type))
         {
+            var list = _itemLists[type];
+
+            // Unsubscribe from list's events
+            if (list is TypedItemListAdapter<T> adapter)
+            {
+                UnsubscribeFromListEvents(type, adapter);
+            }
+
             _itemLists.Remove(type);
+
+            // Notify about the list removal
+            ItemListChanged?.Invoke(type, ItemListAction.Removed, list);
         }
     }
 
@@ -132,6 +226,36 @@ public class ItemListRegistry
     /// </summary>
     public static void ClearAllLists()
     {
+        // Unsubscribe from all lists' events
+        foreach (var pair in _itemLists)
+        {
+            if (pair.Value is ITypedItemListAdapter adapter)
+            {
+                adapter.UnsubscribeFromEvents();
+            }
+
+            // Notify about each list removal
+            ItemListChanged?.Invoke(pair.Key, ItemListAction.Removed, pair.Value);
+        }
+
         _itemLists.Clear();
+    }
+
+    /// <summary>
+    /// Subscribes to the events of a typed list adapter
+    /// </summary>
+    private static void SubscribeToListEvents<T>(Type type, TypedItemListAdapter<T> adapter) where T : IItemListObject
+    {
+        adapter.ItemAdded += (item) => ItemChanged?.Invoke(type, ItemAction.Added, item);
+        adapter.ItemUpdated += (item) => ItemChanged?.Invoke(type, ItemAction.Updated, item);
+        adapter.ItemRemoved += (item) => ItemChanged?.Invoke(type, ItemAction.Removed, item);
+    }
+
+    /// <summary>
+    /// Unsubscribes from the events of a typed list adapter
+    /// </summary>
+    private static void UnsubscribeFromListEvents<T>(Type type, TypedItemListAdapter<T> adapter) where T : IItemListObject
+    {
+        adapter.UnsubscribeFromEvents();
     }
 }
