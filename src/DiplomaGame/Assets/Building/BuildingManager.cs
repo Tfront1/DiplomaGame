@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using GameUtilities.Utils;
 using UnityEditor;
@@ -43,7 +44,30 @@ public class BuildingManager : MonoBehaviour
 
         // Example: Select the first building from the configuration list (you can change this logic)
         selectedBuilding = BuildingsConfig.Buildings.First();
-	}
+
+        ItemListRegistry.ItemListChanged += (type, action, list) => {
+            Debug.Log($"List of type {type.Name} was {action}");
+        };
+
+        // Subscribe to individual item changes
+        ItemListRegistry.ItemChanged += (type, action, item) => {
+            if (_start != null && _end != null)
+            {
+                _path = PathFinder.Instance.RefindPath(_path, _start, _end);
+                if (_path == null || _path.Count() == 0)
+                {
+                    UtilsClass.CreateWorldTextPopup(
+                        "No path found!",
+                        UtilsClass.GetMouseWorldPosition(),
+                        Color.red,
+                        1.5f
+                    );
+                }
+                UtilsClass.DrawPath(_path, Color.black, 1);
+            }
+            Debug.Log($"Item {item.Guid} of type {type.Name} was {action}");
+        };
+    }
 
 	private void Update()
 	{
@@ -80,12 +104,13 @@ public class BuildingManager : MonoBehaviour
     }
 
     public static Vector2 _start, _end;
+    public static List<Vector2> _path;
 
 
     private void FindAndDrawPath(Vector2 start, Vector2 end)
     {
-        var path = PathFinder.Instance.FindPath(start, end);
-        if (path == null || path.Count() == 0)
+        _path = PathFinder.Instance.FindPath(start, end);
+        if (_path == null || _path.Count() == 0)
         {
             UtilsClass.CreateWorldTextPopup(
                 "No path found!",
@@ -94,7 +119,7 @@ public class BuildingManager : MonoBehaviour
                 1.5f
             );
         }
-        UtilsClass.DrawPath(path, Color.black, 1);
+        UtilsClass.DrawPath(_path, Color.black, 1);
     }
 
     private void HandleBuildingPlacement()
@@ -126,10 +151,11 @@ public class BuildingManager : MonoBehaviour
         var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
 
         SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
-        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture);
+
+        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
+        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
         GridRegistry.UpsertGrid(_grid);
         ItemListRegistry.UpsertList(_buildingItemList);
     }

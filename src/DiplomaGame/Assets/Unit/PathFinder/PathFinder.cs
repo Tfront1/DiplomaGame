@@ -6,8 +6,8 @@ public class PathFinder
 {
     private static PathFinder _instance;
     private static readonly object _lock = new();
-    private static LayerMask obstacleMask;
-    private static float avoidanceOffset;
+    private static LayerMask _obstacleMask;
+    private static float _avoidanceOffset;
 
     public static PathFinder Instance
     {
@@ -18,8 +18,6 @@ public class PathFinder
                 if (_instance == null)
                 {
                     _instance = new PathFinder();
-                    Debug.Log(obstacleMask);
-                    Debug.Log(avoidanceOffset);
                 }
                 return _instance;
             }
@@ -28,20 +26,59 @@ public class PathFinder
 
     private PathFinder()
     {
-        avoidanceOffset = 0.1f;
-        obstacleMask = LayerMask.GetMask("Objects");
+        _avoidanceOffset = 0.1f;
+        _obstacleMask = LayerMask.GetMask("Objects");
+    }
+
+
+    /// <param name="controlPoints">List of path points</param>
+    /// <param name="currentPoint">Current point, where is unit</param>
+    /// <param name="endPoint">End point of path</param>
+    /// <returns></returns>
+    public List<Vector2> RefindPath(List<Vector2> controlPoints, Vector2 currentPoint, Vector2 endPoint)
+    {
+        if (controlPoints == null || controlPoints.Count < 2)
+        {
+            return FindPath(currentPoint, endPoint);
+        }
+
+        var hasObstacles = false;
+
+        for (var i = 0; i < controlPoints.Count - 1; i++)
+        {
+            var current = controlPoints[i];
+            var next = controlPoints[i + 1];
+            
+            var direction = next - current;
+            var distance = direction.magnitude;
+
+            var hit = Physics2D.Raycast(current, direction.normalized, distance, _obstacleMask);
+
+            if (hit.collider != null)
+            {
+                hasObstacles = true;
+                break;
+            }
+        }
+
+        if (!hasObstacles)
+        {
+            return controlPoints;
+        }
+
+        return FindPath(currentPoint, endPoint);
     }
 
 
     public List<Vector2> FindPath(Vector2 start, Vector2 end)
     {
-        if (Physics2D.OverlapPoint(start, obstacleMask))
+        if (Physics2D.OverlapPoint(start, _obstacleMask))
         {
             Debug.LogWarning("Start point inside of a collision");
             return null;
         }
 
-        if (Physics2D.OverlapPoint(end, obstacleMask))
+        if (Physics2D.OverlapPoint(end, _obstacleMask))
         {
             Debug.LogWarning("End point inside of a collision.");
             return null;
@@ -49,7 +86,7 @@ public class PathFinder
 
         var path = new List<Vector2> { start };
 
-        if (!Physics2D.Raycast(start, end - start, Vector2.Distance(start, end), obstacleMask))
+        if (!Physics2D.Raycast(start, end - start, Vector2.Distance(start, end), _obstacleMask))
         {
             path.Add(end);
             return path;
@@ -83,7 +120,7 @@ public class PathFinder
             openSet.RemoveAt(0);
             openSetContents.Remove(current);
 
-            if (!Physics2D.Raycast(current, end - current, Vector2.Distance(current, end), obstacleMask))
+            if (!Physics2D.Raycast(current, end - current, Vector2.Distance(current, end), _obstacleMask))
             {
                 var finalPath = ReconstructPath(cameFrom, current);
                 finalPath.Add(end);
@@ -99,7 +136,7 @@ public class PathFinder
                 if (visited.Contains(neighbor))
                     continue;
 
-                if (Physics2D.Raycast(current, neighbor - current, Vector2.Distance(current, neighbor), obstacleMask))
+                if (Physics2D.Raycast(current, neighbor - current, Vector2.Distance(current, neighbor), _obstacleMask))
                 {
                     continue;
                 }
@@ -148,7 +185,7 @@ public class PathFinder
     {
         var neighbors = new HashSet<Vector2>();
 
-        var hitToGoal = Physics2D.Raycast(current, goal - current, Vector2.Distance(current, goal), obstacleMask);
+        var hitToGoal = Physics2D.Raycast(current, goal - current, Vector2.Distance(current, goal), _obstacleMask);
 
         if (hitToGoal)
         {
@@ -166,10 +203,10 @@ public class PathFinder
 
                 var edgePoints = new List<Vector2>
             {
-                new(currentBounds.min.x - avoidanceOffset, currentBounds.min.y - avoidanceOffset),
-                new(currentBounds.max.x + avoidanceOffset, currentBounds.min.y - avoidanceOffset),
-                new(currentBounds.min.x - avoidanceOffset, currentBounds.max.y + avoidanceOffset),
-                new(currentBounds.max.x + avoidanceOffset, currentBounds.max.y + avoidanceOffset)
+                new(currentBounds.min.x - _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                new(currentBounds.max.x + _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                new(currentBounds.min.x - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset),
+                new(currentBounds.max.x + _avoidanceOffset, currentBounds.max.y + _avoidanceOffset)
             };
 
                 var numPointsPerEdge = 3;
@@ -177,34 +214,34 @@ public class PathFinder
                 // Bottom edge
                 for (var i = 1; i < numPointsPerEdge; i++)
                 {
-                    var x = Mathf.Lerp(currentBounds.min.x - avoidanceOffset, currentBounds.max.x + avoidanceOffset, i / (float)numPointsPerEdge);
-                    edgePoints.Add(new Vector2(x, currentBounds.min.y - avoidanceOffset));
+                    var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(x, currentBounds.min.y - _avoidanceOffset));
                 }
 
                 // Top edge
                 for (var i = 1; i < numPointsPerEdge; i++)
                 {
-                    var x = Mathf.Lerp(currentBounds.min.x - avoidanceOffset, currentBounds.max.x + avoidanceOffset, i / (float)numPointsPerEdge);
-                    edgePoints.Add(new Vector2(x, currentBounds.max.y + avoidanceOffset));
+                    var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(x, currentBounds.max.y + _avoidanceOffset));
                 }
 
                 // Left edge
                 for (var i = 1; i < numPointsPerEdge; i++)
                 {
-                    var y = Mathf.Lerp(currentBounds.min.y - avoidanceOffset, currentBounds.max.y + avoidanceOffset, i / (float)numPointsPerEdge);
-                    edgePoints.Add(new Vector2(currentBounds.min.x - avoidanceOffset, y));
+                    var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(currentBounds.min.x - _avoidanceOffset, y));
                 }
 
                 // Right edge
                 for (var i = 1; i < numPointsPerEdge; i++)
                 {
-                    var y = Mathf.Lerp(currentBounds.min.y - avoidanceOffset, currentBounds.max.y + avoidanceOffset, i / (float)numPointsPerEdge);
-                    edgePoints.Add(new Vector2(currentBounds.max.x + avoidanceOffset, y));
+                    var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
+                    edgePoints.Add(new Vector2(currentBounds.max.x + _avoidanceOffset, y));
                 }
 
                 foreach (var point in edgePoints)
                 {
-                    var nearbyColliders = Physics2D.OverlapCircleAll(point, avoidanceOffset, obstacleMask);
+                    var nearbyColliders = Physics2D.OverlapCircleAll(point, _avoidanceOffset, _obstacleMask);
 
                     var shouldAddPoint = true;
 
@@ -224,7 +261,7 @@ public class PathFinder
                     }
 
                     if (shouldAddPoint && !visited.Contains(point) &&
-                        !Physics2D.Raycast(current, point - current, Vector2.Distance(current, point), obstacleMask))
+                        !Physics2D.Raycast(current, point - current, Vector2.Distance(current, point), _obstacleMask))
                     {
                         neighbors.Add(point);
                     }

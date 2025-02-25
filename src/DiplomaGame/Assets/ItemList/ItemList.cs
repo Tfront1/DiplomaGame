@@ -5,12 +5,19 @@ using System.Linq;
 public class ItemList<T> : ITypedItemList where T : IItemListObject
 {
     private readonly Dictionary<Guid, T> _items = new();
-    
+
+    public delegate void ItemEventHandler(T item);
+
+    public event ItemEventHandler ItemAdded;
+    public event ItemEventHandler ItemUpdated;
+    public event ItemEventHandler ItemRemoved;
+
     public Type ItemListObjectType => typeof(T);
 
     public void Add(T value)
     {
         _items.Add(value.Guid, value);
+        ItemAdded?.Invoke(value);
     }
 
     public IItemListObject GetItemListObjectInterface(Guid guid)
@@ -35,7 +42,6 @@ public class ItemList<T> : ITypedItemList where T : IItemListObject
         {
             return value;
         }
-
         return default;
     }
 
@@ -46,16 +52,58 @@ public class ItemList<T> : ITypedItemList where T : IItemListObject
 
     public bool Remove(Guid guid)
     {
-        return _items.Remove(guid);
+        if (_items.TryGetValue(guid, out T value))
+        {
+            bool result = _items.Remove(guid);
+            if (result)
+            {
+                ItemRemoved?.Invoke(value);
+            }
+            return result;
+        }
+        return false;
     }
 
     public void Clear()
     {
+        var itemsToRemove = _items.Values.ToList();
+
         _items.Clear();
+
+        foreach (var item in itemsToRemove)
+        {
+            ItemRemoved?.Invoke(item);
+        }
+    }
+
+    public void Update(T value)
+    {
+        if (_items.ContainsKey(value.Guid))
+        {
+            _items[value.Guid] = value;
+            ItemUpdated?.Invoke(value);
+        }
+        else
+        {
+            Add(value);
+        }
+    }
+
+    public void AddOrUpdate(T value)
+    {
+        if (_items.ContainsKey(value.Guid))
+        {
+            _items[value.Guid] = value;
+            ItemUpdated?.Invoke(value);
+        }
+        else
+        {
+            _items.Add(value.Guid, value);
+            ItemAdded?.Invoke(value);
+        }
     }
 
     public int Count => _items.Count;
-
     public IEnumerable<Guid> Keys => _items.Keys;
     public IEnumerable<T> Values => _items.Values;
 }

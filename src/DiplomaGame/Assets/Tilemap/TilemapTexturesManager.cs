@@ -15,7 +15,7 @@ public class TilemapTexturesManager
     private Dictionary<int, UVCoords> _uvCoordsDictionary = new();
     private List<TilemapSprite> _tilemapSprites;
 
-    private int _padding = 2;
+    private int _padding = 4;
 
     public static TilemapTexturesManager Instance
     {
