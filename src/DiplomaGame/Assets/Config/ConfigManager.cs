@@ -19,5 +19,7 @@ public class ConfigManager : MonoBehaviour
         ConfigLoader.LoadSupplyTexturesConfig();
 
         ConfigLoader.LoadBuildingsConfig();
-	}
+
+        ConfigLoader.LoadUnitsConfig();
+    }
 }

@@ -18,6 +18,7 @@ public static partial class ConfigLoader
         ConfigPaths.SuppliesConfigPath = configPathsDto.SuppliesConfigPath;
         ConfigPaths.BiomeSuppliesConfigPath = configPathsDto.BiomeSuppliesConfigPath;
         ConfigPaths.BuildingsConfigPath = configPathsDto.BuildingsConfigPath;
+        ConfigPaths.UnitsConfigPath = configPathsDto.UnitsConfigPath;
 
 		Debug.Log("Config paths loaded");
 	}

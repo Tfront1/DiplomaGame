@@ -9,4 +9,5 @@ public static class ConfigPaths
     public static string SuppliesConfigPath { get; set; }
     public static string BiomeSuppliesConfigPath { get; set; }
     public static string BuildingsConfigPath { get; set; }
+    public static string UnitsConfigPath { get; set; }
 }

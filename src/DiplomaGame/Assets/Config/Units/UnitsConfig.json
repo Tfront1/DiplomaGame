@@ -1,0 +1,37 @@
+﻿{
+  "TexturePath": "Assets/Textures/Units/",
+  "Units": [
+    {
+      "Id": 1,
+      "Name": "Cisizen",
+      "Texture": "Cisizen/",
+      "SizeX": 1.0,
+      "SizeY": 1.0,
+      "Speed": 20.0
+    },
+    {
+      "Id": 2,
+      "Name": "Warrior",
+      "Texture": "Warrior/",
+      "SizeX": 1.0,
+      "SizeY": 1.0,
+      "Speed": 15.0
+    },
+    {
+      "Id": 3,
+      "Name": "Archer",
+      "Texture": "Archer/",
+      "SizeX": 1.0,
+      "SizeY": 1.0,
+      "Speed": 25.0
+    },
+    {
+      "Id": 4,
+      "Name": "Cavalry",
+      "Texture": "Cavalry/",
+      "SizeX": 2.0,
+      "SizeY": 2.0,
+      "Speed": 35.0
+    }
+  ]
+}
