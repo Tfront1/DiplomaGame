@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using GameUtilities.Utils;
-using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -44,29 +42,6 @@ public class BuildingManager : MonoBehaviour
 
         // Example: Select the first building from the configuration list (you can change this logic)
         selectedBuilding = BuildingsConfig.Buildings.First();
-
-        ItemListRegistry.ItemListChanged += (type, action, list) => {
-            Debug.Log($"List of type {type.Name} was {action}");
-        };
-
-        // Subscribe to individual item changes
-        ItemListRegistry.ItemChanged += (type, action, item) => {
-            if (_start != null && _end != null)
-            {
-                _path = PathFinder.Instance.RefindPath(_path, _start, _end);
-                if (_path == null || _path.Count() == 0)
-                {
-                    UtilsClass.CreateWorldTextPopup(
-                        "No path found!",
-                        UtilsClass.GetMouseWorldPosition(),
-                        Color.red,
-                        1.5f
-                    );
-                }
-                UtilsClass.DrawPath(_path, Color.black, 1);
-            }
-            Debug.Log($"Item {item.Guid} of type {type.Name} was {action}");
-        };
     }
 
 	private void Update()
@@ -87,41 +62,7 @@ public class BuildingManager : MonoBehaviour
         {
             HandleBuildingPlacement();
         }
-
-
-        else if (Input.GetKeyDown(KeyCode.Alpha4))
-        {
-            FindAndDrawPath(_start, _end);
-        }
-        else if (Input.GetKeyDown(KeyCode.Q))
-        {
-            _start = UtilsClass.GetMouseWorldPosition();
-        }
-        else if (Input.GetKeyDown(KeyCode.W))
-        {
-            _end = UtilsClass.GetMouseWorldPosition();
-        }
     }
-
-    public static Vector2 _start, _end;
-    public static List<Vector2> _path;
-
-
-    private void FindAndDrawPath(Vector2 start, Vector2 end)
-    {
-        _path = PathFinder.Instance.FindPath(start, end);
-        if (_path == null || _path.Count() == 0)
-        {
-            UtilsClass.CreateWorldTextPopup(
-                "No path found!",
-                UtilsClass.GetMouseWorldPosition(),
-                Color.red,
-                1.5f
-            );
-        }
-        UtilsClass.DrawPath(_path, Color.black, 1);
-    }
-
     private void HandleBuildingPlacement()
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
@@ -155,7 +96,7 @@ public class BuildingManager : MonoBehaviour
         SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture);
 
         PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
-        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding);
+        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding, newBuildingObject);
         GridRegistry.UpsertGrid(_grid);
         ItemListRegistry.UpsertList(_buildingItemList);
     }
@@ -257,9 +198,9 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building)
+    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject)
     {
-        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building);
+        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building, buildingGameObject);
         buildingItemList.Add(buildingItemItem);
     }
 
@@ -278,7 +219,7 @@ public class BuildingManager : MonoBehaviour
         var offset = CalculateOffset(objectSize, building);
         worldPosition.x += offset.x;
         worldPosition.y += offset.y;
-        worldPosition.z = CalculateZOffset(gridPosition);
+        worldPosition.z = CalculateZOffset(worldPosition);
 
         buildingObject.transform.position = worldPosition;
     }
@@ -317,11 +258,11 @@ public class BuildingManager : MonoBehaviour
     /// <summary>
     /// Calculates Z offset for sprite layering
     /// </summary>
-    /// <param name="gridPosition">Grid position</param>
+    /// <param name="worldPosition">World position</param>
     /// <returns>Z coordinate offset</returns>
-    private float CalculateZOffset(Vector2Int gridPosition)
+    private float CalculateZOffset(Vector2 worldPosition)
     {
-        return (MapConfig.MapHeight * MapConfig.CellSize - gridPosition.y) * -0.001f;
+        return (MapConfig.MapHeight * MapConfig.CellSize - worldPosition.y) * -0.001f;
     }
 
     /// <summary>

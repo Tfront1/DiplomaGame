@@ -100,13 +100,14 @@ namespace Supplies
 
                 var supplyName = _suppliesCache[supplyId].Name;
                 var texture = _texturesCache[supplyId];
-                var newResourceObject = CreateSupplyGameObject(supplyName);
+                var newSupplyObject = CreateSupplyGameObject(supplyName);
+                
+                SetupResourceSprite(newSupplyObject, texture, supplyTexture);
+                SetSupplyPosition(newSupplyObject, gridPosition, texture, supplyTexture);
+                SetupSupplyCollider(newSupplyObject, gridPosition, texture, supply, supplyTexture);
 
-                SetupResourceSprite(newResourceObject, texture, supplyTexture);
-                AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply);
+                AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply, newSupplyObject);
                 PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
-                SetSupplyPosition(newResourceObject, gridPosition, texture, supplyTexture);
-                SetupSupplyCollider(newResourceObject, gridPosition, texture, supply, supplyTexture);
 
                 ItemListRegistry.UpsertList(supplyItemsList);
             }
@@ -211,9 +212,9 @@ namespace Supplies
             }
         }
         
-        private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply)
+        private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply, GameObject supplyGameObject)
         {
-            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply);
+            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply, supplyGameObject);
             supplyItemList.Add(supplyItem);
         }
 
@@ -232,7 +233,7 @@ namespace Supplies
             var offset = CalculateOffset(objectSize, supplyTexture);
             worldPosition.x += offset.x;
             worldPosition.y += offset.y;
-            worldPosition.z = CalculateZOffset(gridPosition);
+            worldPosition.z = CalculateZOffset(worldPosition);
 
             supplyObject.transform.position = worldPosition;
         }
@@ -259,11 +260,11 @@ namespace Supplies
         /// <summary>
         /// Calculates Z offset for sprite layering
         /// </summary>
-        /// <param name="gridPosition">Grid position</param>
+        /// <param name="worldPosition">World position</param>
         /// <returns>Z coordinate offset</returns>
-        private static float CalculateZOffset(Vector2Int gridPosition)
+        private static float CalculateZOffset(Vector2 worldPosition)
         {
-            return (MapConfig.MapHeight * MapConfig.CellSize - gridPosition.y) * -0.001f;
+            return (MapConfig.MapHeight * MapConfig.CellSize - worldPosition.y) * -0.001f;
         }
 
         /// <summary>
