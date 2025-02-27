@@ -1,0 +1,39 @@
+﻿using UnityEngine;
+
+public class BaseStat : IStat
+{
+    private float _currentValue;
+    private float _maxValue;
+    private float _minValue;
+
+    public float CurrentValue => _currentValue;
+    public float MaxValue => _maxValue;
+    public float MinValue => _minValue;
+
+    public BaseStat(float initialValue, float maxValue, float minValue = 0)
+    {
+        this._maxValue = maxValue;
+        this._minValue = minValue;
+        _currentValue = Mathf.Clamp(initialValue, minValue, maxValue);
+    }
+
+    public virtual void Modify(float amount)
+    {
+        SetValue(_currentValue + amount);
+    }
+
+    public virtual void SetValue(float value)
+    {
+        _currentValue = Mathf.Clamp(value, _minValue, _maxValue);
+    }
+
+    public float GetPercentage()
+    {
+        return _currentValue / _maxValue;
+    }
+
+    public override string ToString()
+    {
+        return $"{CurrentValue:F1}/{MaxValue:F1} ({GetPercentage():P1})";
+    }
+}
