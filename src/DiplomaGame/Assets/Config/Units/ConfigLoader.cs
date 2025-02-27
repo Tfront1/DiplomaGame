@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Linq;
-using Supplies;
 using UnityEngine;
 
 public static partial class ConfigLoader
@@ -39,8 +38,6 @@ public static partial class ConfigLoader
         {
             throw new System.Exception($"Units Id repeats: {repeatedIds}");
         }
-
-        UnitsConfig.TexturePath = unitsDto.TexturePath;
 
         unitsDto.Units.ForEach(x => UnitsConfig.Units.Add(new Unit()
         {

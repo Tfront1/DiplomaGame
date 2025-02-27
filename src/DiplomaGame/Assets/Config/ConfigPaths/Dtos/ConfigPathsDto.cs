@@ -11,5 +11,6 @@ public class ConfigPathsDto
     public string BiomeSuppliesConfigPath;
     public string BuildingsConfigPath;
     public string UnitsConfigPath;
+    public string UnitsTexturesPath;
 }
 

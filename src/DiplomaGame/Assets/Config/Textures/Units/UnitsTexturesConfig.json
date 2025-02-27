@@ -1,0 +1,22 @@
+﻿{
+  "TexturesPath": "Assets/Textures/Units/",
+  "UnitsGroups": [
+    {
+      "UnitId": 3,
+      "UnitFolder": "Archer/",
+      "ActionGroups": [
+        {
+          "ActionId": 3,
+          "ActionName": "Idle",
+          "ActionFolder": "Idle/",
+          "Textures": [
+            {
+              "Id": 101,
+              "TextureFileName": "/Idle1.png"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

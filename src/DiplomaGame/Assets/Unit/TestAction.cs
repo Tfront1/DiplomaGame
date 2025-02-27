@@ -3,6 +3,7 @@ using GameUtilities.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using System.IO;
 
 public class TestAction: MonoBehaviour
 {
@@ -96,27 +97,22 @@ public class TestAction: MonoBehaviour
         var unitGameObject = new GameObject("TestUnit");
         var renderer = unitGameObject.AddComponent<SpriteRenderer>();
 
-        var texture = new Texture2D(20, 20);
-        var white = Color.white;
-
-        var colors = new Color[20 * 20];
-        for (int i = 0; i < colors.Length; i++)
-        {
-            colors[i] = white;
-        }
-
-        texture.SetPixels(colors);
+        var fileData = File.ReadAllBytes("Assets/Textures/Units/Archer/Idle/Idle1.png");
+        var texture = new Texture2D(2, 2);
+        texture.LoadImage(fileData);
+        texture.filterMode = FilterMode.Point;
+        texture.wrapMode = TextureWrapMode.Clamp;
         texture.Apply();
 
         var newBuildingSprite = Sprite.Create(
             texture,
-            new Rect(0.0f, 0.0f, 20, 20),
+            new Rect(0.0f, 0.0f, texture.width, texture.height),
             Vector2.zero
         );
 
         renderer.sprite = newBuildingSprite;
         unitGameObject.transform.position = (Vector2)clickPosition;
-        unitGameObject.transform.localScale = new Vector3(10f, 10f, 1f);
+        unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
 
         var unitItem = new UnitItem(clickPosition.x, clickPosition.y, new Guid(), unit, unitGameObject);
         return unitItem;
