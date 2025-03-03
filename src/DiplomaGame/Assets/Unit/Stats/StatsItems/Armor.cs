@@ -1,18 +1,18 @@
 ﻿public class Armor : BaseStat
 {
-    public float DamageReduction { get; private set; }
-    public float DamageReductionPerPoint { get; private set; }
+    public float _damageReduction;
+    public float _damageReductionPerPoint;
 
     public Armor(float initialArmor, float maxArmor, float damageReductionPerPoint = 0.06f)
-        : base(initialArmor, maxArmor)
+        : base("Armor", initialArmor, maxArmor)
     {
-        DamageReductionPerPoint = damageReductionPerPoint;
-        DamageReduction = CurrentValue * damageReductionPerPoint;
+        _damageReductionPerPoint = damageReductionPerPoint;
+        _damageReduction = CurrentValue * damageReductionPerPoint;
     }
 
     public new void SetValue(float value)
     {
         base.SetValue(value);
-        DamageReduction = CurrentValue * DamageReductionPerPoint;
+        _damageReduction = CurrentValue * _damageReductionPerPoint;
     }
 }

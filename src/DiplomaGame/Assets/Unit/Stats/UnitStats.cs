@@ -2,10 +2,10 @@
 
 public class UnitStats : IUnitStats
 {
-    public Health Health { get; private set; }
-    public Armor Armor { get; private set; }
-    public Stamina Stamina { get; private set; }
-    public Hunger Hunger { get; private set; }
+    public Health Health { get; }
+    public Armor Armor { get; }
+    public Stamina Stamina { get; }
+    public Hunger Hunger { get; }
 
     public UnitStats(float health, float maxHealth, float armor, float maxArmor,
         float stamina, float maxStamina, float hunger, float maxHunger)

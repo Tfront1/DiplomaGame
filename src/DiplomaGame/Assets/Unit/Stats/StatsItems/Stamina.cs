@@ -6,17 +6,18 @@
     private float _tiredRate = 0.1f;
 
     public Stamina(float initialStamina, float maxStamina, float regenerationRate = 1f)
-        : base(initialStamina, maxStamina)
+        : base("Stamina", initialStamina, maxStamina)
     {
-        this._regenerationRate = regenerationRate;
+        _regenerationRate = regenerationRate;
     }
 
-    public void Update(float deltaTime)
+    public override void Update(float deltaTime)
     {
-        if (_isRegenerating && CurrentValue < MaxValue)
+        if (!_isGettingTired && _isRegenerating && CurrentValue < MaxValue)
         {
             Modify(_regenerationRate * deltaTime);
-        } else if (_isGettingTired)
+        } 
+        else if (_isGettingTired)
         {
             Modify(_tiredRate * deltaTime);
         }

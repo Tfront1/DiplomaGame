@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using GameUtilities.Utils;
+using Object = UnityEngine.Object;
 
 namespace GameUtilities
 {
@@ -11,7 +12,7 @@ namespace GameUtilities
     public static class CMDebug {
 
         // Creates a Button in the World
-        public static World_Sprite Button(Transform parent, Vector3 localPosition, string text, System.Action ClickFunc, int fontSize = 30, float paddingX = 5, float paddingY = 5) {
+        public static World_Sprite Button(Transform parent, Vector3 localPosition, string text, Action ClickFunc, int fontSize = 30, float paddingX = 5, float paddingY = 5) {
             return World_Sprite.CreateDebugButton(parent, localPosition, text, ClickFunc, fontSize, paddingX, paddingY);
         }
 
@@ -124,7 +125,7 @@ namespace GameUtilities
             gameObject.transform.localScale = Vector3.one * scale;
             gameObject.GetComponent<SpriteRenderer>().sprite = sprite;
 
-            GameObject.Destroy(gameObject, timer);
+            Object.Destroy(gameObject, timer);
 
             return gameObject;
         }

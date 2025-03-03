@@ -8,7 +8,8 @@ public class UnitItem : IUnit
     public Guid Guid { get; set; }
     public Unit Unit { get; set; }
     public GameObject UnitGameObject { get; set; }
-    public IUnitStats Stats { get; private set; }
+    public UnitStats Stats { get; }
+    public UnitSkills Skills { get; }
 
     public UnitItem(float x, float y, Guid guid, Unit unit, GameObject unitGameObject)
     {
@@ -29,7 +30,10 @@ public class UnitItem : IUnit
             maxHunger: 100f
         );
 
+        Skills = new UnitSkills();
+
         TickRateSystem.Instance.OnTick += Stats.Update;
+        TickRateSystem.Instance.OnTick += Skills.Update;
     }
 
     public UnitItem(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject)
@@ -51,7 +55,10 @@ public class UnitItem : IUnit
             maxHunger: 100f
         );
 
+        Skills = new UnitSkills();
+
         TickRateSystem.Instance.OnTick += Stats.Update;
+        TickRateSystem.Instance.OnTick += Skills.Update;
     }
 
     public void SetPosition(Vector2 position)

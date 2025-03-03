@@ -16,19 +16,19 @@ namespace GameUtilities.Utils
         private SpriteRenderer spriteRenderer;
 
 
-        public static World_Sprite CreateDebugButton(Vector3 position, System.Action ClickFunc) {
+        public static World_Sprite CreateDebugButton(Vector3 position, Action ClickFunc) {
             World_Sprite worldSprite = new World_Sprite(null, position, new Vector3(10, 10), Assets.i.s_White, Color.green, sortingOrderDefault);
             worldSprite.AddButton(ClickFunc, null, null);
             return worldSprite;
         }
 
-        public static World_Sprite CreateDebugButton(Transform parent, Vector3 localPosition, System.Action ClickFunc) {
+        public static World_Sprite CreateDebugButton(Transform parent, Vector3 localPosition, Action ClickFunc) {
             World_Sprite worldSprite = new World_Sprite(parent, localPosition, new Vector3(10, 10), Assets.i.s_White, Color.green, sortingOrderDefault);
             worldSprite.AddButton(ClickFunc, null, null);
             return worldSprite;
         }
 
-        public static World_Sprite CreateDebugButton(Transform parent, Vector3 localPosition, string text, System.Action ClickFunc, int fontSize = 30, float paddingX = 5, float paddingY = 5) {
+        public static World_Sprite CreateDebugButton(Transform parent, Vector3 localPosition, string text, Action ClickFunc, int fontSize = 30, float paddingX = 5, float paddingY = 5) {
             GameObject gameObject = new GameObject("DebugButton");
             gameObject.transform.parent = parent;
             gameObject.transform.localPosition = localPosition;
@@ -193,7 +193,7 @@ namespace GameUtilities.Utils
             gameObject.SetActive(false);
         }
 
-        public Button_Sprite AddButton(System.Action ClickFunc, System.Action MouseOverOnceFunc, System.Action MouseOutOnceFunc) {
+        public Button_Sprite AddButton(Action ClickFunc, Action MouseOverOnceFunc, Action MouseOutOnceFunc) {
             gameObject.AddComponent<BoxCollider2D>();
             Button_Sprite buttonSprite = gameObject.AddComponent<Button_Sprite>();
             if (ClickFunc != null)
