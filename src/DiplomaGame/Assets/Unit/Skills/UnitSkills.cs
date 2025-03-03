@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class UnitSkills : IUnitSkills
@@ -6,7 +8,7 @@ public class UnitSkills : IUnitSkills
     private float _passiveExperienceRate = 0.1f;
     private BaseSkill _activeSkill;
 
-    public HashSet<ISkill> _skills = new();
+    public HashSet<BaseSkill> _skills = new();
 
     public UnitSkills()
     {
@@ -17,10 +19,24 @@ public class UnitSkills : IUnitSkills
         _skills.Add(new SwordsmanshipSkill(1, 80, 90));
     }
 
-    public void SetActiveSkill(BaseSkill baseSkill)
+    public void SetActiveSkill(Type skillType)
     {
-        _activeSkill = baseSkill;
-        Debug.Log($"Active skill set to {baseSkill}");
+        var skill = _skills.FirstOrDefault(s => s.GetType() == skillType);
+
+        if (skill != null)
+        {
+            _activeSkill = skill;
+            Debug.Log($"Active skill set to {skill.Name}");
+        }
+        else
+        {
+            Debug.LogWarning($"Skill of type {skillType.Name} not found in skills collection");
+        }
+    }
+
+    public void SetActiveSkill<T>() where T : ISkill
+    {
+        SetActiveSkill(typeof(T));
     }
 
     public void ResetActiveSkill()
