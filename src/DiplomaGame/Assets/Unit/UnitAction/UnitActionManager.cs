@@ -2,18 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// Manages execution, queueing, and lifecycle of unit actions in a game or simulation system.
+/// Handles action priority, interruption, and state control (pause/resume).
+/// </summary>
 public class UnitActionManager
 {
+    // Stores queued actions for each unit (by unit GUID)
     private Dictionary<Guid, Queue<IUnitAction>> _unitActionQueues = new();
+
+    // Tracks currently executing actions for each unit
     private Dictionary<Guid, IUnitAction> _currentActions = new();
+
+    // Global pause state for all actions
     private bool _isPaused = false;
 
+    /// <summary>
+    /// Gets whether the action manager is currently in a paused state.
+    /// </summary>
     public bool IsPaused => _isPaused;
 
+    /// <summary>
+    /// Adds an action to a unit's queue, executing it immediately if possible.
+    /// Actions are queued when the unit is already performing another action.
+    /// </summary>
+    /// <param name="action">The action to queue or execute</param>
     public void QueueAction(IUnitAction action)
     {
         var unitGuid = action.GetUnit().GetGuid();
 
+        // If unit isn't busy and action can execute, run it immediately
         if (!_currentActions.ContainsKey(unitGuid))
         {
             if (action.CanExecute())
@@ -31,6 +49,7 @@ public class UnitActionManager
             }
         }
 
+        // Otherwise, add to queue for later execution
         if (!_unitActionQueues.ContainsKey(unitGuid))
         {
             _unitActionQueues[unitGuid] = new Queue<IUnitAction>();
@@ -38,6 +57,11 @@ public class UnitActionManager
         _unitActionQueues[unitGuid].Enqueue(action);
     }
 
+    /// <summary>
+    /// Convenience method to queue multiple actions for a single unit.
+    /// </summary>
+    /// <param name="unit">The unit to queue actions for</param>
+    /// <param name="actions">List of actions to queue</param>
     public void QueueActions(UnitItem unit, List<IUnitAction> actions)
     {
         foreach (var action in actions)
@@ -46,6 +70,10 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Pauses all currently executing actions system-wide.
+    /// Has no effect if already paused.
+    /// </summary>
     public void PauseAllActions()
     {
         if (_isPaused) return;
@@ -58,6 +86,10 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Resumes all currently paused actions system-wide.
+    /// Has no effect if not paused.
+    /// </summary>
     public void ResumeAllActions()
     {
         if (!_isPaused) return;
@@ -70,6 +102,9 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Toggles between paused and resumed states for all actions.
+    /// </summary>
     public void TogglePause()
     {
         if (_isPaused)
@@ -82,6 +117,11 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Callback handler for action completion events.
+    /// Removes completed actions and starts the next queued action if available.
+    /// </summary>
+    /// <param name="action">The action that completed</param>
     private void HandleActionCompleted(IUnitAction action)
     {
         action.OnActionCompleted -= HandleActionCompleted;
@@ -91,6 +131,7 @@ public class UnitActionManager
         {
             _currentActions.Remove(unitGuid);
 
+            // Start next action in queue if one exists
             if (_unitActionQueues.ContainsKey(unitGuid) && _unitActionQueues[unitGuid].Count > 0)
             {
                 var nextAction = _unitActionQueues[unitGuid].Dequeue();
@@ -107,6 +148,10 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Starts execution of all queued actions for units that aren't currently busy.
+    /// Useful for processing initial action queues or after clearing actions.
+    /// </summary>
     public void ExecuteAllActions()
     {
         foreach (var unitGuid in _unitActionQueues.Keys.ToList())
@@ -127,10 +172,16 @@ public class UnitActionManager
         }
     }
 
+    /// <summary>
+    /// Immediately executes an action, canceling the current action and clearing the action queue for that unit.
+    /// </summary>
+    /// <param name="action">The action to execute immediately</param>
+    /// <returns>True if the action could be executed, false otherwise</returns>
     public bool ExecuteImmediately(IUnitAction action)
     {
         var unitGuid = action.GetUnit().GetGuid();
 
+        // Cancel the current action if one exists
         if (_currentActions.ContainsKey(unitGuid))
         {
             var currentAction = _currentActions[unitGuid];
@@ -139,6 +190,13 @@ public class UnitActionManager
             _currentActions.Remove(unitGuid);
         }
 
+        // Clear any queued actions
+        if (_unitActionQueues.ContainsKey(unitGuid))
+        {
+            _unitActionQueues[unitGuid].Clear();
+        }
+
+        // Execute the new action if possible
         if (action.CanExecute())
         {
             action.OnActionCompleted += HandleActionCompleted;
@@ -155,10 +213,16 @@ public class UnitActionManager
         return false;
     }
 
+    /// <summary>
+    /// Stops the current action and clears the action queue for a specific unit.
+    /// Used for emergency interruptions or when changing unit states.
+    /// </summary>
+    /// <param name="unit">The unit whose actions should be interrupted</param>
     public void InterruptCurrentAction(UnitItem unit)
     {
         var unitGuid = unit.GetGuid();
 
+        // Cancel current action if one exists
         if (_currentActions.ContainsKey(unitGuid))
         {
             var currentAction = _currentActions[unitGuid];
@@ -167,12 +231,17 @@ public class UnitActionManager
             _currentActions.Remove(unitGuid);
         }
 
+        // Clear any queued actions
         if (_unitActionQueues.ContainsKey(unitGuid))
         {
             _unitActionQueues[unitGuid].Clear();
         }
     }
 
+    /// <summary>
+    /// Cancels all currently executing actions and clears all action queues.
+    /// Used for global reset or when changing game states.
+    /// </summary>
     public void ClearAllActionQueues()
     {
         foreach (var action in _currentActions.Values)
@@ -185,12 +254,23 @@ public class UnitActionManager
         _currentActions.Clear();
     }
 
+    /// <summary>
+    /// Checks if a unit is currently executing an action or has actions queued.
+    /// </summary>
+    /// <param name="unit">The unit to check</param>
+    /// <returns>True if the unit is busy, false if idle</returns>
     public bool IsUnitBusy(UnitItem unit)
     {
         var unitGuid = unit.GetGuid();
         return _currentActions.ContainsKey(unitGuid) || (_unitActionQueues.ContainsKey(unitGuid) && _unitActionQueues[unitGuid].Count > 0);
     }
 
+    /// <summary>
+    /// Returns the number of actions currently queued for a unit.
+    /// Does not include the currently executing action.
+    /// </summary>
+    /// <param name="unit">The unit to check</param>
+    /// <returns>The number of queued actions</returns>
     public int GetQueuedActionCount(UnitItem unit)
     {
         var unitGuid = unit.GetGuid();

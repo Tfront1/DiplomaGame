@@ -1,22 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Assets.Items.Interfaces;
 
 namespace Items.Resource.BackPack
 {
-    public class ResourceBackpack
+    public class Backpack
     {
-        private List<ResourceBackpackItem> _items;
+        private List<BackpackItem> _items;
         private readonly int _maxCapacity;
         private int _currentCapacity;
 
-        public ResourceBackpack(int maxCapacity)
+        public Backpack(int maxCapacity)
         {
             _maxCapacity = maxCapacity;
             _currentCapacity = 0;
-            _items = new List<ResourceBackpackItem>();
+            _items = new List<BackpackItem>();
         }
-
-        public bool AddResource(int resourceId, int quantity)
+        
+        public bool AddItem(IBackpackItem backpackItem, int quantity = 1)
         {
             if (quantity <= 0)
                 return false;
@@ -24,10 +26,7 @@ namespace Items.Resource.BackPack
             if (_currentCapacity + quantity > _maxCapacity)
                 return false;
 
-            if (ResourceConfig.ResourceElements.Find(x => x.Id == resourceId) == null)
-                return false;
-
-            var existingItem = _items.FirstOrDefault(item => item.ResourceId == resourceId);
+            var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
 
             if (existingItem != null)
             {
@@ -35,19 +34,19 @@ namespace Items.Resource.BackPack
             }
             else
             {
-                _items.Add(new ResourceBackpackItem(resourceId, quantity));
+                _items.Add(new BackpackItem(backpackItem, quantity));
             }
 
             _currentCapacity += quantity;
             return true;
         }
 
-        public bool RemoveResource(int resourceId, int quantity)
+        public bool RemoveResource(IBackpackItem backpackItem, int quantity)
         {
             if (quantity <= 0)
                 return false;
 
-            var existingItem = _items.FirstOrDefault(item => item.ResourceId == resourceId);
+            var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
 
             if (existingItem == null)
                 return false;
@@ -64,18 +63,18 @@ namespace Items.Resource.BackPack
             return true;
         }
 
-        public int GetResourceQuantity(int resourceId)
+        public int GetResourceQuantity(IBackpackItem backpackItem)
         {
-            var item = _items.FirstOrDefault(item => item.ResourceId == resourceId);
+            var item = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
             return item?.Quantity ?? 0;
         }
 
-        public bool HasResource(int resourceId, int quantity)
+        public bool HasResource(IBackpackItem backpackItem, int quantity)
         {
-            return GetResourceQuantity(resourceId) >= quantity;
+            return GetResourceQuantity(backpackItem) >= quantity;
         }
 
-        public List<ResourceBackpackItem> GetAllItems()
+        public List<BackpackItem> GetAllItems()
         {
             return _items;
         }
@@ -88,18 +87,14 @@ namespace Items.Resource.BackPack
         {
             return (float)_currentCapacity / _maxCapacity;
         }
-
-        public List<(ResourceElement Resource, int Quantity)> GetDetailedItems()
+        
+        public List<(IBackpackItem backpackItem, int Quantity)> GetDetailedItems()
         {
-            var detailedItems = new List<(ResourceElement, int)>();
+            var detailedItems = new List<(IBackpackItem, int)>();
 
             foreach (var item in _items)
             {
-                var resourceElement = ResourceConfig.ResourceElements.Find(x => x.Id == item.ResourceId);
-                if (resourceElement != null)
-                {
-                    detailedItems.Add((resourceElement, item.Quantity));
-                }
+                detailedItems.Add((item.Item, item.Quantity));
             }
 
             return detailedItems;
