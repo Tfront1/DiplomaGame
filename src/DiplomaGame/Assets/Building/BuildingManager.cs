@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using GameUtilities.Utils;
+using Items.Resource.BackPack;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -200,7 +201,13 @@ public class BuildingManager : MonoBehaviour
 
     private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject)
     {
-        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building, buildingGameObject);
+        Backpack backpack = null;
+        if (building.BackpackCapacity > 0)
+        {
+            backpack = new Backpack(building.BackpackCapacity);
+        }
+
+        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building, buildingGameObject, backpack);
         buildingItemList.Add(buildingItemItem);
     }
 
@@ -272,7 +279,6 @@ public class BuildingManager : MonoBehaviour
     /// <param name="gridPosition">Grid position</param>
     /// <param name="building">Building data</param>
     /// <param name="spriteTexture">Building's texture</param>
-    /// <param name="grid">Target grid</param>
     private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
     {
         var collider = buildingObject.AddComponent<BoxCollider2D>();

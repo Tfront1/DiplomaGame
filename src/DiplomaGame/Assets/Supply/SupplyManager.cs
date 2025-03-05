@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Items.Resource.BackPack;
 using UnityEngine;
+using Random = System.Random;
 
 namespace Supplies
 {
@@ -41,6 +43,8 @@ namespace Supplies
         /// Reference to parent GameObject that organizes all Supply objects in hierarchy
         /// </summary>
         private static Transform _suppliesFolder;
+
+        private static Random _random = new();
 
         /// <summary>
         /// Initializes supply caches with data from configs
@@ -214,7 +218,10 @@ namespace Supplies
         
         private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply, GameObject supplyGameObject)
         {
-            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply, supplyGameObject);
+            //ToDo: Seed config
+            var supplyResourceCount = _random.Next(SuppliesConfig.MinSupplyResources, SuppliesConfig.MaxSupplyResources);
+            var backpack = new Backpack(supplyResourceCount);
+            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
             supplyItemList.Add(supplyItem);
         }
 

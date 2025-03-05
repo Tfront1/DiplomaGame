@@ -1,0 +1,20 @@
+﻿{
+  "Resources": [
+    {
+      "Id": 1,
+      "Name": "Wood"
+    },
+    {
+      "Id": 2,
+      "Name": "Stone"
+    },
+    {
+      "Id": 3,
+      "Name": "Iron Ore"
+    },
+    {
+      "Id": 4,
+      "Name": "Gold Ore"
+    }
+  ]
+}

@@ -41,6 +41,8 @@ public static partial class ConfigLoader
 		}
 
         SuppliesConfig.SupplyPerBlocks = suppliesDto.SupplyPerBlocks;
+        SuppliesConfig.MinSupplyResources = suppliesDto.MinSupplyResources;
+        SuppliesConfig.MaxSupplyResources = suppliesDto.MaxSupplyResources;
 
         suppliesDto.Supplies.ForEach(x => SuppliesConfig.Supplies.Add(new Supply
 		{

@@ -11,4 +11,5 @@ public static class ConfigPaths
     public static string BuildingsConfigPath { get; set; }
     public static string UnitsConfigPath { get; set; }
     public static string UnitsTexturesPath { get; set; }
+    public static string ResourceItemsConfig { get; set; }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Assets.Items.Interfaces;
 
@@ -109,6 +108,12 @@ namespace Items.Resource.BackPack
         {
             _items.Clear();
             _currentCapacity = 0;
+        }
+
+        public bool FillWithSingleItem(IBackpackItem backpackItem)
+        {
+            Clear();
+            return AddItem(backpackItem, MaxCapacity);
         }
     }
 }

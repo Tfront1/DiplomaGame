@@ -1,5 +1,7 @@
 ﻿{
   "SupplyPerBlocks": 2000,
+  "MinSupplyResources": 1000,
+  "MaxSupplyResources": 10000,
   "Supplies": [
     {
       "Id": 1,
@@ -13,7 +15,7 @@
     {
       "Id": 2,
       "Name": "Stone",
-      "Type": "Stome",
+      "Type": "Stone",
       "Ratio": 25,
       "Texture": "StoneSup.png",
       "WidthCell": 2,

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Assets.Items.Ammunition;
 using Assets.Items.Armor;
 using Assets.Items.Weapon;
+using Items.Resource;
 
 namespace Assets.Items.Crafts
 {
@@ -27,6 +28,8 @@ namespace Assets.Items.Crafts
                 "Weapon" => typeof(WeaponElement),
                 "Armor" => typeof(ArmorElement),
                 "Ammo" => typeof(AmmunitionElement),
+                "Resource" => typeof(ResourceElement),
+                "Building" => typeof(Building),
                 _ => throw new ArgumentException($"Unknown result type: {resultType}")
             };
 

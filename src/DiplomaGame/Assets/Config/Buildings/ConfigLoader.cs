@@ -49,7 +49,9 @@ public static partial class ConfigLoader
 			VisualHeightCell = x.VisualHeightCell,
 			Scale = x.Scale,
 			RandomPos = x.RandomPos,
-			HasMargin = x.HasMargin
+			HasMargin = x.HasMargin,
+			MaxHP = x.MaxHP,
+			BackpackCapacity = x.BackpackCapacity
 		}));
 
         Debug.Log("Buildings config loaded");

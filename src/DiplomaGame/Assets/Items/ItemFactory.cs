@@ -40,7 +40,7 @@ namespace Assets.Items
 
         private static ResourceElement CreateResourceElement(int id)
         {
-            var resource = ResourceConfig.ResourceElements.Find(x => x.Id == id);
+            var resource = ResourcesConfig.ResourceElements.Find(x => x.Id == id);
             if (resource == null)
                 throw new ArgumentException($"Resource with ID {id} not found");
 

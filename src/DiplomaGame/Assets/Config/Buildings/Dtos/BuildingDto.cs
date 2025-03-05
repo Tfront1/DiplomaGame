@@ -10,4 +10,6 @@ public class BuildingDto
     public float Scale;
     public bool RandomPos;
     public bool HasMargin;
+    public float MaxHP;
+    public int BackpackCapacity;
 }

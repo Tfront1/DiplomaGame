@@ -4,7 +4,7 @@ using Items.Resource.BackPack;
 
 namespace Assets.Items.Crafts
 {
-    public static class CraftingManager
+    public static class ItemCraftingManager
     {
         public static bool CanCraft(CraftingRecipe recipe, Backpack inBackpack)
         {
@@ -41,7 +41,6 @@ namespace Assets.Items.Crafts
             return outBackpack.AddItem(craftedItem);
         }
 
-        // Крафтинг з перевіркою наявності ресурсів
         public static bool Craft(CraftingRecipe recipe, Backpack inBackpack, Backpack outBackpack)
         {
             if (!CanCraft(recipe, inBackpack))

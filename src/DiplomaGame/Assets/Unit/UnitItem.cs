@@ -1,4 +1,5 @@
 ﻿using System;
+using Items.Resource.BackPack;
 using UnityEngine;
 
 public class UnitItem : IUnit
@@ -10,6 +11,7 @@ public class UnitItem : IUnit
     public GameObject UnitGameObject { get; set; }
     public UnitStats Stats { get; }
     public UnitSkills Skills { get; }
+    public Backpack UnitBackpack { get;}
 
     public UnitItem(float x, float y, Guid guid, Unit unit, GameObject unitGameObject)
     {
@@ -34,6 +36,9 @@ public class UnitItem : IUnit
 
         TickRateSystem.Instance.OnTick += Stats.Update;
         TickRateSystem.Instance.OnTick += Skills.Update;
+
+        //ToDo: Add config to unit
+        UnitBackpack = new Backpack(1000);
     }
 
     public UnitItem(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject)
@@ -59,6 +64,10 @@ public class UnitItem : IUnit
 
         TickRateSystem.Instance.OnTick += Stats.Update;
         TickRateSystem.Instance.OnTick += Skills.Update;
+
+
+        //ToDo: Add config to unit
+        UnitBackpack = new Backpack(1000);
     }
 
     public void SetPosition(Vector2 position)

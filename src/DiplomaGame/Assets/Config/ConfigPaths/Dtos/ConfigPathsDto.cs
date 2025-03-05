@@ -12,5 +12,6 @@ public class ConfigPathsDto
     public string BuildingsConfigPath;
     public string UnitsConfigPath;
     public string UnitsTexturesPath;
+    public string ResourceItemsConfig;
 }
 
