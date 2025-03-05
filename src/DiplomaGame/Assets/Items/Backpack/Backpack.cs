@@ -10,6 +10,9 @@ namespace Items.Resource.BackPack
         private readonly int _maxCapacity;
         private int _currentCapacity;
 
+        public int CurrentCapacity => _currentCapacity;
+        public int MaxCapacity => _maxCapacity;
+
         public Backpack(int maxCapacity)
         {
             _maxCapacity = maxCapacity;
@@ -77,10 +80,6 @@ namespace Items.Resource.BackPack
         {
             return _items;
         }
-
-        public int CurrentCapacity => _currentCapacity;
-
-        public int MaxCapacity => _maxCapacity;
 
         public float GetFillPercentage()
         {

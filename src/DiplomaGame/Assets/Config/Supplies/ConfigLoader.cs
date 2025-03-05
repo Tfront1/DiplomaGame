@@ -20,6 +20,7 @@ public static partial class ConfigLoader
             .Where(x => x.Id <= 0)
             .Select(x => x.Id)
             .ToList();
+
         if (nonPositiveIds.Any())
         {
             throw new System.Exception($"Supplies Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
@@ -40,6 +41,17 @@ public static partial class ConfigLoader
 			throw new System.Exception($"Supplies Id repeats: {repeatedIds}");
 		}
 
+        var nonExistsResourceIds = suppliesDto.Supplies
+            .Where(x => ResourcesConfig.ResourceElements
+                .All(res => res.Id != x.ResourceId))
+            .Select(x => x.ResourceId)
+            .ToList();
+
+        if (nonExistsResourceIds.Count > 0)
+        {
+            throw new System.Exception($"Supplies Resource Id not exists in Resources config: {nonExistsResourceIds}");
+        }
+
         SuppliesConfig.SupplyPerBlocks = suppliesDto.SupplyPerBlocks;
         SuppliesConfig.MinSupplyResources = suppliesDto.MinSupplyResources;
         SuppliesConfig.MaxSupplyResources = suppliesDto.MaxSupplyResources;
@@ -48,7 +60,7 @@ public static partial class ConfigLoader
 		{
 			Id = x.Id,
 			Name = x.Name,
-			Type = x.Type,
+            ResourceId = x.ResourceId,
 			Ratio = x.Ratio,
 			Texture = x.Texture,
             HeightCell = x.HeightCell,

@@ -16,28 +16,6 @@ public class SupplyItem : IItemListObject
     public Backpack Backpack { get; }
     public ResourceElement ResourceElement { get; }
 
-    public SupplyItem(int x, int y, Guid guid, Supply supply, GameObject supplyGameObject, Backpack backpack)
-    {
-        X = x;
-        Y = y;
-        Guid = guid;
-        Supply = supply;
-        SupplyGameObject = supplyGameObject;
-
-        Backpack = backpack;
-        ResourceElement = supply.Type switch
-        {
-            "Wood" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 1),
-            "Stone" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 2),
-            "Iron Ore" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 3),
-            "Gold Ore" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 4),
-            _ => throw new ArgumentException($"Unknown result type: {supply.Type}")
-        };
-
-        Backpack.FillWithSingleItem(ResourceElement);
-        Debug.Log($"Resource:{ResourceElement.Name} Count:{Backpack.GetResourceQuantity(ResourceElement)}");
-    }
-
     public SupplyItem(Vector2Int position, Guid guid, Supply supply, GameObject supplyGameObject, Backpack backpack)
     {
         X = position.x;
@@ -47,14 +25,7 @@ public class SupplyItem : IItemListObject
         SupplyGameObject = supplyGameObject;
 
         Backpack = backpack;
-        ResourceElement = supply.Type switch
-        {
-            "Wood" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 1),
-            "Stone" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 2),
-            "Iron Ore" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 3),
-            "Gold Ore" => ResourcesConfig.ResourceElements.Find(resourceElement => resourceElement.Id == 4),
-            _ => throw new ArgumentException($"Unknown result type: {supply.Type}")
-        };
+        ResourceElement = ResourcesConfig.ResourceElements.Find(x => x.Id == supply.ResourceId);
 
         Backpack.FillWithSingleItem(ResourceElement);
         Debug.Log($"Resource:{ResourceElement.Name} Count:{Backpack.GetResourceQuantity(ResourceElement)}");

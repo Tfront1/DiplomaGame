@@ -13,6 +13,8 @@ public class ConfigManager : MonoBehaviour
         ConfigLoader.LoadTerrainTexturesConfig();
 		ConfigLoader.LoadInputSystemConfig();
 
+        ConfigLoader.LoadResourceItemsConfig();
+
         ConfigLoader.LoadSuppliesConfig();
         ConfigLoader.LoadBiomesConfig();
         ConfigLoader.LoadBiomeSuppliesConfig();
@@ -23,6 +25,5 @@ public class ConfigManager : MonoBehaviour
         ConfigLoader.LoadUnitsConfig();
         ConfigLoader.LoadUnitTexturesConfig();
 
-        ConfigLoader.LoadResourceItemsConfig();
     }
 }

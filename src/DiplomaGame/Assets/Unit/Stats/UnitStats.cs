@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class UnitStats : IUnitStats
+public class UnitStats
 {
     public Health Health { get; }
     public Armor Armor { get; }

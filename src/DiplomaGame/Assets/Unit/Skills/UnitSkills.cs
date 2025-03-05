@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class UnitSkills : IUnitSkills
+public class UnitSkills
 {
     private float _passiveExperienceRate = 0.1f;
     private BaseSkill _activeSkill;
