@@ -13,11 +13,17 @@ public class ConfigManager : MonoBehaviour
         ConfigLoader.LoadTerrainTexturesConfig();
 		ConfigLoader.LoadInputSystemConfig();
 
+        ConfigLoader.LoadResourceItemsConfig();
+
         ConfigLoader.LoadSuppliesConfig();
         ConfigLoader.LoadBiomesConfig();
         ConfigLoader.LoadBiomeSuppliesConfig();
         ConfigLoader.LoadSupplyTexturesConfig();
 
         ConfigLoader.LoadBuildingsConfig();
-	}
+
+        ConfigLoader.LoadUnitsConfig();
+        ConfigLoader.LoadUnitTexturesConfig();
+
+    }
 }

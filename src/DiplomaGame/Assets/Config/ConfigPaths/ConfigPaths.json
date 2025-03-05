@@ -7,5 +7,8 @@
   "BiomesConfigPath": "Assets/Config/Biomes/BiomesConfig.json",
   "SuppliesConfigPath": "Assets/Config/Supplies/SuppliesConfig.json",
   "BiomeSuppliesConfigPath": "Assets/Config/Supplies/BiomeSupplies/BiomeSuppliesConfig.json",
-  "BuildingsConfigPath": "Assets/Config/Buildings/BuildingsConfig.json"
+  "BuildingsConfigPath": "Assets/Config/Buildings/BuildingsConfig.json",
+  "UnitsConfigPath": "Assets/Config/Units/UnitsConfig.json",
+  "UnitsTexturesPath": "Assets/Config/Textures/Units/UnitsTexturesConfig.json",
+  "ResourceItemsConfig": "Assets/Config/Items/Resources/ResourcesConfig.json"
 }

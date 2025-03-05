@@ -9,4 +9,6 @@
     public float Scale { get; set; }
 	public bool RandomPos { get; set; }
 	public bool HasMargin { get; set; }
+	public float MaxHP { get; set; }
+	public int BackpackCapacity { get; set; }
 }

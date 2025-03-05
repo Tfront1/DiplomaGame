@@ -3,7 +3,7 @@ public class SupplyDto
 {
 	public int Id;
 	public string Name;
-	public string Type;
+	public int ResourceId;
     public int Ratio;
     public string Texture;
     public int WidthCell;

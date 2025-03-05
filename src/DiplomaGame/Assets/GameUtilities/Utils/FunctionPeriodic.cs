@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace GameUtilities.Utils {
 
@@ -38,7 +39,7 @@ namespace GameUtilities.Utils {
         // Persist through scene loads
         public static FunctionPeriodic Create_Global(Action action, Func<bool> testDestroy, float timer) {
             FunctionPeriodic functionPeriodic = Create(action, testDestroy, timer, "", false, false, false);
-            MonoBehaviour.DontDestroyOnLoad(functionPeriodic.gameObject);
+            Object.DontDestroyOnLoad(functionPeriodic.gameObject);
             return functionPeriodic;
         }
 

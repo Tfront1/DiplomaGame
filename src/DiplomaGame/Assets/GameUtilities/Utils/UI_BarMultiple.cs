@@ -85,7 +85,7 @@ namespace GameUtilities.Utils {
         }
 
         public void DestroySelf() {
-            UnityEngine.Object.Destroy(gameObject);
+            Object.Destroy(gameObject);
         }
 
     }

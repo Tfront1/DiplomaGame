@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Object = UnityEngine.Object;
 
 namespace GameUtilities.Utils {
 
@@ -27,7 +28,7 @@ namespace GameUtilities.Utils {
         private static Transform cachedCanvasTransform;
         public static Transform GetCanvasTransform() {
             if (cachedCanvasTransform == null) {
-                Canvas canvas = MonoBehaviour.FindObjectOfType<Canvas>();
+                Canvas canvas = Object.FindObjectOfType<Canvas>();
                 if (canvas != null) {
                     cachedCanvasTransform = canvas.transform;
                 }
@@ -531,7 +532,7 @@ namespace GameUtilities.Utils {
                     dragging = false;
                 }
                 if (dragging) {
-                    onMouseDragging(UtilsClass.GetMouseWorldPosition());
+                    onMouseDragging(GetMouseWorldPosition());
                 }
                 return false; 
             });
@@ -546,19 +547,19 @@ namespace GameUtilities.Utils {
             Vector3 from = Vector3.zero;
             return FunctionUpdater.Create(() => {
                 if (state == 1) {
-                    if (onWaitingForToPosition != null) onWaitingForToPosition(from, UtilsClass.GetMouseWorldPosition());
+                    if (onWaitingForToPosition != null) onWaitingForToPosition(from, GetMouseWorldPosition());
                 }
                 if (state == 1 && Input.GetMouseButtonDown(cancelMouseButton)) {
                     // Cancel
                     state = 0;
                 }
-                if (Input.GetMouseButtonDown(mouseButton) && !UtilsClass.IsPointerOverUI()) {
+                if (Input.GetMouseButtonDown(mouseButton) && !IsPointerOverUI()) {
                     if (state == 0) {
                         state = 1;
-                        from = UtilsClass.GetMouseWorldPosition();
+                        from = GetMouseWorldPosition();
                     } else {
                         state = 0;
-                        onMouseClickFromTo(from, UtilsClass.GetMouseWorldPosition());
+                        onMouseClickFromTo(from, GetMouseWorldPosition());
                     }
                 }
                 return false; 
@@ -688,7 +689,7 @@ namespace GameUtilities.Utils {
 
 
 
-        [System.Serializable]
+        [Serializable]
         private class JsonDictionary {
             public List<string> keyList = new List<string>();
             public List<string> valueList = new List<string>();
@@ -720,29 +721,29 @@ namespace GameUtilities.Utils {
 
         // Split a string into an array based on a Separator
         public static string[] SplitString(string save, string separator) {
-            return save.Split(new string[] { separator }, System.StringSplitOptions.None);
+            return save.Split(new string[] { separator }, StringSplitOptions.None);
         }
 
 
         // Destroy all children of this parent
         public static void DestroyChildren(Transform parent) {
             foreach (Transform transform in parent)
-                GameObject.Destroy(transform.gameObject);
+                Object.Destroy(transform.gameObject);
         }
 
         // Destroy all children and randomize their names, useful if you want to do a Find() after calling destroy, since they only really get destroyed at the end of the frame
         public static void DestroyChildrenRandomizeNames(Transform parent) {
             foreach (Transform transform in parent) {
                 transform.name = "" + UnityEngine.Random.Range(10000, 99999);
-                GameObject.Destroy(transform.gameObject);
+                Object.Destroy(transform.gameObject);
             }
         }
 
         // Destroy all children except the ones with these names
         public static void DestroyChildren(Transform parent, params string[] ignoreArr) {
             foreach (Transform transform in parent) {
-                if (System.Array.IndexOf(ignoreArr, transform.name) == -1) // Don't ignore
-                    GameObject.Destroy(transform.gameObject);
+                if (Array.IndexOf(ignoreArr, transform.name) == -1) // Don't ignore
+                    Object.Destroy(transform.gameObject);
             }
         }
 
@@ -825,8 +826,8 @@ namespace GameUtilities.Utils {
 
         // Is this position inside the FOV? Top Down Perspective
         public static bool IsPositionInsideFov(Vector3 pos, Vector3 aimDir, Vector3 posTarget, float fov) {
-            int aimAngle = UtilsClass.GetAngleFromVector180(aimDir);
-            int angle = UtilsClass.GetAngleFromVector180(posTarget - pos);
+            int aimAngle = GetAngleFromVector180(aimDir);
+            int angle = GetAngleFromVector180(posTarget - pos);
             int angleDifference = (angle - aimAngle);
             if (angleDifference > 180) angleDifference -= 360;
             if (angleDifference < -180) angleDifference += 360;
@@ -1099,7 +1100,7 @@ namespace GameUtilities.Utils {
             List<Vector3> ret = new List<Vector3>();
             for (int i = 0; i < positionCount; i++) {
                 int angle = i * (360 / positionCount);
-                Vector3 dir = UtilsClass.ApplyRotationToVector(new Vector3(0, 1), angle);
+                Vector3 dir = ApplyRotationToVector(new Vector3(0, 1), angle);
                 Vector3 pos = position + dir * distance;
                 ret.Add(pos);
             }
@@ -1119,7 +1120,7 @@ namespace GameUtilities.Utils {
             List<Vector3> ret = new List<Vector3>();
             for (int i = 0; i < positionCount; i++) {
                 int angle = angleStart + angleIncrease * i;
-                Vector3 dir = UtilsClass.ApplyRotationToVector(direction, angle);
+                Vector3 dir = ApplyRotationToVector(direction, angle);
                 Vector3 pos = position + dir * distance;
                 ret.Add(pos);
             }
@@ -1189,7 +1190,7 @@ namespace GameUtilities.Utils {
 
         public static List<Vector2Int> GetPosXYListOblong(int width, int dropXamount, int increaseDropXamount, Vector3 dir) {
             List<Vector2Int> list = GetPosXYListOblong(width, dropXamount, increaseDropXamount);
-            list = RotatePosXYList(list, UtilsClass.GetAngleFromVector(dir));
+            list = RotatePosXYList(list, GetAngleFromVector(dir));
             return list;
         }
 
@@ -1224,7 +1225,7 @@ namespace GameUtilities.Utils {
             List<Vector2Int> ret = new List<Vector2Int>();
             for (int i = 0; i < list.Count; i++) {
                 Vector2Int posXY = list[i];
-                Vector3 vec = UtilsClass.ApplyRotationToVector(new Vector3(posXY.x, posXY.y), angle);
+                Vector3 vec = ApplyRotationToVector(new Vector3(posXY.x, posXY.y), angle);
                 ret.Add(new Vector2Int(Mathf.RoundToInt(vec.x), Mathf.RoundToInt(vec.y)));
             }
             return ret;
@@ -1236,7 +1237,7 @@ namespace GameUtilities.Utils {
 
 
         public static Transform CloneTransform(Transform transform, string name = null) {
-            Transform clone = GameObject.Instantiate(transform, transform.parent);
+            Transform clone = Object.Instantiate(transform, transform.parent);
 
             if (name != null)
                 clone.name = name;
@@ -1256,7 +1257,7 @@ namespace GameUtilities.Utils {
         }
 
         public static Transform CloneTransform(Transform transform, Transform newParent, string name = null) {
-            Transform clone = GameObject.Instantiate(transform, newParent);
+            Transform clone = Object.Instantiate(transform, newParent);
 
             if (name != null)
                 clone.name = name;
@@ -1321,8 +1322,8 @@ namespace GameUtilities.Utils {
 
         public static void DebugDrawCircle(Vector3 center, float radius, Color color, float duration, int divisions) {
             for (int i = 0; i <= divisions; i++) {
-                Vector3 vec1 = center + UtilsClass.ApplyRotationToVector(new Vector3(0, 1) * radius, (360f / divisions) * i);
-                Vector3 vec2 = center + UtilsClass.ApplyRotationToVector(new Vector3(0, 1) * radius, (360f / divisions) * (i + 1));
+                Vector3 vec1 = center + ApplyRotationToVector(new Vector3(0, 1) * radius, (360f / divisions) * i);
+                Vector3 vec2 = center + ApplyRotationToVector(new Vector3(0, 1) * radius, (360f / divisions) * (i + 1));
                 Debug.DrawLine(vec1, vec2, color, duration);
             }
         }
@@ -1572,14 +1573,14 @@ namespace GameUtilities.Utils {
         public static class ReflectionTools {
 
             public static object CallMethod(string typeName, string methodName) {
-                return System.Type.GetType(typeName).GetMethod(methodName).Invoke(null, null);
+                return Type.GetType(typeName).GetMethod(methodName).Invoke(null, null);
             }
             public static object GetField(string typeName, string fieldName) {
-                System.Reflection.FieldInfo fieldInfo = System.Type.GetType(typeName).GetField(fieldName);
+                System.Reflection.FieldInfo fieldInfo = Type.GetType(typeName).GetField(fieldName);
                 return fieldInfo.GetValue(null);
             }
-            public static System.Type GetNestedType(string typeName, string nestedTypeName) {
-                return System.Type.GetType(typeName).GetNestedType(nestedTypeName);
+            public static Type GetNestedType(string typeName, string nestedTypeName) {
+                return Type.GetType(typeName).GetNestedType(nestedTypeName);
             }
 
         }

@@ -9,7 +9,9 @@
       "VisualHeightCell": 2,
       "Scale": 0.8,
       "RandomPos": true,
-      "HasMargin": true
+      "HasMargin": true,
+      "MaxHP": 1000,
+      "BackpackCapacity": 500
     },
     {
       "Id": 2,
@@ -20,7 +22,9 @@
       "VisualHeightCell": 2,
       "Scale": 1.0,
       "RandomPos": false,
-      "HasMargin": false
+      "HasMargin": false,
+      "MaxHP": 1000,
+      "BackpackCapacity": 0
     },
     {
       "Id": 3,
@@ -31,7 +35,9 @@
       "VisualHeightCell": 1,
       "Scale": 1.0,
       "RandomPos": true,
-      "HasMargin": true
+      "HasMargin": true,
+      "MaxHP": 500,
+      "BackpackCapacity": 500
     }
   ]
 }
