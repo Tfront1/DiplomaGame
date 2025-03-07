@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using GameUtilities.Utils;
 using Items.Resource.BackPack;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -8,105 +8,96 @@ using Vector2 = UnityEngine.Vector2;
 
 public class BuildingManager : MonoBehaviour
 {
-	[SerializeField]
-    public Texture2D texture;
-
-    private MapGrid<BuildingGridObject> _grid;
-    private Building selectedBuilding; // The building selected from the configuration
-
     /// <summary>
     /// How much percent would be minimum offset
     /// </summary>
-    private readonly float _defaultOffset = 0.05f;
+    private static readonly float _defaultOffset = 0.05f;
 
     /// <summary>
     /// How many pixels in a unit of measurement
     /// </summary>
-    private readonly float _unitPerCell = 100.0f;
+    private static readonly float _unitPerCell = 100.0f;
+
+    /// <summary>
+    /// Cache for quick Building lookup by ID to avoid repeated searches
+    /// </summary>
+    private static Dictionary<int, Building> _buildingsCache;
+
+    /// <summary>
+    /// Cache for quick Texture lookup by building ID to avoid repeated searches
+    /// </summary>
+    private static Dictionary<int, Texture2D> _texturesCache;
+
+    /// <summary>
+    /// Cache for sprites to avoid recreating sprites from the same textures
+    /// </summary>
+    private static Dictionary<Texture2D, Sprite> _spriteCache = new();
+
+    /// <summary>
+    /// Cache for building texture configurations to avoid repeated searches
+    /// </summary>
+    private static Dictionary<int, BuildingTexture> _buildingTextureConfigCache;
 
     /// <summary>
     /// Reference to parent GameObject that organizes all Building objects in hierarchy
     /// </summary>
     private static Transform _buildingFolder;
 
-    private static ItemList<BuildingItem> _buildingItemList = new();
+    private static bool _isInitializedCaches = false;
 
-    private void Awake()
-	{
-        _grid = new MapGrid<BuildingGridObject>(
-            MapConfig.MapWidth,
-            MapConfig.MapHeight,
-            MapConfig.CellSize,
-            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-            (g, x, y) => new BuildingGridObject(g, x, y)
-        );
-
-        // Example: Select the first building from the configuration list (you can change this logic)
-        selectedBuilding = BuildingsConfig.Buildings.First();
-    }
-
-	private void Update()
-	{
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            selectedBuilding = BuildingsConfig.Buildings[0];
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            selectedBuilding = BuildingsConfig.Buildings[1];
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            selectedBuilding = BuildingsConfig.Buildings[2];
-        }
-        else if (Input.GetMouseButtonDown(0))
-        {
-            HandleBuildingPlacement();
-        }
-    }
-    private void HandleBuildingPlacement()
+    /// <summary>
+    /// Initializes building caches with data from configs
+    /// </summary>
+    private static void InitializeCaches()
     {
-        var clickPosition = UtilsClass.GetMouseWorldPosition();
-        var gridPosition = GridService.GetCellGridPosition(clickPosition);
+        _buildingsCache = BuildingsConfig.Buildings.ToDictionary(s => s.Id);
+        _texturesCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId, t => t.Texture);
+        _buildingTextureConfigCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId);
+
+        _isInitializedCaches = true; 
+    }
+    
+    public static bool Build(Vector2Int gridPosition, Building building, ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid)
+    {
+        if (!_isInitializedCaches)
+        {
+            InitializeCaches();
+        }
 
         if (!GridService.CanPlaceAtPosition(
                 gridPosition,
-                new Vector2Int(selectedBuilding.WidthCell,
-                    selectedBuilding.HeightCell),
+                new Vector2Int(building.WidthCell,
+                    building.HeightCell),
                 GridRegistry.GetAllGridsList().ToArray()) ||
             !ItemListService.CanPlaceAtPosition(
                 gridPosition,
-                new Vector2Int(selectedBuilding.WidthCell, selectedBuilding.HeightCell),
+                new Vector2Int(building.WidthCell, building.HeightCell),
                 ItemListRegistry.GetAllListsItemsList().ToArray()
             ))
         {
-            UtilsClass.CreateWorldTextPopup(
-                "Cannot build here!",
-                clickPosition,
-                Color.red,
-                1.5f
-            );
-            return;
+            return false;
         }
 
         var buildingGuid = Guid.NewGuid();
-        var newBuildingObject = CreateBuildingGameObject(selectedBuilding.Name);
+        var newBuildingObject = CreateBuildingGameObject(building.Name);
 
-        SetupBuildingSprite(newBuildingObject, texture, selectedBuilding);
-        SetBuildingPosition(newBuildingObject, gridPosition, selectedBuilding, texture);
-        SetupBuildingCollider(newBuildingObject, gridPosition, selectedBuilding, texture);
+        SetupBuildingSprite(newBuildingObject, _buildingTextureConfigCache[building.Id], building);
+        SetBuildingPosition(newBuildingObject, gridPosition, building, _buildingTextureConfigCache[building.Id]);
+        SetupBuildingCollider(newBuildingObject, gridPosition, building, _buildingTextureConfigCache[building.Id]);
 
-        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, selectedBuilding);
-        AddBuildingToList(gridPosition, buildingGuid, _buildingItemList, selectedBuilding, newBuildingObject);
-        GridRegistry.UpsertGrid(_grid);
-        ItemListRegistry.UpsertList(_buildingItemList);
+        PlaceBuildingInGrid(gridPosition, buildingGuid, grid, building);
+        AddBuildingToList(gridPosition, buildingGuid, buildingItemList, building, newBuildingObject);
+        GridRegistry.UpsertGrid(grid);
+        ItemListRegistry.UpsertList(buildingItemList);
+
+        return true;
     }
 
     /// <summary>
     /// Gets or creates a parent folder for buildings
     /// </summary>
     /// <returns>Transform of the buildings folder</returns>
-    private Transform GetBuildingsFolder()
+    private static Transform GetBuildingsFolder()
     {
         if (_buildingFolder != null) return _buildingFolder;
         var folderGO = GameObject.Find("Buildings");
@@ -123,7 +114,7 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     /// <param name="buildingName">Name for the new building</param>
     /// <returns>Created building GameObject</returns>
-    private GameObject CreateBuildingGameObject(string buildingName)
+    private static GameObject CreateBuildingGameObject(string buildingName)
     {
         var building = new GameObject(buildingName);
         building.transform.SetParent(GetBuildingsFolder());
@@ -134,19 +125,19 @@ public class BuildingManager : MonoBehaviour
     /// Sets up sprite renderer and scale for the building
     /// </summary>
     /// <param name="buildingObject">Target building object</param>
-    /// <param name="spriteTexture">Texture for the sprite</param>
+    /// <param name="buildingTexture">Texture for the sprite</param>
     /// <param name="building">Building data</param>
-    private void SetupBuildingSprite(GameObject buildingObject, Texture2D spriteTexture, Building building)
+    private static void SetupBuildingSprite(GameObject buildingObject, BuildingTexture buildingTexture, Building building)
     {
         var renderer = buildingObject.AddComponent<SpriteRenderer>();
         var newBuildingSprite = Sprite.Create(
-            spriteTexture,
-            new Rect(0.0f, 0.0f, spriteTexture.width, spriteTexture.height),
+            buildingTexture.Texture,
+            new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
             Vector2.zero
         );
         renderer.sprite = newBuildingSprite;
 
-        var (finalScale, _) = CalculateBuildingScale(building, spriteTexture);
+        var (finalScale, _) = CalculateBuildingScale(building, buildingTexture);
         buildingObject.transform.localScale = new Vector3(finalScale, finalScale, 1);
     }
 
@@ -154,9 +145,9 @@ public class BuildingManager : MonoBehaviour
     /// Calculates building scale and size with margins
     /// </summary>
     /// <param name="building">Building to calculate for</param>
-    /// <param name="spriteTexture">Building's texture</param>
+    /// <param name="buildingTexture">Building's texture</param>
     /// <returns>Scale and size vector</returns>
-    private (float finalScale, Vector2 objectSize) CalculateBuildingScale(Building building, Texture2D spriteTexture)
+    private static (float finalScale, Vector2 objectSize) CalculateBuildingScale(Building building, BuildingTexture buildingTexture)
     {
         var margin = 0.0f;
         if (building.HasMargin)
@@ -164,17 +155,17 @@ public class BuildingManager : MonoBehaviour
             margin = MapConfig.CellSize * _defaultOffset;
         }
 
-        var textureUnitWidth = spriteTexture.width / _unitPerCell;
-        var textureUnitHeight = spriteTexture.height / _unitPerCell;
+        var textureUnitWidth = buildingTexture.Texture.width / _unitPerCell;
+        var textureUnitHeight = buildingTexture.Texture.height / _unitPerCell;
 
-        var totalVisualWidthInUnits = MapConfig.CellSize * building.VisualWidthCell - (margin * 2);
-        var totalVisualHeightInUnits = MapConfig.CellSize * building.VisualHeightCell - (margin * 2);
+        var totalVisualWidthInUnits = MapConfig.CellSize * buildingTexture.VisualWidthCell - (margin * 2);
+        var totalVisualHeightInUnits = MapConfig.CellSize * buildingTexture.VisualHeightCell - (margin * 2);
 
         var scaleToFitCellX = totalVisualWidthInUnits / textureUnitWidth;
         var scaleToFitCellY = totalVisualHeightInUnits / textureUnitHeight;
 
         var baseScale = Mathf.Min(scaleToFitCellX, scaleToFitCellY);
-        var finalScale = baseScale * building.Scale;
+        var finalScale = baseScale * buildingTexture.Scale;
 
         return (finalScale, new Vector2(textureUnitWidth * finalScale, textureUnitHeight * finalScale));
     }
@@ -186,7 +177,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingId">Building's unique ID</param>
     /// <param name="grid">Target grid</param>
     /// <param name="building">Building to place</param>
-    private void PlaceBuildingInGrid(Vector2Int gridPosition, Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
+    private static void PlaceBuildingInGrid(Vector2Int gridPosition, Guid buildingId, MapGrid<BuildingGridObject> grid, Building building)
     {
         for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
         {
@@ -217,13 +208,13 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingObject">Building to position</param>
     /// <param name="gridPosition">Grid position</param>
     /// <param name="building">Building data</param>
-    /// <param name="spriteTexture">Building's texture</param>
-    private void SetBuildingPosition(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
+    /// <param name="buildingTexture">Building's texture</param>
+    private static void SetBuildingPosition(GameObject buildingObject, Vector2Int gridPosition, Building building, BuildingTexture buildingTexture)
     {
         var worldPosition = GridService.GetWorldPosition(gridPosition.x, gridPosition.y);
-        var (_, objectSize) = CalculateBuildingScale(building, spriteTexture);
+        var (_, objectSize) = CalculateBuildingScale(building, buildingTexture);
 
-        var offset = CalculateOffset(objectSize, building);
+        var offset = CalculateOffset(objectSize, building, buildingTexture);
         worldPosition.x += offset.x;
         worldPosition.y += offset.y;
         worldPosition.z = CalculateZOffset(worldPosition);
@@ -236,8 +227,9 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     /// <param name="objectSize">Building's size</param>
     /// <param name="building">Building data</param>
+    /// <param name="buildingTexture">Building's texture</param>
     /// <returns>Offset vector</returns>
-    private Vector2 CalculateOffset(Vector2 objectSize, Building building)
+    private static Vector2 CalculateOffset(Vector2 objectSize, Building building, BuildingTexture buildingTexture)
     {
         var margin = 0.0f;
         if (building.HasMargin)
@@ -245,13 +237,13 @@ public class BuildingManager : MonoBehaviour
             margin = MapConfig.CellSize * _defaultOffset;
         }
 
-        var availableWidth = (MapConfig.CellSize * building.VisualWidthCell) - (margin * 2);
-        var availableHeight = (MapConfig.CellSize * building.VisualHeightCell) - (margin * 2);
+        var availableWidth = (MapConfig.CellSize * buildingTexture.VisualWidthCell) - (margin * 2);
+        var availableHeight = (MapConfig.CellSize * buildingTexture.VisualHeightCell) - (margin * 2);
 
         var defaultOffsetX = margin + (availableWidth - objectSize.x) / 2;
         var defaultOffsetY = margin + (availableHeight - objectSize.y) / 2;
 
-        if (!building.RandomPos) return new Vector2(defaultOffsetX, defaultOffsetY);
+        if (!buildingTexture.RandomPos) return new Vector2(defaultOffsetX, defaultOffsetY);
 
         var maxOffsetX = availableWidth - objectSize.x;
         var maxOffsetY = availableHeight - objectSize.y;
@@ -267,7 +259,7 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     /// <param name="worldPosition">World position</param>
     /// <returns>Z coordinate offset</returns>
-    private float CalculateZOffset(Vector2 worldPosition)
+    private static float CalculateZOffset(Vector2 worldPosition)
     {
         return (MapConfig.MapHeight * MapConfig.CellSize - worldPosition.y) * -0.001f;
     }
@@ -278,11 +270,11 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingObject">Target building</param>
     /// <param name="gridPosition">Grid position</param>
     /// <param name="building">Building data</param>
-    /// <param name="spriteTexture">Building's texture</param>
-    private void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, Texture2D spriteTexture)
+    /// <param name="buildingTexture">Building's texture</param>
+    private static void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, BuildingTexture buildingTexture)
     {
         var collider = buildingObject.AddComponent<BoxCollider2D>();
-        var (finalScale, _) = CalculateBuildingScale(building, spriteTexture);
+        var (finalScale, _) = CalculateBuildingScale(building, buildingTexture);
 
         float colliderWidth, colliderHeight;
 
@@ -316,7 +308,7 @@ public class BuildingManager : MonoBehaviour
     /// <param name="finalScale">Building's scale</param>
     /// <param name="building">Building data</param>
     /// <returns>Collider offset vector</returns>
-    private Vector2 CalculateColliderOffset(Vector3 buildingPosition, Vector3 colliderPosition, float finalScale, Building building)
+    private static Vector2 CalculateColliderOffset(Vector3 buildingPosition, Vector3 colliderPosition, float finalScale, Building building)
     {
         var offset = new Vector2(buildingPosition.x - colliderPosition.x, buildingPosition.y - colliderPosition.y);
         return new Vector2(

@@ -55,8 +55,6 @@ public static partial class ConfigLoader
             throw new System.Exception($"Supply textures Id repeats: {repeatedIds}");
         }
 
-        SupplyTexturesConfig.SupplyTexturesSprite = supplyTexturesDto.TilemapSprites;
-
         var suppliesIdErrors = ValidateSupplies(supplyTexturesDto);
 
         if (suppliesIdErrors != null)

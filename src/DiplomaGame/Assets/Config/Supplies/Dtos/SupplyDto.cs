@@ -5,7 +5,6 @@ public class SupplyDto
 	public string Name;
 	public int ResourceId;
     public int Ratio;
-    public string Texture;
     public int WidthCell;
     public int HeightCell;
 }

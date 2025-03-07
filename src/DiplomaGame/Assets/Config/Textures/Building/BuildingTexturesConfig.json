@@ -1,0 +1,33 @@
+﻿{
+  "TexturesPath": "Assets/Textures/Building/",
+  "DefaultTextureSize": 64,
+  "TilemapSprites": [
+    {
+      "Id": 1,
+      "BuildingId": 1,
+      "TextureFileName": "B1.png",
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 1,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 2,
+      "BuildingId": 2,
+      "TextureFileName": "B2.png",
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 3,
+      "BuildingId": 3,
+      "TextureFileName": "B3.png",
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 2,
+      "Scale": 0.8,
+      "RandomPos": true
+    }
+  ]
+}

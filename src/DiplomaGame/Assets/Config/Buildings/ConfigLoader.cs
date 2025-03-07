@@ -45,10 +45,6 @@ public static partial class ConfigLoader
 			Name = x.Name,
             WidthCell = x.WidthCell,
 			HeightCell = x.HeightCell,
-            VisualWidthCell = x.VisualWidthCell,
-			VisualHeightCell = x.VisualHeightCell,
-			Scale = x.Scale,
-			RandomPos = x.RandomPos,
 			HasMargin = x.HasMargin,
 			MaxHP = x.MaxHP,
 			BackpackCapacity = x.BackpackCapacity

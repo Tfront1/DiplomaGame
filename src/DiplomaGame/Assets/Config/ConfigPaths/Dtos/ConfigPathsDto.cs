@@ -5,6 +5,7 @@ public class ConfigPathsDto
 	public string MapConfigPath;
 	public string TerrainTexturesPath;
     public string SupplyTexturesPath;
+    public string BuildingTexturesPath;
     public string InputSystemPath;
 	public string BiomesConfigPath;
     public string SuppliesConfigPath;

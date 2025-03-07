@@ -5,10 +5,6 @@
       "Name": "B1",
       "WidthCell": 1,
       "HeightCell": 1,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 2,
-      "Scale": 0.8,
-      "RandomPos": true,
       "HasMargin": true,
       "MaxHP": 1000,
       "BackpackCapacity": 500
@@ -16,12 +12,8 @@
     {
       "Id": 2,
       "Name": "B2",
-      "WidthCell": 1,
+      "WidthCell": 2,
       "HeightCell": 2,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 2,
-      "Scale": 1.0,
-      "RandomPos": false,
       "HasMargin": false,
       "MaxHP": 1000,
       "BackpackCapacity": 0
@@ -31,10 +23,6 @@
       "Name": "B3",
       "WidthCell": 1,
       "HeightCell": 1,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 1,
-      "Scale": 1.0,
-      "RandomPos": true,
       "HasMargin": true,
       "MaxHP": 500,
       "BackpackCapacity": 500

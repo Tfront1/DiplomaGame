@@ -44,16 +44,20 @@ namespace Supplies
         /// </summary>
         private static Transform _suppliesFolder;
 
+        private static bool _isInitializedCaches = false;
+
         private static Random _random = new();
 
         /// <summary>
         /// Initializes supply caches with data from configs
         /// </summary>
-        public static void InitializeCaches()
+        private static void InitializeCaches()
         {
             _suppliesCache = SuppliesConfig.Supplies.ToDictionary(s => s.Id);
             _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
             _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
+
+            _isInitializedCaches = true;
         }
 
         /// <summary>
@@ -71,8 +75,11 @@ namespace Supplies
                 (g, x, y) => new SupplyGridObject(g, x, y)
             );
 
-            InitializeCaches();
-            
+            if (!_isInitializedCaches)
+            {
+                InitializeCaches();
+            }
+
             foreach (var (position, supplyId) in supplyInts)
             {
                 var x = position.Item1;
