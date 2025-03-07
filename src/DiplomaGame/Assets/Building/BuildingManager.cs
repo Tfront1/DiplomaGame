@@ -17,22 +17,7 @@ public class BuildingManager : MonoBehaviour
     /// How many pixels in a unit of measurement
     /// </summary>
     private static readonly float _unitPerCell = 100.0f;
-
-    /// <summary>
-    /// Cache for quick Building lookup by ID to avoid repeated searches
-    /// </summary>
-    private static Dictionary<int, Building> _buildingsCache;
-
-    /// <summary>
-    /// Cache for quick Texture lookup by building ID to avoid repeated searches
-    /// </summary>
-    private static Dictionary<int, Texture2D> _texturesCache;
-
-    /// <summary>
-    /// Cache for sprites to avoid recreating sprites from the same textures
-    /// </summary>
-    private static Dictionary<Texture2D, Sprite> _spriteCache = new();
-
+    
     /// <summary>
     /// Cache for building texture configurations to avoid repeated searches
     /// </summary>
@@ -50,8 +35,6 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     private static void InitializeCaches()
     {
-        _buildingsCache = BuildingsConfig.Buildings.ToDictionary(s => s.Id);
-        _texturesCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId, t => t.Texture);
         _buildingTextureConfigCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId);
 
         _isInitializedCaches = true; 

@@ -71,6 +71,8 @@ public class MoveUnitAction : BaseUnitAction
 
             if (IsStopped)
             {
+                ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+                CompleteAction();
                 yield break;
             }
 
@@ -90,6 +92,7 @@ public class MoveUnitAction : BaseUnitAction
                 if (pathCopy.Count <= 1)
                 {
                     Debug.Log($"Unit {_unit.Unit.Name} cannot find path to {_targetPosition}");
+                    ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
                     CompleteAction();
                     yield break;
                 }
@@ -122,6 +125,8 @@ public class MoveUnitAction : BaseUnitAction
 
                 if (IsStopped)
                 {
+                    ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+                    CompleteAction();
                     yield break;
                 }
 

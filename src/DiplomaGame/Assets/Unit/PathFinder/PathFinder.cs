@@ -160,6 +160,107 @@ public class PathFinder
 
         return null;
     }
+
+    public Vector2? FindNearestAccessiblePoint(Vector2 characterPosition, Vector2 targetPoint, float maxDistance = 2.0f, int pointsPerEdge = 5)
+    {
+        // Перевіряємо, чи цільова точка вже доступна
+        if (!Physics2D.OverlapPoint(targetPoint, _obstacleMask))
+        {
+            return targetPoint;
+        }
+
+        // Отримуємо колайдер, на який вказав користувач
+        var targetCollider = Physics2D.OverlapPoint(targetPoint, _obstacleMask);
+        if (targetCollider == null)
+        {
+            return null;
+        }
+
+        // Створюємо список потенційних точок
+        var candidatePoints = new List<CandidatePoint>();
+
+        // Отримуємо межі колайдера
+        var bounds = targetCollider.bounds;
+
+        // Сгенеруємо точки навколо колайдера з поступовим відступом
+        for (var offset = _avoidanceOffset; offset <= maxDistance; offset += maxDistance / 3)
+        {
+            // Межі колайдера з відступом
+            var minX = bounds.min.x - offset;
+            var maxX = bounds.max.x + offset;
+            var minY = bounds.min.y - offset;
+            var maxY = bounds.max.y + offset;
+
+            // Список всіх точок для цього рівня відступу
+            var edgePoints = new List<Vector2>();
+
+            // Нижня сторона
+            for (var i = 0; i <= pointsPerEdge; i++)
+            {
+                var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
+                edgePoints.Add(new Vector2(x, minY));
+            }
+
+            // Верхня сторона
+            for (var i = 0; i <= pointsPerEdge; i++)
+            {
+                var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
+                edgePoints.Add(new Vector2(x, maxY));
+            }
+
+            // Ліва сторона
+            for (var i = 1; i < pointsPerEdge; i++)
+            {
+                var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
+                edgePoints.Add(new Vector2(minX, y));
+            }
+
+            // Права сторона
+            for (var i = 1; i < pointsPerEdge; i++)
+            {
+                var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
+                edgePoints.Add(new Vector2(maxX, y));
+            }
+
+            // Перевіряємо кожну точку
+            foreach (var point in edgePoints)
+            {
+                // Перевіряємо, чи точка доступна (не в колізії)
+                if (!Physics2D.OverlapPoint(point, _obstacleMask) && GridService.IsWorldPositionInMapBounds(point))
+                {
+                    // Перевіряємо, чи є прямий шлях від персонажа до точки
+                    if (!Physics2D.Raycast(characterPosition, point - characterPosition, Vector2.Distance(characterPosition, point), _obstacleMask))
+                    {
+                        // Додаємо точку з пріоритетом на основі відстаней
+                        var distToTarget = Vector2.Distance(point, targetPoint);
+                        var distToChar = Vector2.Distance(point, characterPosition);
+
+                        // Комбінована оцінка (менше краще)
+                        var score = distToTarget * 0.7f + distToChar * 0.3f;
+
+                        candidatePoints.Add(new CandidatePoint(point, score));
+                    }
+                }
+            }
+
+            // Якщо на цьому рівні відступу знайдено достатньо точок, можемо зупинити пошук
+            if (candidatePoints.Count >= pointsPerEdge)
+            {
+                break;
+            }
+        }
+
+        // Якщо не знайдено жодної точки, повертаємо null
+        if (candidatePoints.Count == 0)
+        {
+            return null;
+        }
+
+        // Сортуємо точки за оцінкою і повертаємо найкращу
+        candidatePoints.Sort((a, b) => a.Score.CompareTo(b.Score));
+        return candidatePoints[0].Position;
+    }
+
     private static void InsertOrdered(List<NodeWithPriority> list, NodeWithPriority node)
     {
         var i = 0;
@@ -285,6 +386,18 @@ public class PathFinder
             Position = position;
             GScore = gScore;
             FScore = fScore;
+        }
+    }
+
+    private class CandidatePoint
+    {
+        public Vector2 Position;
+        public float Score;
+
+        public CandidatePoint(Vector2 position, float score)
+        {
+            Position = position;
+            Score = score;
         }
     }
 }

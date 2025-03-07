@@ -26,21 +26,26 @@ public class TestAction: MonoBehaviour
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
+            ItemListRegistry.ItemChanged += (type, action, item) => {
+                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
+            };
             var moveAction = new MoveUnitAction(_unitItem, _end);
             ActionManager.ExecuteImmediately(moveAction);
             FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
 
-            ItemListRegistry.ItemChanged += (type, action, item) => {
-                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-                ActionManager.InterruptCurrentAction(_unitItem);
-                moveAction = new MoveUnitAction(_unitItem, _end);
-                ActionManager.ExecuteImmediately(moveAction);
-            };
+            
         }
         //Move to mouse in query
         else if (Input.GetKeyDown(KeyCode.W))
         {
             _end = UtilsClass.GetMouseWorldPosition();
+
+            var endpoint = PathFinder.Instance.FindNearestAccessiblePoint(new Vector2(_unitItem.X, _unitItem.Y), _end);
+
+            if (endpoint.HasValue)
+            {
+                _end = endpoint.Value;
+            }
 
             var moveAction = new MoveUnitAction(_unitItem, _end);
             ActionManager.QueueAction(moveAction);
@@ -48,9 +53,6 @@ public class TestAction: MonoBehaviour
 
             ItemListRegistry.ItemChanged += (type, action, item) => {
                 FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-                ActionManager.InterruptCurrentAction(_unitItem);
-                moveAction = new MoveUnitAction(_unitItem, _end);
-                ActionManager.QueueAction(moveAction);
             };
         }
         //Spawn unit
