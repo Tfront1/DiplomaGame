@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Assets.Items.Interfaces;
 
@@ -7,11 +8,13 @@ namespace Items.Resource.BackPack
     public class Backpack
     {
         private List<BackpackItem> _items;
-        private readonly int _maxCapacity;
+        private int _maxCapacity;
         private int _currentCapacity;
 
         public int CurrentCapacity => _currentCapacity;
         public int MaxCapacity => _maxCapacity;
+
+        public event EventHandler<BackpackChangedEventArgs> BackpackChanged;
 
         public Backpack(int maxCapacity)
         {
@@ -40,6 +43,9 @@ namespace Items.Resource.BackPack
             }
 
             _currentCapacity += quantity;
+
+            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
+
             return true;
         }
 
@@ -61,6 +67,8 @@ namespace Items.Resource.BackPack
 
             if (existingItem.Quantity == 0)
                 _items.Remove(existingItem);
+
+            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
 
             return true;
         }
@@ -113,6 +121,29 @@ namespace Items.Resource.BackPack
         {
             Clear();
             return AddItem(backpackItem, MaxCapacity);
+        }
+
+        public void SetMaxCapacity(int maxCapacity)
+        {
+            _maxCapacity = maxCapacity;
+            OnBackpackChanged(new BackpackChangedEventArgs(null, 0));
+        }
+
+        public class BackpackChangedEventArgs : EventArgs
+        {
+            public IBackpackItem Item { get; }
+            public int Quantity { get; }
+
+            public BackpackChangedEventArgs(IBackpackItem item, int quantity)
+            {
+                Item = item;
+                Quantity = quantity;
+            }
+        }
+
+        protected virtual void OnBackpackChanged(BackpackChangedEventArgs e)
+        {
+            BackpackChanged?.Invoke(this, e);
         }
     }
 }

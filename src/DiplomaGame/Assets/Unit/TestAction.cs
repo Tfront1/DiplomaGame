@@ -114,7 +114,7 @@ public class TestAction: MonoBehaviour
         unitGameObject.transform.position = (Vector2)clickPosition;
         unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
 
-        var unitItem = new UnitItem(clickPosition, new Guid(), unit, unitGameObject);
+        var unitItem = new UnitItem(clickPosition, Guid.NewGuid(), unit, unitGameObject);
         return unitItem;
     }
 

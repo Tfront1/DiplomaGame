@@ -1,5 +1,6 @@
 ﻿using System;
 using Items.Resource.BackPack;
+using Town;
 using UnityEngine;
 
 public class UnitItem : IUnit
@@ -12,7 +13,8 @@ public class UnitItem : IUnit
     public UnitStats Stats { get; }
     public UnitSkills Skills { get; }
     public Backpack UnitBackpack { get;}
-
+    public event EventHandler<UnitDiedEventArgs> OnDied;
+    public TownItem HomeTown { get; set; }
     public UnitItem(float x, float y, Guid guid, Unit unit, GameObject unitGameObject)
     {
         Guid = guid;
@@ -76,8 +78,35 @@ public class UnitItem : IUnit
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
     }
 
+    public void Die()
+    {
+        TickRateSystem.Instance.OnTick -= Stats.Update;
+        TickRateSystem.Instance.OnTick -= Skills.Update;
+
+        OnUnitDied();
+
+        UnityEngine.Object.Destroy(UnitGameObject);
+    }
+
+    protected virtual void OnUnitDied()
+    {
+        var args = new UnitDiedEventArgs(this);
+
+        OnDied?.Invoke(this, args);
+    }
+
     public Guid GetGuid()
     {
         return Guid;
+    }
+
+    public class UnitDiedEventArgs : EventArgs
+    {
+        public UnitItem Unit { get; }
+
+        public UnitDiedEventArgs(UnitItem unit)
+        {
+            Unit = unit;
+        }
     }
 }
