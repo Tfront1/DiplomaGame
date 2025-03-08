@@ -161,106 +161,103 @@ public class PathFinder
         return null;
     }
 
-    public Vector2? FindNearestAccessiblePoint(Vector2 characterPosition, Vector2 targetPoint, float maxDistance = 2.0f, int pointsPerEdge = 5)
+    public List<Vector2> FindNearestAccessiblePath(Vector2 characterPosition, Vector2 targetPoint, int pointsPerEdge = 2)
     {
-        // Перевіряємо, чи цільова точка вже доступна
         if (!Physics2D.OverlapPoint(targetPoint, _obstacleMask))
         {
-            return targetPoint;
+            return FindPath(characterPosition, targetPoint);
         }
 
-        // Отримуємо колайдер, на який вказав користувач
         var targetCollider = Physics2D.OverlapPoint(targetPoint, _obstacleMask);
         if (targetCollider == null)
         {
-            return null;
+            return FindPath(characterPosition, targetPoint);
         }
 
-        // Створюємо список потенційних точок
-        var candidatePoints = new List<CandidatePoint>();
-
-        // Отримуємо межі колайдера
         var bounds = targetCollider.bounds;
+        var minX = bounds.min.x - _avoidanceOffset;
+        var maxX = bounds.max.x + _avoidanceOffset;
+        var minY = bounds.min.y - _avoidanceOffset;
+        var maxY = bounds.max.y + _avoidanceOffset;
 
-        // Сгенеруємо точки навколо колайдера з поступовим відступом
-        for (var offset = _avoidanceOffset; offset <= maxDistance; offset += maxDistance / 3)
+        var edgePoints = new List<Vector2>();
+        for (var i = 0; i <= pointsPerEdge; i++)
         {
-            // Межі колайдера з відступом
-            var minX = bounds.min.x - offset;
-            var maxX = bounds.max.x + offset;
-            var minY = bounds.min.y - offset;
-            var maxY = bounds.max.y + offset;
+            var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
+            edgePoints.Add(new Vector2(x, minY));
+        }
+        for (var i = 0; i <= pointsPerEdge; i++)
+        {
+            var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
+            edgePoints.Add(new Vector2(x, maxY));
+        }
+        for (var i = 1; i < pointsPerEdge; i++)
+        {
+            var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
+            edgePoints.Add(new Vector2(minX, y));
+        }
+        for (var i = 1; i < pointsPerEdge; i++)
+        {
+            var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
+            edgePoints.Add(new Vector2(maxX, y));
+        }
 
-            // Список всіх точок для цього рівня відступу
-            var edgePoints = new List<Vector2>();
+        var candidatePoints = new List<(Vector2 point, float score)>();
 
-            // Нижня сторона
-            for (var i = 0; i <= pointsPerEdge; i++)
+        foreach (var point in edgePoints)
+        {
+            if (!Physics2D.OverlapPoint(point, _obstacleMask) && GridService.IsWorldPositionInMapBounds(point))
             {
-                var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
-                edgePoints.Add(new Vector2(x, minY));
-            }
+                var hasDirectLineOfSight = !Physics2D.Linecast(characterPosition, point, _obstacleMask);
 
-            // Верхня сторона
-            for (var i = 0; i <= pointsPerEdge; i++)
-            {
-                var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
-                edgePoints.Add(new Vector2(x, maxY));
-            }
+                var distanceScore = Vector2.Distance(characterPosition, point);
 
-            // Ліва сторона
-            for (var i = 1; i < pointsPerEdge; i++)
-            {
-                var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
-                edgePoints.Add(new Vector2(minX, y));
-            }
+                var distanceToTarget = Vector2.Distance(point, targetPoint);
 
-            // Права сторона
-            for (var i = 1; i < pointsPerEdge; i++)
-            {
-                var y = Mathf.Lerp(minY, maxY, i / (float)pointsPerEdge);
-                edgePoints.Add(new Vector2(maxX, y));
-            }
+                var obstacleScore = EstimatePathComplexity(characterPosition, point);
 
-            // Перевіряємо кожну точку
-            foreach (var point in edgePoints)
-            {
-                // Перевіряємо, чи точка доступна (не в колізії)
-                if (!Physics2D.OverlapPoint(point, _obstacleMask) && GridService.IsWorldPositionInMapBounds(point))
+                var totalScore = distanceScore + obstacleScore * 3f + distanceToTarget * 0.5f;
+
+                if (hasDirectLineOfSight)
                 {
-                    // Перевіряємо, чи є прямий шлях від персонажа до точки
-                    if (!Physics2D.Raycast(characterPosition, point - characterPosition, Vector2.Distance(characterPosition, point), _obstacleMask))
-                    {
-                        // Додаємо точку з пріоритетом на основі відстаней
-                        var distToTarget = Vector2.Distance(point, targetPoint);
-                        var distToChar = Vector2.Distance(point, characterPosition);
-
-                        // Комбінована оцінка (менше краще)
-                        var score = distToTarget * 0.7f + distToChar * 0.3f;
-
-                        candidatePoints.Add(new CandidatePoint(point, score));
-                    }
+                    totalScore -= 50f;
                 }
-            }
 
-            // Якщо на цьому рівні відступу знайдено достатньо точок, можемо зупинити пошук
-            if (candidatePoints.Count >= pointsPerEdge)
-            {
-                break;
+                candidatePoints.Add((point, totalScore));
             }
         }
 
-        // Якщо не знайдено жодної точки, повертаємо null
-        if (candidatePoints.Count == 0)
+        candidatePoints.Sort((a, b) => a.score.CompareTo(b.score));
+
+        var maxPointsToCheck = Mathf.Min(3, candidatePoints.Count);
+
+        for (var i = 0; i < maxPointsToCheck; i++)
         {
-            return null;
+            if (i >= candidatePoints.Count)
+                break;
+
+            var point = candidatePoints[i].point;
+            var path = FindPath(characterPosition, point);
+
+            if (path != null && path.Count > 0)
+            {
+                return path;
+            }
         }
 
-        // Сортуємо точки за оцінкою і повертаємо найкращу
-        candidatePoints.Sort((a, b) => a.Score.CompareTo(b.Score));
-        return candidatePoints[0].Position;
-    }
+        for (var i = maxPointsToCheck; i < candidatePoints.Count; i++)
+        {
+            var point = candidatePoints[i].point;
+            var path = FindPath(characterPosition, point);
 
+            if (path != null && path.Count > 0)
+            {
+                return path;
+            }
+        }
+
+        return null;
+    }
     private static void InsertOrdered(List<NodeWithPriority> list, NodeWithPriority node)
     {
         var i = 0;
@@ -375,6 +372,58 @@ public class PathFinder
         return validNeighbors.ToList();
     }
 
+    private static float CalculatePathLength(List<Vector2> path)
+    {
+        var length = 0f;
+
+        for (var i = 0; i < path.Count - 1; i++)
+        {
+            length += Vector2.Distance(path[i], path[i + 1]);
+        }
+
+        return length;
+    }
+
+    private static float EstimatePathComplexity(Vector2 start, Vector2 end)
+    {
+        var complexity = 0f;
+        var direction = end - start;
+        var distance = direction.magnitude;
+        direction.Normalize();
+
+        var checkPoints = Mathf.CeilToInt(distance / 0.5f);
+
+        var previousWasObstacle = false;
+        var obstacleCount = 0;
+
+        for (var i = 1; i < checkPoints; i++)
+        {
+            var checkPoint = start + direction * (i * 0.5f);
+            bool isObstacle = Physics2D.OverlapPoint(checkPoint, _obstacleMask);
+
+            if (isObstacle)
+            {
+                obstacleCount++;
+
+                if (!previousWasObstacle)
+                {
+                    complexity += 10f;
+                }
+
+                complexity += 2f;
+            }
+
+            previousWasObstacle = isObstacle;
+        }
+
+        if (obstacleCount > checkPoints * 0.3f)
+        {
+            complexity += 30f;
+        }
+
+        return complexity;
+    }
+
     private class NodeWithPriority
     {
         public Vector2 Position;
@@ -386,18 +435,6 @@ public class PathFinder
             Position = position;
             GScore = gScore;
             FScore = fScore;
-        }
-    }
-
-    private class CandidatePoint
-    {
-        public Vector2 Position;
-        public float Score;
-
-        public CandidatePoint(Vector2 position, float score)
-        {
-            Position = position;
-            Score = score;
         }
     }
 }

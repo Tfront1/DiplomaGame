@@ -10,11 +10,13 @@ public class MoveUnitAction : BaseUnitAction
     private Vector2 _targetPosition;
     private float _moveSpeed;
     private bool _toRecalculatePath = false;
+    private bool _moveCloseToObject;
 
-    public MoveUnitAction(UnitItem unit, Vector2 targetPosition) : base(unit)
+    public MoveUnitAction(UnitItem unit, Vector2 targetPosition, bool moveCloseToObject = false) : base(unit)
     {
         _targetPosition = targetPosition;
         _moveSpeed = unit.Unit.Speed;
+        _moveCloseToObject = moveCloseToObject;
     }
 
     public override bool CanExecute()
@@ -31,7 +33,27 @@ public class MoveUnitAction : BaseUnitAction
             return;
         }
 
-        var movePath = PathFinder.Instance.FindPath(new Vector2(_unit.X, _unit.Y), _targetPosition);
+        List<Vector2> movePath;
+
+        var start = Time.realtimeSinceStartup;
+
+        if (_moveCloseToObject)
+        {
+            movePath = PathFinder.Instance.FindNearestAccessiblePath(new Vector2(_unit.X, _unit.Y),
+                _targetPosition);
+            if (movePath != null && movePath.Count > 0)
+            {
+                _targetPosition = movePath.Last();
+            }
+        }
+        else
+        {
+            movePath = PathFinder.Instance.FindPath(new Vector2(_unit.X, _unit.Y), _targetPosition);
+        }
+
+        var end = Time.realtimeSinceStartup;
+        Debug.Log($"Path finder: {(end - start) * 1000:F2}ms");
+
 
         if (movePath != null && movePath.Count > 0)
         {

@@ -40,14 +40,7 @@ public class TestAction: MonoBehaviour
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
-            var endpoint = PathFinder.Instance.FindNearestAccessiblePoint(new Vector2(_unitItem.X, _unitItem.Y), _end);
-
-            if (endpoint.HasValue)
-            {
-                _end = endpoint.Value;
-            }
-
-            var moveAction = new MoveUnitAction(_unitItem, _end);
+            var moveAction = new MoveUnitAction(_unitItem, _end, true);
             ActionManager.QueueAction(moveAction);
             FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
 
