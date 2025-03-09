@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-public class TestAction: MonoBehaviour
+public class TestAction : MonoBehaviour
 {
     public static List<Vector2> _path;
 
@@ -130,8 +130,6 @@ public class TestAction: MonoBehaviour
             //var randomX = clickPosition.x;
             //var randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
-
-            unitGameObject.AddComponent<CircleCollider2D>();
 
             units.Add(new UnitItem(randomPosition, Guid.NewGuid(), unit, unitGameObject));
         }

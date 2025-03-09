@@ -15,7 +15,7 @@ public class MoveUnitAction : BaseUnitAction
     public MoveUnitAction(UnitItem unit, Vector2 targetPosition, bool moveCloseToObject = false) : base(unit)
     {
         _targetPosition = targetPosition;
-        _moveSpeed = unit.Unit.Speed;
+        _moveSpeed = _unit.Unit.Speed;
         _moveCloseToObject = moveCloseToObject;
     }
 
@@ -48,6 +48,8 @@ public class MoveUnitAction : BaseUnitAction
             _idAction,
             action
         );
+
+        _unit.DisableCollider();
     }
 
     private void OnPathFound(Guid id, List<Vector2> movePath)
@@ -99,7 +101,6 @@ public class MoveUnitAction : BaseUnitAction
 
             if (IsStopped)
             {
-                ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
                 CompleteAction();
                 yield break;
             }
@@ -125,7 +126,6 @@ public class MoveUnitAction : BaseUnitAction
                 if (pathCopy.Count <= 1)
                 {
                     Debug.Log($"Unit {_unit.Unit.Name} cannot find path to {_targetPosition}");
-                    ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
                     CompleteAction();
                     yield break;
                 }
@@ -157,7 +157,6 @@ public class MoveUnitAction : BaseUnitAction
 
                 if (IsStopped)
                 {
-                    ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
                     CompleteAction();
                     yield break;
                 }
@@ -190,7 +189,14 @@ public class MoveUnitAction : BaseUnitAction
         }
 
         Debug.Log($"Unit {_unit.Unit.Name} completed movement to {_targetPosition}");
-        ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+        
         CompleteAction();
+    }
+
+    protected override void CompleteAction()
+    {
+        ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+        _unit.EnableCollider();
+        base.CompleteAction();
     }
 }

@@ -28,7 +28,7 @@ public abstract class BaseUnitAction : IUnitAction
         return _unit;
     }
 
-    protected void CompleteAction()
+    protected virtual void CompleteAction()
     {
         OnActionCompleted?.Invoke(this);
     }

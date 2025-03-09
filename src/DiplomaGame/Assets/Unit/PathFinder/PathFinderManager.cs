@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public static class PathFinderManager
@@ -102,8 +101,11 @@ public static class PathFinderManager
                 result = PathFinder.Instance.FindPath(request.Start, request.End);
             }
 
-            result.Remove(request.Start);
-            _cachedPaths.Add((request.Start, request.End), (result, Time.time));
+            if (result != null)
+            {
+                result.Remove(request.Start);
+                _cachedPaths.Add((request.Start, request.End), (result, Time.time));
+            }
         }
 
         OnPathFound?.Invoke(request.Id, result);
