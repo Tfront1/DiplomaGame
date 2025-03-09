@@ -1,7 +1,6 @@
 ﻿using System;
 using GameUtilities.Utils;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using System.IO;
 
@@ -11,7 +10,7 @@ public class TestAction: MonoBehaviour
 
     public UnitActionManager ActionManager = new();
 
-    public UnitItem _unitItem;
+    public List<UnitItem> _unitItem = new();
 
     public Vector2 _end;
     
@@ -19,39 +18,48 @@ public class TestAction: MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.R))
         {
-            var waitAction = new WaitUnitAction(_unitItem, 2000f);
-            ActionManager.QueueAction(waitAction);
+            foreach (var unit in _unitItem)
+            {
+                var waitAction = new WaitUnitAction(unit, 2000f);
+                ActionManager.QueueAction(waitAction);
+            }
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
-            ItemListRegistry.ItemChanged += (type, action, item) => {
-                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-            };
-            var moveAction = new MoveUnitAction(_unitItem, _end);
-            ActionManager.ExecuteImmediately(moveAction);
-            FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-
-            
+            foreach (var unit in _unitItem)
+            {
+                ItemListRegistry.ItemChanged += (type, action, item) => {
+                    FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
+                };
+                var moveAction = new MoveUnitAction(unit, _end);
+                ActionManager.ExecuteImmediately(moveAction);
+                FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
+            }
         }
         //Move to mouse in query
         else if (Input.GetKeyDown(KeyCode.W))
         {
             _end = UtilsClass.GetMouseWorldPosition();
+            
+            List<Vector2> starts = new();
+            foreach (var unit in _unitItem)
+            {
+                var moveAction = new MoveUnitAction(unit, _end, true);
+                ActionManager.QueueAction(moveAction);
+                FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
 
-            var moveAction = new MoveUnitAction(_unitItem, _end, true);
-            ActionManager.QueueAction(moveAction);
-            FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-
-            ItemListRegistry.ItemChanged += (type, action, item) => {
-                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-            };
+                ItemListRegistry.ItemChanged += (type, action, item) => {
+                    FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
+                };
+                starts.Add(new Vector2(unit.X, unit.Y));
+            }
         }
         //Spawn unit
         else if (Input.GetKeyDown(KeyCode.Q))
         {
-            _unitItem = SpawnUnit();
+            _unitItem.AddRange(SpawnUnit());
         }
         //Pause
         else if (Input.GetKeyDown(KeyCode.S))
@@ -66,12 +74,15 @@ public class TestAction: MonoBehaviour
         //Stop doing
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            ActionManager.InterruptCurrentAction(_unitItem);
+            foreach (var unit in _unitItem)
+            {
+                ActionManager.InterruptCurrentAction(unit);
+            }
         }
     }
 
     private void FindAndDrawPath(Vector2 start, Vector2 end)
-    {
+    {/*
         _path = PathFinder.Instance.FindPath(start, end);
         if (_path == null || _path.Count() == 0)
         {
@@ -82,35 +93,50 @@ public class TestAction: MonoBehaviour
                 1.5f
             );
         }
-        UtilsClass.DrawPath(_path, Color.black, 1);
+        UtilsClass.DrawPath(_path, Color.black, 1);*/
     }
 
-    private UnitItem SpawnUnit()
+    private List<UnitItem> SpawnUnit()
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
-        var unit = new Unit { Speed = 15f };
-        var unitGameObject = new GameObject("TestUnit");
-        var renderer = unitGameObject.AddComponent<SpriteRenderer>();
 
-        var fileData = File.ReadAllBytes("Assets/Textures/Units/Archer/Idle/Idle1.png");
-        var texture = new Texture2D(2, 2);
-        texture.LoadImage(fileData);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.Apply();
+        
+        var random = new System.Random();
+        List<UnitItem> units = new();
+        for (var i = 0; i < 100; i++)
+        {
+            var unitGameObject = new GameObject("TestUnit");
+            var renderer = unitGameObject.AddComponent<SpriteRenderer>();
 
-        var newBuildingSprite = Sprite.Create(
-            texture,
-            new Rect(0.0f, 0.0f, texture.width, texture.height),
-            Vector2.zero
-        );
+            var fileData = File.ReadAllBytes("Assets/Textures/Units/Archer/Idle/Idle1.png");
+            var texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.Apply();
 
-        renderer.sprite = newBuildingSprite;
-        unitGameObject.transform.position = (Vector2)clickPosition;
-        unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
+            var newBuildingSprite = Sprite.Create(
+                texture,
+                new Rect(0.0f, 0.0f, texture.width, texture.height),
+                Vector2.zero
+            );
 
-        var unitItem = new UnitItem(clickPosition, Guid.NewGuid(), unit, unitGameObject);
-        return unitItem;
+            var unit = new Unit { Speed = 15f };
+            renderer.sprite = newBuildingSprite;
+            unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
+
+            var randomX = clickPosition.x + (float)(random.NextDouble() * 50);
+            var randomY = clickPosition.y + (float)(random.NextDouble() * 50);
+            //var randomX = clickPosition.x;
+            //var randomY = clickPosition.y;
+            var randomPosition = new Vector2(randomX, randomY);
+
+            unitGameObject.AddComponent<CircleCollider2D>();
+
+            units.Add(new UnitItem(randomPosition, Guid.NewGuid(), unit, unitGameObject));
+        }
+
+        return units;
     }
 
 

@@ -33,31 +33,37 @@ public class MoveUnitAction : BaseUnitAction
             return;
         }
 
-        List<Vector2> movePath;
+        _idAction = Guid.NewGuid();
 
-        var start = Time.realtimeSinceStartup;
+        PathFinderManager.OnPathFound += OnPathFound;
 
+        var action = PathFinderManager.PathAction.Move;
         if (_moveCloseToObject)
         {
-            movePath = PathFinder.Instance.FindNearestAccessiblePath(new Vector2(_unit.X, _unit.Y),
-                _targetPosition);
-            if (movePath != null && movePath.Count > 0)
-            {
-                _targetPosition = movePath.Last();
-            }
+            action = PathFinderManager.PathAction.MoveClose;
         }
-        else
-        {
-            movePath = PathFinder.Instance.FindPath(new Vector2(_unit.X, _unit.Y), _targetPosition);
-        }
+        PathFinderManager.RequestPath(
+            new Vector2(_unit.X, _unit.Y),
+            _targetPosition,
+            _idAction,
+            action
+        );
+    }
 
-        var end = Time.realtimeSinceStartup;
-        Debug.Log($"Path finder: {(end - start) * 1000:F2}ms");
+    private void OnPathFound(Guid id, List<Vector2> movePath)
+    {
+        if (id != _idAction) return;
+
+        PathFinderManager.OnPathFound -= OnPathFound;
 
 
         if (movePath != null && movePath.Count > 0)
         {
-            _idAction = Guid.NewGuid();
+            if (_moveCloseToObject && movePath.Count > 0)
+            {
+                _targetPosition = movePath.Last();
+            }
+
             ItemListRegistry.ItemChanged += RefindPathOnItemChanged;
             CoroutineRunner.Instance.StartCoroutineWithId(_idAction, MoveAlongPath(movePath));
         }
@@ -103,12 +109,17 @@ public class MoveUnitAction : BaseUnitAction
                 Vector2 currentPosition = _unit.UnitGameObject.transform.position;
                 var destination = pathCopy.Last();
 
-                path = PathFinder.Instance.RefindPath(null, currentPosition, destination);
-                _toRecalculatePath = false;
+                List<Vector2> remainingPath = null;
+                if (currentPathIndex < path.Count)
+                {
+                    remainingPath = path.GetRange(currentPathIndex, path.Count - currentPathIndex);
+                }
 
+                path = PathFinder.Instance.RefindPath(remainingPath, currentPosition, destination);
+
+                _toRecalculatePath = false;
                 pathCopy = new List<Vector2>(path.Count);
                 pathCopy.AddRange(path.Select(point => new Vector2(point.x, point.y)));
-
                 currentPathIndex = 0;
 
                 if (pathCopy.Count <= 1)
@@ -118,7 +129,6 @@ public class MoveUnitAction : BaseUnitAction
                     CompleteAction();
                     yield break;
                 }
-
                 continue;
             }
 

@@ -37,18 +37,49 @@ public class PathFinder
     /// <returns></returns>
     public List<Vector2> RefindPath(List<Vector2> controlPoints, Vector2 currentPoint, Vector2 endPoint)
     {
-        if (controlPoints == null || controlPoints.Count < 2)
+        if (controlPoints == null)
         {
             return FindPath(currentPoint, endPoint);
         }
 
+        if(controlPoints.Count == 0)
+        {
+            return FindPath(currentPoint, endPoint);
+        }
+
+        if (!controlPoints.Contains(currentPoint))
+        {
+            controlPoints.Insert(0, currentPoint);
+        }
+        var hasObstacles = IsPathPassable(controlPoints);
+
+        if (!hasObstacles)
+        {
+            return controlPoints;
+        }
+
+        return FindPath(currentPoint, endPoint);
+    }
+    
+    public bool IsObstacleBetweenPoints(Vector2 start, Vector2 end)
+    {
+        var direction = end - start;
+        var distance = direction.magnitude;
+
+        var hit = Physics2D.Raycast(start, direction.normalized, distance, _obstacleMask);
+
+        return hit.collider != null;
+    }
+
+    public bool IsPathPassable(List<Vector2> path)
+    {
         var hasObstacles = false;
 
-        for (var i = 0; i < controlPoints.Count - 1; i++)
+        for (var i = 0; i < path.Count - 1; i++)
         {
-            var current = controlPoints[i];
-            var next = controlPoints[i + 1];
-            
+            var current = path[i];
+            var next = path[i + 1];
+
             var direction = next - current;
             var distance = direction.magnitude;
 
@@ -61,12 +92,7 @@ public class PathFinder
             }
         }
 
-        if (!hasObstacles)
-        {
-            return controlPoints;
-        }
-
-        return FindPath(currentPoint, endPoint);
+        return hasObstacles;
     }
 
 
