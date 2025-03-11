@@ -3,6 +3,7 @@ using GameUtilities.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using Town;
 
 public class TestAction : MonoBehaviour
 {
@@ -10,15 +11,16 @@ public class TestAction : MonoBehaviour
 
     public UnitActionManager ActionManager = new();
 
-    public List<UnitItem> _unitItem = new();
 
     public Vector2 _end;
+
+    public TownItem _town = new TownItem("Test", Guid.NewGuid());
     
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.R))
         {
-            foreach (var unit in _unitItem)
+            foreach (var unit in _town.Units)
             {
                 var waitAction = new WaitUnitAction(unit, 2000f);
                 ActionManager.QueueAction(waitAction);
@@ -28,7 +30,7 @@ public class TestAction : MonoBehaviour
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
-            foreach (var unit in _unitItem)
+            foreach (var unit in _town.Units)
             {
                 ItemListRegistry.ItemChanged += (type, action, item) => {
                     FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
@@ -44,7 +46,7 @@ public class TestAction : MonoBehaviour
             _end = UtilsClass.GetMouseWorldPosition();
             
             List<Vector2> starts = new();
-            foreach (var unit in _unitItem)
+            foreach (var unit in _town.Units)
             {
                 var moveAction = new MoveUnitAction(unit, _end, true);
                 ActionManager.QueueAction(moveAction);
@@ -59,7 +61,7 @@ public class TestAction : MonoBehaviour
         //Spawn unit
         else if (Input.GetKeyDown(KeyCode.Q))
         {
-            _unitItem.AddRange(SpawnUnit());
+            _town.Units.AddRange(SpawnUnit());
         }
         //Pause
         else if (Input.GetKeyDown(KeyCode.S))
@@ -74,7 +76,7 @@ public class TestAction : MonoBehaviour
         //Stop doing
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            foreach (var unit in _unitItem)
+            foreach (var unit in _town.Units)
             {
                 ActionManager.InterruptCurrentAction(unit);
             }
@@ -131,7 +133,7 @@ public class TestAction : MonoBehaviour
             //var randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
 
-            units.Add(new UnitItem(randomPosition, Guid.NewGuid(), unit, unitGameObject));
+            _town.AddUnit(UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject));
         }
 
         return units;

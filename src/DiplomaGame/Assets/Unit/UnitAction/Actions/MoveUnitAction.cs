@@ -48,8 +48,6 @@ public class MoveUnitAction : BaseUnitAction
             _idAction,
             action
         );
-
-        _unit.DisableCollider();
     }
 
     private void OnPathFound(Guid id, List<Vector2> movePath)
@@ -188,15 +186,12 @@ public class MoveUnitAction : BaseUnitAction
             currentPathIndex++;
         }
 
-        Debug.Log($"Unit {_unit.Unit.Name} completed movement to {_targetPosition}");
-        
         CompleteAction();
     }
 
     protected override void CompleteAction()
     {
         ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
-        _unit.EnableCollider();
         base.CompleteAction();
     }
 }

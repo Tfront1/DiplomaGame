@@ -3,36 +3,38 @@ using Items.Resource.BackPack;
 using Town;
 using UnityEngine;
 
-public class UnitItem : IUnit
+public class UnitItem : MonoBehaviour, IUnit
 {
+    public Guid Id { get; set; }
+    public Unit Unit { get; set; }
     public float X => UnitGameObject.transform.position.x;
     public float Y => UnitGameObject.transform.position.y;
-    public Guid Guid { get; set; }
-    public Unit Unit { get; set; }
+    public Vector2 Coords => new(X, Y);
     public GameObject UnitGameObject { get; set; }
-    public UnitStats Stats { get; }
-    public UnitSkills Skills { get; }
-    public Backpack UnitBackpack { get;}
+
+    //Gameplay
+    public UnitStats Stats { get; set; }
+    public UnitSkills Skills { get; set; }
+    public Backpack UnitBackpack { get; set; }
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public TownItem HomeTown { get; set; }
 
-    public UnitItem(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject)
+    private bool _toUpdateGroups = true;
+
+    public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject)
     {
-        Guid = guid;
+        var unitItem = unitGameObject.AddComponent<UnitItem>();
+        unitItem.Initialize(position, guid, unit);
+        return unitItem;
+    }
+
+    public void Initialize(Vector2 position, Guid guid, Unit unit)
+    {
+        Id = guid;
         Unit = unit;
-        UnitGameObject = unitGameObject;
+        UnitGameObject = gameObject;
 
-        UnitGameObject.layer = LayerMask.NameToLayer("Units");
-        var collider = unitGameObject.AddComponent<CircleCollider2D>();
-        collider.radius = 0.11f;
-
-        var rb = unitGameObject.AddComponent<Rigidbody2D>();
-        rb.gravityScale = 0f;
-        rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-
-        UnitGameObject.AddComponent<UnitCollisionHandler>();
-
+        gameObject.AddComponent<UnitCounterDisplay>();
         SetPosition(position);
 
         //ToDo: Config for stats
@@ -48,36 +50,20 @@ public class UnitItem : IUnit
         );
 
         Skills = new UnitSkills();
-
         TickRateSystem.Instance.OnTick += Stats.Update;
         TickRateSystem.Instance.OnTick += Skills.Update;
-
 
         //ToDo: Add config to unit
         UnitBackpack = new Backpack(1000);
     }
 
-    public void DisableCollider()
-    {
-        var collider = UnitGameObject.GetComponent<CircleCollider2D>();
-        if (collider != null)
-        {
-            collider.enabled = false;
-        }
-    }
-
-    public void EnableCollider()
-    {
-        var collider = UnitGameObject.GetComponent<CircleCollider2D>();
-        if (collider != null)
-        {
-            collider.enabled = true;
-        }
-    }
-
     public void SetPosition(Vector2 position)
     {
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
+        if (_toUpdateGroups)
+        {
+            UnitCollisionManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position, position);
+        }
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
     }
 
@@ -85,6 +71,8 @@ public class UnitItem : IUnit
     {
         TickRateSystem.Instance.OnTick -= Stats.Update;
         TickRateSystem.Instance.OnTick -= Skills.Update;
+
+        UnitCollisionManager.Instance.RemoveUnitTracking(this);
 
         OnUnitDied();
 
@@ -100,7 +88,7 @@ public class UnitItem : IUnit
 
     public Guid GetGuid()
     {
-        return Guid;
+        return Id;
     }
 
     public class UnitDiedEventArgs : EventArgs

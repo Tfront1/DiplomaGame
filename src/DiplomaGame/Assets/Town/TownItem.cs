@@ -8,8 +8,8 @@ namespace Town
 {
     public class TownItem
     {
-        public string Name { get; set; }
         public Guid Id { get; set; }
+        public string Name { get; set; }
         public List<BuildingItem> Buildings { get; set; } = new();
         public List<UnitItem> Units { get; set; } = new();
         public BuildingItem TownHall { get; set; }
@@ -17,6 +17,13 @@ namespace Town
         //ToDo: Logic for possible crafts
         public List<CraftingRecipe> PossibleCrafts { get; set; }
         public int DiedUnits { get; set; } = 0;
+
+        public TownItem(string name, Guid id)
+        {
+            Name = name;
+            Id = id;
+            TownRegistry.AddTown(this);
+        }
 
         public TownItem(string name, Guid id, BuildingItem townHall)
         {
@@ -210,12 +217,8 @@ namespace Town
         private void Unit_Died(object sender, UnitDiedEventArgs e)
         {
             var deadUnit = e.Unit;
-
-            if (Units.Contains(deadUnit))
-            {
-                Units.Remove(deadUnit);
-                DiedUnits++;
-            }
+            DiedUnits++;
+            RemoveUnit(deadUnit);
         }
     }
 }
