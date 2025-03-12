@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UnitCollisionManager : MonoBehaviour
+public class UnitGroupManager : MonoBehaviour
 {
-    private static UnitCollisionManager _instance;
+    private static UnitGroupManager _instance;
 
     // Stores the last update timestamp for each unit
     private Dictionary<Guid, float> _lastUpdateTimes = new();
@@ -16,23 +16,23 @@ public class UnitCollisionManager : MonoBehaviour
     // List to control processing order
     private List<Guid> _processingOrder = new();
 
-    // Time interval between allowed updates for the same unit (1 second)
+    // Time interval between allowed updates for the same unit (0.5 second)
     private const float UpdateInterval = 0.5f;
+    
+    private UnitGroupSystem _unitGroupSystem = new();
 
-    private UnitCollisionSystem _collisionSystem = new();
-
-    public static UnitCollisionManager Instance
+    public static UnitGroupManager Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<UnitCollisionManager>();
+                _instance = FindObjectOfType<UnitGroupManager>();
 
                 if (_instance == null)
                 {
                     var managerObject = new GameObject("TownUnitPositionManager");
-                    _instance = managerObject.AddComponent<UnitCollisionManager>();
+                    _instance = managerObject.AddComponent<UnitGroupManager>();
                     DontDestroyOnLoad(managerObject);
                 }
             }
@@ -62,8 +62,7 @@ public class UnitCollisionManager : MonoBehaviour
     /// </summary>
     /// <param name="unit">The unit to update</param>
     /// <param name="oldPosition">The previous position</param>
-    /// <param name="newPosition">The new position</param>
-    public void RequestPositionUpdate(UnitItem unit, Vector2 oldPosition, Vector2 newPosition)
+    public void RequestPositionUpdate(UnitItem unit, Vector2 oldPosition)
     {
         if (unit == null || unit.HomeTown == null) return;
 
@@ -71,7 +70,6 @@ public class UnitCollisionManager : MonoBehaviour
         {
             Unit = unit,
             OldPosition = oldPosition,
-            NewPosition = newPosition,
         };
 
         // Simply replace the existing request or add a new one
@@ -87,12 +85,13 @@ public class UnitCollisionManager : MonoBehaviour
     {
         while (true)
         {
-            if (_processingOrder.Count > 0)
+            yield return new WaitUntil(() => _processingOrder.Count > 0);
+
+            while (_processingOrder.Count > 0)
             {
                 ProcessNextInQueue();
+                yield return null;
             }
-
-            yield return null;
         }
     }
 
@@ -118,10 +117,10 @@ public class UnitCollisionManager : MonoBehaviour
         {
             _lastUpdateTimes[unit.Id] = Time.time;
 
-            _collisionSystem.UpdateUnitPosition(
+            _unitGroupSystem.UpdateUnitPosition(
                 unit,
                 request.OldPosition,
-                request.NewPosition
+                unit.Coords
             );
         }
         else
@@ -161,7 +160,7 @@ public class UnitCollisionManager : MonoBehaviour
                 _processingOrder.Remove(unit.Id);
             }
 
-            _collisionSystem.UnregisterUnit(unit);
+            _unitGroupSystem.UnregisterUnit(unit);
         }
     }
 
@@ -169,6 +168,5 @@ public class UnitCollisionManager : MonoBehaviour
     {
         public UnitItem Unit;
         public Vector2 OldPosition;
-        public Vector2 NewPosition;
     }
 }

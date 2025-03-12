@@ -129,11 +129,11 @@ public class TestAction : MonoBehaviour
 
             var randomX = clickPosition.x + (float)(random.NextDouble() * 50);
             var randomY = clickPosition.y + (float)(random.NextDouble() * 50);
-            //var randomX = clickPosition.x;
-            //var randomY = clickPosition.y;
+            //randomX = clickPosition.x;
+            //randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
 
-            _town.AddUnit(UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject));
+            _town.AddUnit(UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, _town));
         }
 
         return units;

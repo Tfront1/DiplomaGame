@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Items.Resource.BackPack;
 using Town;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class UnitItem : MonoBehaviour, IUnit
 {
@@ -9,8 +12,10 @@ public class UnitItem : MonoBehaviour, IUnit
     public Unit Unit { get; set; }
     public float X => UnitGameObject.transform.position.x;
     public float Y => UnitGameObject.transform.position.y;
-    public Vector2 Coords => new(X, Y);
+    public float Z => UnitGameObject.transform.position.z;
+    public Vector3 Coords => new(X, Y, Z);
     public GameObject UnitGameObject { get; set; }
+    public SpriteRenderer SpriteRenderer { get; set; }
 
     //Gameplay
     public UnitStats Stats { get; set; }
@@ -18,23 +23,25 @@ public class UnitItem : MonoBehaviour, IUnit
     public Backpack UnitBackpack { get; set; }
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public TownItem HomeTown { get; set; }
+    public Guid GroupId { get; set; } = Guid.Empty;
+    public bool IsInGroup { get; set; } = false;
 
-    private bool _toUpdateGroups = true;
-
-    public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject)
+    public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
         var unitItem = unitGameObject.AddComponent<UnitItem>();
-        unitItem.Initialize(position, guid, unit);
+        unitItem.Initialize(position, guid, unit, townItem);
         return unitItem;
     }
 
-    public void Initialize(Vector2 position, Guid guid, Unit unit)
+    public void Initialize(Vector2 position, Guid guid, Unit unit, TownItem townItem)
     {
         Id = guid;
         Unit = unit;
         UnitGameObject = gameObject;
+        HomeTown = townItem;
 
-        gameObject.AddComponent<UnitCounterDisplay>();
+        SpriteRenderer = UnitGameObject.GetComponent<SpriteRenderer>();
+        UnitGameObject.AddComponent<UnitCounterDisplay>();
         SetPosition(position);
 
         //ToDo: Config for stats
@@ -60,11 +67,34 @@ public class UnitItem : MonoBehaviour, IUnit
     public void SetPosition(Vector2 position)
     {
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
-        if (_toUpdateGroups)
-        {
-            UnitCollisionManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position, position);
-        }
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
+
+        if (!IsInGroup)
+        {
+            UnitGroupManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position);
+        }
+        else
+        {
+            var group = GroupManager.Instance.GetGroup(GroupId);
+            if (group != null && group.UnitLeader.Id == Id)
+            {
+                UnitGroupManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position);
+            }
+        }
+
+    }
+
+    public List<UnitItem> GetGroupList()
+    {
+        List<UnitItem> units = null;
+        var group = GroupManager.Instance.GetGroup(GroupId);
+
+        if (IsInGroup && group != null && group.UnitLeader.Id == Id)
+        {
+            units = group.GroupUnits.ToList();
+        }
+
+        return units;
     }
 
     public void Die()
@@ -72,11 +102,11 @@ public class UnitItem : MonoBehaviour, IUnit
         TickRateSystem.Instance.OnTick -= Stats.Update;
         TickRateSystem.Instance.OnTick -= Skills.Update;
 
-        UnitCollisionManager.Instance.RemoveUnitTracking(this);
+        UnitGroupManager.Instance.RemoveUnitTracking(this);
 
         OnUnitDied();
 
-        UnityEngine.Object.Destroy(UnitGameObject);
+        Destroy(UnitGameObject);
     }
 
     protected virtual void OnUnitDied()

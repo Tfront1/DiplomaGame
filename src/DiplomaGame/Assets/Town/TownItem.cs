@@ -145,7 +145,6 @@ namespace Town
             if (!Units.Contains(unit))
             {
                 Units.Add(unit);
-                unit.HomeTown = this;
 
                 unit.OnDied += Unit_Died;
             }
