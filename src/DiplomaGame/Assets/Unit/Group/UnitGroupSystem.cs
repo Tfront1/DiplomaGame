@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using GameUtilities.Utils;
 using UnityEngine;
 
-
 public class UnitGroupSystem
 {
     private Dictionary<Guid, List<UnitItem>> _townUnits = new();
 
     private Dictionary<Guid, Dictionary<Vector2Int, List<UnitItem>>> _spatialGrid = new();
+    
+    //Grid with leaders and units without group
+    private Dictionary<Guid, Dictionary<Vector2Int, List<UnitItem>>> _optimisedSpatialGrid = new();
 
     private const float _detectionRadius = 3f;
 
@@ -24,6 +26,7 @@ public class UnitGroupSystem
         {
             _townUnits[townId].Add(unit);
             AddUnitToSpatialGrid(unit);
+            AddUnitToOptimisedSpatialGrid(unit);
         }
 
         if (unit.IsInGroup && !Guid.Empty.Equals(unit.GroupId))
@@ -43,7 +46,8 @@ public class UnitGroupSystem
         var townId = unit.HomeTown.Id;
         if (!_townUnits.ContainsKey(townId)) return;
 
-        RemoveUnitFromSpatialGrid(unit, new Vector2(unit.X, unit.Y));
+        RemoveUnitFromSpatialGrid(unit, unit.Coords);
+        RemoveUnitFromOptimisedSpatialGrid(unit, unit.Coords);
         _townUnits[townId].Remove(unit);
 
         if (unit.IsInGroup)
@@ -66,7 +70,7 @@ public class UnitGroupSystem
         }
     }
 
-    public void UpdateUnitPosition(UnitItem unit, Vector2 oldPosition, Vector2 newPosition)
+    public void UpdateUnitPosition(UnitItem unit, Vector2 oldPosition)
     {
         if (unit.HomeTown == null) return;
 
@@ -77,7 +81,9 @@ public class UnitGroupSystem
         }
 
         RemoveUnitFromSpatialGrid(unit, oldPosition);
+        RemoveUnitFromOptimisedSpatialGrid(unit, oldPosition);
         AddUnitToSpatialGrid(unit);
+        AddUnitToOptimisedSpatialGrid(unit);
 
         if (unit.IsInGroup)
         {
@@ -102,6 +108,11 @@ public class UnitGroupSystem
             {
                 _spatialGrid[townId] = new Dictionary<Vector2Int, List<UnitItem>>();
             }
+
+            if (!_optimisedSpatialGrid.ContainsKey(townId))
+            {
+                _optimisedSpatialGrid[townId] = new Dictionary<Vector2Int, List<UnitItem>>();
+            }
         }
     }
 
@@ -112,7 +123,7 @@ public class UnitGroupSystem
         var townId = unit.HomeTown.Id;
         var unitPosition = new Vector2(unit.X, unit.Y);
         var cell = GridService.GetCellGridPosition(unitPosition);
-
+        
         if (!_spatialGrid[townId].ContainsKey(cell))
         {
             _spatialGrid[townId][cell] = new List<UnitItem>();
@@ -121,13 +132,33 @@ public class UnitGroupSystem
         _spatialGrid[townId][cell].Add(unit);
     }
 
+    private void AddUnitToOptimisedSpatialGrid(UnitItem unit)
+    {
+        if (unit.HomeTown == null) return;
+
+        var townId = unit.HomeTown.Id;
+        var unitPosition = new Vector2(unit.X, unit.Y);
+        var cell = GridService.GetCellGridPosition(unitPosition);
+
+        if (!_optimisedSpatialGrid[townId].ContainsKey(cell))
+        {
+            _optimisedSpatialGrid[townId][cell] = new List<UnitItem>();
+        }
+
+
+        var group = GroupManager.Instance.GetGroup(unit.GroupId);
+        if (!unit.IsInGroup || group.UnitLeader.Id == unit.Id)
+        {
+            _optimisedSpatialGrid[townId][cell].Add(unit);
+        }
+    }
+
     private void RemoveUnitFromSpatialGrid(UnitItem unit, Vector2 oldPosition)
     {
         if (unit.HomeTown == null) return;
 
         var townId = unit.HomeTown.Id;
-        var oldPositionVector2 = new Vector2(oldPosition.x, oldPosition.y);
-        var oldCell = GridService.GetCellGridPosition(oldPositionVector2);
+        var oldCell = GridService.GetCellGridPosition(oldPosition);
 
         if (_spatialGrid[townId].ContainsKey(oldCell))
         {
@@ -136,6 +167,24 @@ public class UnitGroupSystem
             if (_spatialGrid[townId][oldCell].Count == 0)
             {
                 _spatialGrid[townId].Remove(oldCell);
+            }
+        }
+    }
+    
+    private void RemoveUnitFromOptimisedSpatialGrid(UnitItem unit, Vector2 oldPosition)
+    {
+        if (unit.HomeTown == null) return;
+
+        var townId = unit.HomeTown.Id;
+        var oldCell = GridService.GetCellGridPosition(oldPosition);
+
+        if (_optimisedSpatialGrid[townId].ContainsKey(oldCell))
+        {
+            _optimisedSpatialGrid[townId][oldCell].Remove(unit);
+
+            if (_optimisedSpatialGrid[townId][oldCell].Count == 0)
+            {
+                _optimisedSpatialGrid[townId].Remove(oldCell);
             }
         }
     }
@@ -151,17 +200,11 @@ public class UnitGroupSystem
             {
                 var neighborCell = new Vector2Int(currentCell.x + i, currentCell.y + j);
 
-                if (_spatialGrid[townId].ContainsKey(neighborCell))
+                if (_optimisedSpatialGrid[townId].ContainsKey(neighborCell))
                 {
-                    foreach (var otherUnit in _spatialGrid[townId][neighborCell])
+                    foreach (var otherUnit in _optimisedSpatialGrid[townId][neighborCell])
                     {
                         if (otherUnit.Id == unit.Id) continue;
-
-                        if (otherUnit.IsInGroup)
-                        {
-                            var group = GroupManager.Instance.GetGroup(otherUnit.GroupId);
-                            if (group != null && group.UnitLeader.Id != otherUnit.Id) continue;
-                        }
 
                         var distance = CalculateDistanceFromCenters(unit, otherUnit);
 

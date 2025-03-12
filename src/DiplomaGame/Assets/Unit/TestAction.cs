@@ -102,7 +102,6 @@ public class TestAction : MonoBehaviour
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
 
-        
         var random = new System.Random();
         List<UnitItem> units = new();
         for (var i = 0; i < 100; i++)

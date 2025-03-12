@@ -97,6 +97,8 @@ public class UnitGroupManager : MonoBehaviour
 
     private void ProcessNextInQueue()
     {
+        if (_processingOrder.Count == 0) return;
+
         var unitId = _processingOrder[0];
         _processingOrder.RemoveAt(0);
 
@@ -106,7 +108,6 @@ public class UnitGroupManager : MonoBehaviour
         }
 
         var unit = request.Unit;
-
         if (unit == null || unit.HomeTown == null)
         {
             _updateDictionary.Remove(unitId);
@@ -116,20 +117,16 @@ public class UnitGroupManager : MonoBehaviour
         if (IsUnitEligibleForUpdate(unit.Id))
         {
             _lastUpdateTimes[unit.Id] = Time.time;
-
             _unitGroupSystem.UpdateUnitPosition(
                 unit,
-                request.OldPosition,
-                unit.Coords
+                request.OldPosition
             );
+            _updateDictionary.Remove(unitId);
         }
         else
         {
-            // If not eligible now, add back to the end of processing order for later processing
             _processingOrder.Add(unitId);
         }
-
-        _updateDictionary.Remove(unitId);
     }
 
     private bool IsUnitEligibleForUpdate(Guid unitId)
