@@ -229,46 +229,34 @@ public class UnitGroupSystem
     {
         if (nearbyUnits.Count == 0) return;
 
-        UnitItem nearbyLeader = null;
+        var nearbyLeaders = new List<UnitItem>();
         foreach (var nearby in nearbyUnits)
         {
+            if (nearby.Id == unit.Id) continue;
+
             if (nearby.IsInGroup && nearby.GroupId != Guid.Empty)
             {
                 var group = GroupManager.Instance.GetGroup(nearby.GroupId);
-                if (group != null && group.UnitLeader.Id == nearby.Id && nearby.Id != unit.Id)
+                if (group != null && group.UnitLeader.Id == nearby.Id)
                 {
-                    nearbyLeader = nearby;
-                    break;
+                    nearbyLeaders.Add(nearby);
                 }
             }
         }
 
-        if (nearbyLeader != null)
+        if (nearbyLeaders.Count > 0)
         {
+            ProcessWithLeader(unit, nearbyLeaders[0]);
+
             if (unit.IsInGroup)
             {
                 var unitGroup = GroupManager.Instance.GetGroup(unit.GroupId);
                 if (unitGroup != null && unitGroup.UnitLeader.Id == unit.Id)
                 {
-                    MergeGroups(unit.GroupId, nearbyLeader.GroupId);
-                }
-                else
-                {
-                    var group = GroupManager.Instance.GetGroup(nearbyLeader.GroupId);
-                    if (group != null)
+                    for (var i = 1; i < nearbyLeaders.Count; i++)
                     {
-                        group.AddUnitToGroup(unit);
-                        UpdateGroupCounter(group);
+                        MergeGroups(nearbyLeaders[i].GroupId, unit.GroupId);
                     }
-                }
-            }
-            else
-            {
-                var group = GroupManager.Instance.GetGroup(nearbyLeader.GroupId);
-                if (group != null)
-                {
-                    group.AddUnitToGroup(unit);
-                    UpdateGroupCounter(group);
                 }
             }
         }
@@ -277,7 +265,7 @@ public class UnitGroupSystem
             if (unit.IsInGroup)
             {
                 var group = GroupManager.Instance.GetGroup(unit.GroupId);
-                if (group.UnitLeader.Id == unit.Id)
+                if (group != null && group.UnitLeader.Id == unit.Id)
                 {
                     foreach (var nearby in nearbyUnits)
                     {
@@ -307,6 +295,35 @@ public class UnitGroupSystem
         }
     }
 
+    private void ProcessWithLeader(UnitItem unit, UnitItem leader)
+    {
+        if (unit.IsInGroup)
+        {
+            var unitGroup = GroupManager.Instance.GetGroup(unit.GroupId);
+            if (unitGroup != null && unitGroup.UnitLeader.Id == unit.Id)
+            {
+                MergeGroups(unit.GroupId, leader.GroupId);
+            }
+            else
+            {
+                var leaderGroup = GroupManager.Instance.GetGroup(leader.GroupId);
+                if (leaderGroup != null)
+                {
+                    leaderGroup.AddUnitToGroup(unit);
+                    UpdateGroupCounter(leaderGroup);
+                }
+            }
+        }
+        else
+        {
+            var leaderGroup = GroupManager.Instance.GetGroup(leader.GroupId);
+            if (leaderGroup != null)
+            {
+                leaderGroup.AddUnitToGroup(unit);
+                UpdateGroupCounter(leaderGroup);
+            }
+        }
+    }
     public void MergeGroups(Guid sourceGroupId, Guid targetGroupId)
     {
         var sourceGroup = GroupManager.Instance.GetGroup(sourceGroupId);
