@@ -25,26 +25,18 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private Vector3 _positionToMove;
 
-    public GameplayInputHandler inputHandler;
-
     private void OnEnable()
     {
-        if (inputHandler != null)
-        {
-            inputHandler.OnMiddleMouseHold += HandleMiddleMouseMovement;
-            inputHandler.OnScroll += HandleZoom;
-            inputHandler.OnMouseNearEdge += HandleEdgeMovement;
-        }
+        GameplayInputHandler.Instance.OnMiddleMouseHold += HandleMiddleMouseMovement;
+        GameplayInputHandler.Instance.OnScroll += HandleZoom;
+        GameplayInputHandler.Instance.OnMouseNearEdge += HandleEdgeMovement;
     }
 
     private void OnDisable()
     {
-        if (inputHandler != null)
-        {
-            inputHandler.OnMiddleMouseHold -= HandleMiddleMouseMovement;
-            inputHandler.OnScroll -= HandleZoom;
-            inputHandler.OnMouseNearEdge -= HandleEdgeMovement;
-        }
+        GameplayInputHandler.Instance.OnMiddleMouseHold -= HandleMiddleMouseMovement;
+        GameplayInputHandler.Instance.OnScroll -= HandleZoom;
+        GameplayInputHandler.Instance.OnMouseNearEdge -= HandleEdgeMovement;
     }
 
     void Start()

@@ -228,7 +228,7 @@ namespace Supplies
             //ToDo: Seed config
             var supplyResourceCount = _random.Next(SuppliesConfig.MinSupplyResources, SuppliesConfig.MaxSupplyResources);
             var backpack = new Backpack(supplyResourceCount);
-            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
+            var supplyItem = SupplyItem.Create(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
             supplyItemList.Add(supplyItem);
         }
 

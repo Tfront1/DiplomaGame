@@ -23,10 +23,11 @@ public class UnitGroup
         if (UnitLeader.Id != unit.Id)
         {
             GroupUnits.Add(unit);
-            ChangeUnitSpriteRender(unit, false);
+            unit.HideUnit();
             unit.IsInGroup = true;
             unit.GroupId = Id;
             unit.SetPosition(UnitLeader.Coords);
+            UpdateGroupCounter();
         }
     }
 
@@ -38,12 +39,14 @@ public class UnitGroup
             {
                 var newLeader = GroupUnits.First();
                 ChangeGroupLeader(newLeader);
+                UpdateGroupCounter();
             }
             else
             {
                 unit.IsInGroup = false;
                 unit.GroupId = Guid.Empty;
-                ChangeUnitSpriteRender(unit, true);
+                unit.ShowUnit();
+                HideUnitCounter(unit);
 
                 GroupManager.Instance.RemoveGroup(Id);
                 return;
@@ -54,11 +57,11 @@ public class UnitGroup
         {
             unit.IsInGroup = false;
             unit.GroupId = Guid.Empty;
-            ChangeUnitSpriteRender(unit, true);
+            unit.ShowUnit();
 
             UnitLeader.IsInGroup = false;
             UnitLeader.GroupId = Guid.Empty;
-            ChangeUnitSpriteRender(UnitLeader, true);
+            UnitLeader.ShowUnit();
 
             GroupManager.Instance.RemoveGroup(Id);
             return;
@@ -66,9 +69,10 @@ public class UnitGroup
 
         if (GroupUnits.Remove(unit))
         {
-            ChangeUnitSpriteRender(unit, true);
             unit.IsInGroup = false;
             unit.GroupId = Guid.Empty;
+            unit.ShowUnit();
+            UpdateGroupCounter();
         }
     }
 
@@ -83,19 +87,37 @@ public class UnitGroup
             return;
 
         GroupUnits.Remove(newLeader);
-        ChangeUnitSpriteRender(newLeader, true);
-        ChangeUnitSpriteRender(UnitLeader, false);
+        newLeader.ShowUnit();
+        UnitLeader.HideUnit();
         GroupUnits.Add(UnitLeader);
 
         UnitLeader = newLeader;
+
+        UpdateGroupCounter();
     }
 
-    private void ChangeUnitSpriteRender(UnitItem unit, bool enable)
+    private void UpdateGroupCounter()
     {
-        var spriteRenderer = unit.SpriteRenderer;
-        if (spriteRenderer != null)
+        if (UnitLeader == null) return;
+
+        var counterDisplay = UnitLeader.DisplayGroupCounter;
+        if (counterDisplay != null)
         {
-            spriteRenderer.enabled = enable;
+            counterDisplay.UpdateCount(CountGroupUnits + 1);
+        }
+
+        foreach (var unit in GroupUnits)
+        {
+            HideUnitCounter(unit);
+        }
+    }
+
+    private void HideUnitCounter(UnitItem unit)
+    {
+        var counterDisplay = unit.DisplayGroupCounter;
+        if (counterDisplay != null)
+        {
+            counterDisplay.UpdateCount(0);
         }
     }
 }

@@ -43,7 +43,12 @@ public class InputSystemSetup : MonoBehaviour
 
             foreach (var actionConfig in actionMapConfig.Actions)
             {
-                var action = actionMap.AddAction(actionConfig.ActionName, (InputActionType)System.Enum.Parse(typeof(InputActionType), actionConfig.ActionType));
+                var actionType = (InputActionType)System.Enum.Parse(typeof(InputActionType), actionConfig.ActionType);
+                var interactions = !string.IsNullOrEmpty(actionConfig.Interactions) ? actionConfig.Interactions : null;
+
+                var action = actionMap.AddAction(name: actionConfig.ActionName,
+                    type: actionType,
+                    interactions: interactions);
 
                 if (!string.IsNullOrEmpty(actionConfig.ExpectedControlType))
                 {

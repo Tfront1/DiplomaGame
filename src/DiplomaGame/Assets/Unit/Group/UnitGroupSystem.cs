@@ -12,7 +12,7 @@ public class UnitGroupSystem
     //Grid with leaders and units without group
     private Dictionary<Guid, Dictionary<Vector2Int, List<UnitItem>>> _optimisedSpatialGrid = new();
 
-    private const float _detectionRadius = 3f;
+    private const float _detectionRadius = 1.5f;
 
     public void RegisterUnit(UnitItem unit)
     {
@@ -56,16 +56,6 @@ public class UnitGroupSystem
             if (group != null)
             {
                 group.RemoveUnitFromGroup(unit);
-
-                var updatedGroup = GroupManager.Instance.GetGroup(unit.GroupId);
-                if (updatedGroup != null)
-                {
-                    UpdateGroupCounter(updatedGroup);
-                }
-                else
-                {
-                    HideUnitCounter(unit);
-                }
             }
         }
     }
@@ -84,15 +74,6 @@ public class UnitGroupSystem
         RemoveUnitFromOptimisedSpatialGrid(unit, oldPosition);
         AddUnitToSpatialGrid(unit);
         AddUnitToOptimisedSpatialGrid(unit);
-
-        if (unit.IsInGroup)
-        {
-            var group = GroupManager.Instance.GetGroup(unit.GroupId);
-            if (group != null && group.UnitLeader.Id != unit.Id)
-            {
-                return;
-            }
-        }
 
         var nearbyUnits = FindNearbyUnits(unit, townId);
 
@@ -227,7 +208,12 @@ public class UnitGroupSystem
 
     private void ProcessUnitGrouping(UnitItem unit, HashSet<UnitItem> nearbyUnits)
     {
-        if (nearbyUnits.Count == 0) return;
+        if (nearbyUnits.Count == 0 && unit.IsInGroup)
+        {
+            var group = GroupManager.Instance.GetGroup(unit.GroupId);
+            group.RemoveUnitFromGroup(unit);
+            return;
+        }
 
         var nearbyLeaders = new List<UnitItem>();
         foreach (var nearby in nearbyUnits)
@@ -274,7 +260,6 @@ public class UnitGroupSystem
                             group.AddUnitToGroup(nearby);
                         }
                     }
-                    UpdateGroupCounter(group);
                 }
             }
             else
@@ -289,8 +274,6 @@ public class UnitGroupSystem
                         newGroup.AddUnitToGroup(nearby);
                     }
                 }
-
-                UpdateGroupCounter(newGroup);
             }
         }
     }
@@ -310,7 +293,6 @@ public class UnitGroupSystem
                 if (leaderGroup != null)
                 {
                     leaderGroup.AddUnitToGroup(unit);
-                    UpdateGroupCounter(leaderGroup);
                 }
             }
         }
@@ -320,7 +302,6 @@ public class UnitGroupSystem
             if (leaderGroup != null)
             {
                 leaderGroup.AddUnitToGroup(unit);
-                UpdateGroupCounter(leaderGroup);
             }
         }
     }
@@ -351,8 +332,6 @@ public class UnitGroupSystem
             var leader = sourceGroup.UnitLeader;
             targetGroup.AddUnitToGroup(leader);
         }
-
-        UpdateGroupCounter(targetGroup);
     }
 
     private float CalculateDistanceFromCenters(UnitItem firstUnit, UnitItem secondUnit)
@@ -378,27 +357,5 @@ public class UnitGroupSystem
         return UtilsClass.CalculateDistance(firstPos, secondPos);
     }
 
-    private void UpdateGroupCounter(UnitGroup group)
-    {
-        if (group == null || group.UnitLeader == null) return;
-
-        var counterDisplay = group.UnitLeader.GetComponent<UnitCounterDisplay>();
-        if (counterDisplay != null)
-        {
-            counterDisplay.UpdateCount(group.CountGroupUnits + 1);
-        }
-
-        foreach (var unit in group.GroupUnits)
-        {
-            HideUnitCounter(unit);
-        }
-    }
-    private void HideUnitCounter(UnitItem unit)
-    {
-        var counterDisplay = unit.GetComponent<UnitCounterDisplay>();
-        if (counterDisplay != null)
-        {
-            counterDisplay.UpdateCount(0);
-        }
-    }
+    
 }

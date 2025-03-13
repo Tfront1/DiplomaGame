@@ -1,4 +1,6 @@
-﻿using GameUtilities.Utils;
+﻿using System;
+using GameUtilities.Utils;
+using Town;
 using UnityEngine;
 
 public class TestBuilding :MonoBehaviour
@@ -7,6 +9,7 @@ public class TestBuilding :MonoBehaviour
 
     private ItemList<BuildingItem> _list;
     private MapGrid<BuildingGridObject> _grid;
+    private TownItem _townItem;
 
     private void Awake()
     {
@@ -18,8 +21,9 @@ public class TestBuilding :MonoBehaviour
             new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
             (g, x, y) => new BuildingGridObject(g, x, y)
         );
+        _townItem = new TownItem("TestBuildingTown", Guid.NewGuid());
     }
-
+    
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -34,12 +38,12 @@ public class TestBuilding :MonoBehaviour
         {
             selectedBuilding = BuildingsConfig.Buildings[2];
         }
-        else if (Input.GetMouseButtonDown(0))
+        else if (Input.GetKeyDown(KeyCode.Alpha5))
         {
             var clickPosition = UtilsClass.GetMouseWorldPosition();
             var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
-            BuildingManager.Build(gridPosition, selectedBuilding, _list, _grid);
+            BuildingManager.Build(gridPosition, selectedBuilding, _list, _grid, _townItem);
         }
     }
 }

@@ -4,6 +4,6 @@ public interface IItemListObject
 {
     int X { get; }
     int Y { get; }
-    Guid Guid { get; }
+    Guid Id { get; }
     Guid GetGuid();
 }

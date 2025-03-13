@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Items.Resource.BackPack;
+using Town;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
@@ -40,7 +41,7 @@ public class BuildingManager : MonoBehaviour
         _isInitializedCaches = true; 
     }
     
-    public static bool Build(Vector2Int gridPosition, Building building, ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid)
+    public static bool Build(Vector2Int gridPosition, Building building, ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid, TownItem townItem)
     {
         if (!_isInitializedCaches)
         {
@@ -69,7 +70,7 @@ public class BuildingManager : MonoBehaviour
         SetupBuildingCollider(newBuildingObject, gridPosition, building, _buildingTextureConfigCache[building.Id]);
 
         PlaceBuildingInGrid(gridPosition, buildingGuid, grid, building);
-        AddBuildingToList(gridPosition, buildingGuid, buildingItemList, building, newBuildingObject);
+        AddBuildingToList(gridPosition, buildingGuid, buildingItemList, building, newBuildingObject, townItem);
         GridRegistry.UpsertGrid(grid);
         ItemListRegistry.UpsertList(buildingItemList);
 
@@ -173,7 +174,7 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject)
+    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject, TownItem townItem)
     {
         Backpack backpack = null;
         if (building.BackpackCapacity > 0)
@@ -181,7 +182,7 @@ public class BuildingManager : MonoBehaviour
             backpack = new Backpack(building.BackpackCapacity);
         }
 
-        var buildingItemItem = new BuildingItem(gridPosition, buildingGuid, building, buildingGameObject, backpack);
+        var buildingItemItem = BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack);
         buildingItemList.Add(buildingItemItem);
     }
 

@@ -27,6 +27,7 @@ public class UnitCounterDisplay : MonoBehaviour
         _textComponent.alignment = TextAlignmentOptions.Center;
         _textComponent.fontSize = _textSize;
         _textComponent.color = _textColor;
+        _textObject.layer = LayerMask.NameToLayer("GameplayUI");
 
         _textObject.SetActive(false);
     }

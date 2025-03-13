@@ -31,6 +31,7 @@ public static partial class ConfigLoader
 				{
 					ActionName = action.name,
 					ActionType = action.type,
+					Interactions = action.interactions,
 					ExpectedControlType = action.expectedControlType,
 					ActionBindings = new List<InputSystemConfig.ActionBindingsConfig>()
 				};

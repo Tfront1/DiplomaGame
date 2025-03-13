@@ -38,7 +38,6 @@ namespace Town
             if (!Buildings.Contains(building) && TownHall != building)
             {
                 Buildings.Add(building);
-                building.HomeTown = this;
 
                 if (building.Backpack != null)
                 {

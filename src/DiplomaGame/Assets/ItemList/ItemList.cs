@@ -16,7 +16,7 @@ public class ItemList<T> : ITypedItemList where T : IItemListObject
 
     public void Add(T value)
     {
-        _items.Add(value.Guid, value);
+        _items.Add(value.Id, value);
         ItemAdded?.Invoke(value);
     }
 
@@ -78,9 +78,9 @@ public class ItemList<T> : ITypedItemList where T : IItemListObject
 
     public void Update(T value)
     {
-        if (_items.ContainsKey(value.Guid))
+        if (_items.ContainsKey(value.Id))
         {
-            _items[value.Guid] = value;
+            _items[value.Id] = value;
             ItemUpdated?.Invoke(value);
         }
         else
@@ -91,14 +91,14 @@ public class ItemList<T> : ITypedItemList where T : IItemListObject
 
     public void AddOrUpdate(T value)
     {
-        if (_items.ContainsKey(value.Guid))
+        if (_items.ContainsKey(value.Id))
         {
-            _items[value.Guid] = value;
+            _items[value.Id] = value;
             ItemUpdated?.Invoke(value);
         }
         else
         {
-            _items.Add(value.Guid, value);
+            _items.Add(value.Id, value);
             ItemAdded?.Invoke(value);
         }
     }

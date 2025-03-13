@@ -3,6 +3,8 @@ using GameUtilities.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Linq;
+using Selection;
 using Town;
 
 public class TestAction : MonoBehaviour
@@ -30,7 +32,8 @@ public class TestAction : MonoBehaviour
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
-            foreach (var unit in _town.Units)
+            var unit = SelectorManager.SelectedItems.First() as UnitItem;
+            if (unit != null)
             {
                 ItemListRegistry.ItemChanged += (type, action, item) => {
                     FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
@@ -40,22 +43,25 @@ public class TestAction : MonoBehaviour
                 FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
             }
         }
+
         //Move to mouse in query
         else if (Input.GetKeyDown(KeyCode.W))
         {
             _end = UtilsClass.GetMouseWorldPosition();
             
-            List<Vector2> starts = new();
-            foreach (var unit in _town.Units)
+            foreach (var item in SelectorManager.SelectedItems)
             {
-                var moveAction = new MoveUnitAction(unit, _end, true);
-                ActionManager.QueueAction(moveAction);
-                FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
-
-                ItemListRegistry.ItemChanged += (type, action, item) => {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    var moveGroupAction = new MoveGroupUnitAction(unit, _end, true);
+                    ActionManager.QueueAction(moveGroupAction);
                     FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
-                };
-                starts.Add(new Vector2(unit.X, unit.Y));
+
+                    ItemListRegistry.ItemChanged += (type, action, item) => {
+                        FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
+                    };
+                }
             }
         }
         //Spawn unit

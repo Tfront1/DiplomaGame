@@ -16,7 +16,7 @@ namespace GameUtilities.MonoBehaviours
         [SerializeField] private float cameraMoveSpeed = 20f;
         [SerializeField] private float cameraZoomSpeed = 10f;
         
-        private Camera myCamera;
+        private static Camera myCamera;
         private Func<Vector3> GetCameraFollowPositionFunc;
         private Func<float> GetCameraZoomFunc;
 
@@ -115,7 +115,10 @@ namespace GameUtilities.MonoBehaviours
             }
         }
 
-        
+        public static Vector2 GetWorldPosition(Vector2 coords)
+        {
+            return myCamera.ScreenToWorldPoint(coords);
+        }
     }
     public class CameraMoveEventArgs : EventArgs
     {
