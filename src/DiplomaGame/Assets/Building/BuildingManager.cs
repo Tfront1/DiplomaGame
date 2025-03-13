@@ -77,6 +77,23 @@ public class BuildingManager : MonoBehaviour
         return true;
     }
 
+    public static bool RemoveBuilding(Vector2Int gridPosition, BuildingItem test,
+        ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid)
+    {
+        //Remove
+        var buildingItem = buildingItemList.GetValue(grid.GetGridObject(gridPosition).Guid);
+        if (buildingItem == null)
+        {
+            return false;
+        }
+        
+        RemoveBuildingFromGrid(gridPosition, grid, buildingItem.Building);
+        RemoveBuildingFromList(buildingItem.Id, buildingItemList);
+        Destroy(buildingItem.BuildingGameObject);
+
+        return true;
+    }
+
     /// <summary>
     /// Gets or creates a parent folder for buildings
     /// </summary>
@@ -174,6 +191,18 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
+    private static void RemoveBuildingFromGrid(Vector2Int gridPosition,
+        MapGrid<BuildingGridObject> grid, Building building)
+    {
+        for (var x = gridPosition.x; x < gridPosition.x + building.WidthCell; x++)
+        {
+            for (var y = gridPosition.y; y < gridPosition.y + building.HeightCell; y++)
+            {
+                grid.RemoveGridObject(x, y);
+            }
+        }
+    }
+
     private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject, TownItem townItem)
     {
         Backpack backpack = null;
@@ -184,6 +213,11 @@ public class BuildingManager : MonoBehaviour
 
         var buildingItemItem = BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack);
         buildingItemList.Add(buildingItemItem);
+    }
+
+    private static void RemoveBuildingFromList( Guid buildingGuid, ItemList<BuildingItem> buildingItemList)
+    {
+        buildingItemList.Remove(buildingGuid);
     }
 
     /// <summary>

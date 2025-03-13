@@ -45,5 +45,13 @@ public class TestBuilding :MonoBehaviour
 
             BuildingManager.Build(gridPosition, selectedBuilding, _list, _grid, _townItem);
         }
+        else if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            var clickPosition = UtilsClass.GetMouseWorldPosition();
+            var gridPosition = GridService.GetCellGridPosition(clickPosition);
+
+
+            BuildingManager.RemoveBuilding(gridPosition, null, _list, _grid);
+        }
     }
 }

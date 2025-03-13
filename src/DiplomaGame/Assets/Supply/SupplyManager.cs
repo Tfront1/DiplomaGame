@@ -124,6 +124,21 @@ namespace Supplies
             }
         }
 
+        public static bool RemoveSupply(Vector2Int gridPosition, SupplyItem supplyItem,
+            ItemList<SupplyItem> supplyItemList, MapGrid<SupplyGridObject> grid)
+        {
+            if (supplyItem == null)
+            {
+                return false;
+            }
+
+            RemoveSupplyFromGrid(gridPosition, grid, supplyItem.Supply);
+            RemoveSupplyFromList(supplyItem.Id, supplyItemList);
+            Destroy(supplyItem.SupplyGameObject);
+
+            return true;
+        }
+
         /// <summary>
         /// Gets or creates supplies parent folder
         /// </summary>
@@ -222,7 +237,19 @@ namespace Supplies
                 }
             }
         }
-        
+
+        private static void RemoveSupplyFromGrid(Vector2Int gridPosition,
+            MapGrid<SupplyGridObject> grid, Supply supply)
+        {
+            for (var x = gridPosition.x; x < gridPosition.x + supply.WidthCell; x++)
+            {
+                for (var y = gridPosition.y; y < gridPosition.y + supply.HeightCell; y++)
+                {
+                    grid.RemoveGridObject(x, y);
+                }
+            }
+        }
+
         private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply, GameObject supplyGameObject)
         {
             //ToDo: Seed config
@@ -230,6 +257,11 @@ namespace Supplies
             var backpack = new Backpack(supplyResourceCount);
             var supplyItem = SupplyItem.Create(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
             supplyItemList.Add(supplyItem);
+        }
+
+        private static void RemoveSupplyFromList(Guid supplyGuid, ItemList<SupplyItem> supplyItemList)
+        {
+            supplyItemList.Remove(supplyGuid);
         }
 
         /// <summary>

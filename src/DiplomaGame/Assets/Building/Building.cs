@@ -9,5 +9,16 @@ public class Building
 	public bool HasMargin { get; set; }
 	public float MaxHP { get; set; }
 	public int BackpackCapacity { get; set; }
+	public BuildingTypes BuildingType { get; set; }
     public List<int> CraftsIds { get; set; } = new();
+
+	public enum BuildingTypes
+    {
+		BuildingHouse,
+        TownHall,
+        Blacksmith,
+		Vault,
+        Fence,
+		None
+    }
 }

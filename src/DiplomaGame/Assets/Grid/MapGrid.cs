@@ -111,7 +111,12 @@ public class MapGrid<TGridObject> : IBaseGrid
 		return default;
 	}
 
-	public TGridObject GetGridObject(Vector3 wordPosition)
+    public TGridObject GetGridObject(Vector2Int cellPosition)
+    {
+        return GetGridObject(cellPosition.x, cellPosition.y);
+    }
+
+    public TGridObject GetGridObject(Vector3 wordPosition)
 	{
 		var cellPosition = GetCellGridPosition(wordPosition);
 

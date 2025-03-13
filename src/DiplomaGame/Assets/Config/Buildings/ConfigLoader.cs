@@ -47,9 +47,23 @@ public static partial class ConfigLoader
 			HeightCell = x.HeightCell,
 			HasMargin = x.HasMargin,
 			MaxHP = x.MaxHP,
-			BackpackCapacity = x.BackpackCapacity
+			BuildingType = GetBuildingType(x.BuildingType),
+            BackpackCapacity = x.BackpackCapacity
 		}));
 
         Debug.Log("Buildings config loaded");
+    }
+
+    private static Building.BuildingTypes GetBuildingType(string type)
+    {
+        return type switch
+        {
+            "BuildingHouse" => Building.BuildingTypes.BuildingHouse,
+            "TownHall" => Building.BuildingTypes.TownHall,
+            "Fence" => Building.BuildingTypes.Fence,
+            "Vault" => Building.BuildingTypes.Vault,
+            "Blacksmith" => Building.BuildingTypes.Blacksmith,
+            _ => Building.BuildingTypes.None
+        };
     }
 }

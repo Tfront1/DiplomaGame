@@ -127,7 +127,11 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public void OnSelect()
     {
         IsSelected = true;
-        if (IsInGroup)
+        if (!IsInGroup)
+        {
+            SelectionIndicator.SetActive(true);
+        }
+        else
         {
             var group = GroupManager.Instance.GetGroup(GroupId);
             if (group != null && group.UnitLeader.Id == Id)

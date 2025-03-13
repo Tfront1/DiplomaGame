@@ -2,30 +2,53 @@
   "Buildings": [
     {
       "Id": 1,
-      "Name": "B1",
+      "Name": "Building Base",
       "WidthCell": 1,
       "HeightCell": 1,
       "HasMargin": true,
-      "MaxHP": 1000,
-      "BackpackCapacity": 500
+      "MaxHP": 1,
+      "BuildingType": "BuildingHouse",
+      "BackpackCapacity": 1
     },
     {
       "Id": 2,
-      "Name": "B2",
+      "Name": "TownHall",
       "WidthCell": 2,
       "HeightCell": 2,
-      "HasMargin": false,
+      "HasMargin": true,
       "MaxHP": 1000,
-      "BackpackCapacity": 0
+      "BuildingType": "TownHall",
+      "BackpackCapacity": 2000
     },
     {
       "Id": 3,
-      "Name": "B3",
+      "Name": "Fence",
       "WidthCell": 1,
       "HeightCell": 1,
-      "HasMargin": true,
+      "HasMargin": false,
+      "MaxHP": 1500,
+      "BuildingType": "Fence",
+      "BackpackCapacity": 0
+    },
+    {
+      "Id": 4,
+      "Name": "Vault",
+      "WidthCell": 2,
+      "HeightCell": 1,
+      "HasMargin": false,
       "MaxHP": 500,
-      "BackpackCapacity": 500
+      "BuildingType": "Vault",
+      "BackpackCapacity": 1000
+    },
+    {
+      "Id": 5,
+      "Name": "Blacksmith",
+      "WidthCell": 2,
+      "HeightCell": 2,
+      "HasMargin": false,
+      "MaxHP": 500,
+      "BuildingType": "Blacksmith",
+      "BackpackCapacity": 0
     }
   ]
 }

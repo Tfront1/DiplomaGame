@@ -51,7 +51,14 @@ namespace Selection
             GameplayInputHandler.Instance.OnMouseLeftHoldStart += StartSelectArea;
             GameplayInputHandler.Instance.OnMouseLeftHoldEnd += EndSelectArea;
             GameplayInputHandler.Instance.OnMouseLeftHold += ContinueSelectingArea;
+        }
 
+        private void OnDestroy()
+        {
+            GameplayInputHandler.Instance.OnMouseLeftClick -= SelectItem;
+            GameplayInputHandler.Instance.OnMouseLeftHoldStart -= StartSelectArea;
+            GameplayInputHandler.Instance.OnMouseLeftHoldEnd -= EndSelectArea;
+            GameplayInputHandler.Instance.OnMouseLeftHold -= ContinueSelectingArea;
         }
 
         public void SelectItem(Vector2 position)
