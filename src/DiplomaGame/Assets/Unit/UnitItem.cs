@@ -24,6 +24,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public Guid GroupId { get; set; } = Guid.Empty;
     public bool IsInGroup { get; set; } = false;
+    public bool CanGroup { get; set; } = false;
     public UnitCounterDisplay DisplayGroupCounter { get; set; }
 
     public bool IsSelected { get; set; } = false;

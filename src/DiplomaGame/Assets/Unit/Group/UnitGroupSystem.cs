@@ -75,6 +75,11 @@ public class UnitGroupSystem
         AddUnitToSpatialGrid(unit);
         AddUnitToOptimisedSpatialGrid(unit);
 
+        if (!unit.CanGroup)
+        {
+            return;
+        }
+
         var nearbyUnits = FindNearbyUnits(unit, townId);
 
         ProcessUnitGrouping(unit, nearbyUnits);
@@ -126,9 +131,8 @@ public class UnitGroupSystem
             _optimisedSpatialGrid[townId][cell] = new List<UnitItem>();
         }
 
-
         var group = GroupManager.Instance.GetGroup(unit.GroupId);
-        if (!unit.IsInGroup || group.UnitLeader.Id == unit.Id)
+        if (!unit.IsInGroup || group.UnitLeader.Id == unit.Id || unit.CanGroup)
         {
             _optimisedSpatialGrid[townId][cell].Add(unit);
         }

@@ -42,6 +42,9 @@ public class MoveGroupUnitAction : BaseUnitAction
         {
             action = PathFinderManager.PathAction.MoveClose;
         }
+
+        _unit.CanGroup = true;
+
         PathFinderManager.RequestPath(
             new Vector2(_unit.X, _unit.Y),
             _targetPosition,

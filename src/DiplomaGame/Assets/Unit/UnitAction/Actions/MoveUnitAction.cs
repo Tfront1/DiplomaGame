@@ -42,6 +42,14 @@ public class MoveUnitAction : BaseUnitAction
         {
             action = PathFinderManager.PathAction.MoveClose;
         }
+
+        if (_unit.IsInGroup)
+        {
+            var group = GroupManager.Instance.GetGroup(_unit.GroupId);
+            group.RemoveUnitFromGroup(_unit);
+            _unit.CanGroup = false;
+        }
+
         PathFinderManager.RequestPath(
             new Vector2(_unit.X, _unit.Y),
             _targetPosition,
@@ -192,6 +200,7 @@ public class MoveUnitAction : BaseUnitAction
     protected override void CompleteAction()
     {
         ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+        _unit.CanGroup = true;
         base.CompleteAction();
     }
 }
