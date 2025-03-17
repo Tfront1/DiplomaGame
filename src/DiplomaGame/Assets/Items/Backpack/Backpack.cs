@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Items.Interfaces;
+using UnityEngine;
 
 namespace Items.Resource.BackPack
 {
@@ -68,6 +69,7 @@ namespace Items.Resource.BackPack
             if (existingItem.Quantity == 0)
                 _items.Remove(existingItem);
 
+            Debug.Log(ToString());
             OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
 
             return true;
@@ -79,9 +81,14 @@ namespace Items.Resource.BackPack
             return item?.Quantity ?? 0;
         }
 
-        public bool HasResource(IBackpackItem backpackItem, int quantity)
+        public bool HasResourceCount(IBackpackItem backpackItem, int quantity)
         {
             return GetResourceQuantity(backpackItem) >= quantity;
+        }
+
+        public bool HasResource(IBackpackItem backpackItem)
+        {
+            return GetResourceQuantity(backpackItem) >= 1;
         }
 
         public List<BackpackItem> GetAllItems()
@@ -93,14 +100,19 @@ namespace Items.Resource.BackPack
         {
             return (float)_currentCapacity / _maxCapacity;
         }
-        
-        public List<(IBackpackItem backpackItem, int Quantity)> GetDetailedItems()
+
+        public int GetFreeQuantity()
         {
-            var detailedItems = new List<(IBackpackItem, int)>();
+            return MaxCapacity - CurrentCapacity;
+        }
+        
+        public Dictionary<IBackpackItem, int> GetDetailedItems()
+        {
+            var detailedItems = new Dictionary<IBackpackItem, int>();
 
             foreach (var item in _items)
             {
-                detailedItems.Add((item.Item, item.Quantity));
+                detailedItems.Add(item.Item, item.Quantity);
             }
 
             return detailedItems;
@@ -127,6 +139,23 @@ namespace Items.Resource.BackPack
         {
             _maxCapacity = maxCapacity;
             OnBackpackChanged(new BackpackChangedEventArgs(null, 0));
+        }
+
+        public override string ToString()
+        {
+            var res = $"Backpack ({_currentCapacity}/{_maxCapacity}): ";
+
+            if (_items == null || _items.Count == 0)
+            {
+                res += "empty";
+            }
+            else
+            {
+                res += string.Join(", ", _items.Select(item =>
+                    $"{item.Item.Name} x{item.Quantity}"));
+            }
+
+            return res;
         }
 
         public class BackpackChangedEventArgs : EventArgs

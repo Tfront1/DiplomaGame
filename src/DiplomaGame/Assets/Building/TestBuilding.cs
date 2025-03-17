@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using GameUtilities.Utils;
 using Town;
 using UnityEngine;
@@ -7,20 +8,10 @@ public class TestBuilding :MonoBehaviour
 {
     private Building selectedBuilding;
 
-    private ItemList<BuildingItem> _list;
-    private MapGrid<BuildingGridObject> _grid;
     private TownItem _townItem;
 
     private void Awake()
     {
-        _list = new ItemList<BuildingItem>();
-        _grid = new MapGrid<BuildingGridObject>(
-            MapConfig.MapWidth,
-            MapConfig.MapHeight,
-            MapConfig.CellSize,
-            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-            (g, x, y) => new BuildingGridObject(g, x, y)
-        );
         _townItem = new TownItem("TestBuildingTown", Guid.NewGuid());
     }
     
@@ -36,14 +27,23 @@ public class TestBuilding :MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            selectedBuilding = BuildingsConfig.Buildings[2];
+            _townItem = TestAction._town;
+            selectedBuilding = BuildingsConfig.Buildings[4];
         }
         else if (Input.GetKeyDown(KeyCode.Alpha5))
         {
             var clickPosition = UtilsClass.GetMouseWorldPosition();
             var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
-            BuildingManager.Build(gridPosition, selectedBuilding, _list, _grid, _townItem);
+            BuildingManager.BuildInstantly(new Vector2Int(10, 10), BuildingsConfig.Buildings[3], _townItem);
+            BuildingManager.BuildInstantly(new Vector2Int(15, 15), BuildingsConfig.Buildings[3], _townItem);
+
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == 1);
+
+            _townItem.Buildings[0].Backpack.AddItem(res, 1000);
+            _townItem.Buildings[1].Backpack.AddItem(res, 500);
+
+            BuildingManager.BuildWithFoundation(gridPosition, selectedBuilding, BuildingsConfig.Buildings.First(), _townItem);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha6))
         {
@@ -51,7 +51,7 @@ public class TestBuilding :MonoBehaviour
             var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
 
-            BuildingManager.RemoveBuilding(gridPosition, null, _list, _grid);
+            BuildingManager.RemoveBuilding(gridPosition);
         }
     }
 }

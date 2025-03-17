@@ -51,7 +51,7 @@ public class MoveUnitAction : BaseUnitAction
         }
 
         PathFinderManager.RequestPath(
-            new Vector2(_unit.X, _unit.Y),
+            _unit.Coords,
             _targetPosition,
             _idAction,
             action
@@ -193,7 +193,7 @@ public class MoveUnitAction : BaseUnitAction
 
             currentPathIndex++;
         }
-
+        _isSuccessAction = true;
         CompleteAction();
     }
 

@@ -2,12 +2,12 @@
   "Buildings": [
     {
       "Id": 1,
-      "Name": "Building Base",
+      "Name": "Construction",
       "WidthCell": 1,
       "HeightCell": 1,
       "HasMargin": true,
       "MaxHP": 1,
-      "BuildingType": "BuildingHouse",
+      "BuildingType": "Construction",
       "BackpackCapacity": 1
     },
     {
@@ -34,8 +34,8 @@
       "Id": 4,
       "Name": "Vault",
       "WidthCell": 2,
-      "HeightCell": 1,
-      "HasMargin": false,
+      "HeightCell": 2,
+      "HasMargin": true,
       "MaxHP": 500,
       "BuildingType": "Vault",
       "BackpackCapacity": 1000
@@ -45,7 +45,7 @@
       "Name": "Blacksmith",
       "WidthCell": 2,
       "HeightCell": 2,
-      "HasMargin": false,
+      "HasMargin": true,
       "MaxHP": 500,
       "BuildingType": "Blacksmith",
       "BackpackCapacity": 0

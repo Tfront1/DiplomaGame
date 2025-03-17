@@ -5,7 +5,7 @@
     {
       "Id": 1,
       "BuildingId": 1,
-      "TextureFileName": "B1.png",
+      "TextureFileName": "StartBuilding.png",
       "VisualWidthCell": 1,
       "VisualHeightCell": 1,
       "Scale": 1.0,
@@ -14,6 +14,15 @@
     {
       "Id": 2,
       "BuildingId": 2,
+      "TextureFileName": "B1.png",
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 4,
+      "BuildingId": 4,
       "TextureFileName": "B2.png",
       "VisualWidthCell": 2,
       "VisualHeightCell": 2,
@@ -21,13 +30,13 @@
       "RandomPos": false
     },
     {
-      "Id": 3,
-      "BuildingId": 3,
+      "Id": 5,
+      "BuildingId": 5,
       "TextureFileName": "B3.png",
-      "VisualWidthCell": 1,
+      "VisualWidthCell": 2,
       "VisualHeightCell": 2,
-      "Scale": 0.8,
-      "RandomPos": true
+      "Scale": 1.0,
+      "RandomPos": false
     }
   ]
 }

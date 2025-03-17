@@ -1,0 +1,17 @@
+﻿{
+  "Recipes": [
+    {
+      "Id": 1,
+      "Name": "Test Building",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1500
+        }
+      ],
+      "CraftingTime": 60,
+      "ResultType": "Building",
+      "ResultId": 5
+    }
+  ]
+}

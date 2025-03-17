@@ -8,7 +8,7 @@ namespace Town
 
         public static void AddTown(TownItem townItem)
         {
-            if (townItem != null)
+            if (townItem != null && !TownList.Contains(townItem))
             {
                 TownList.Add(townItem);
             }

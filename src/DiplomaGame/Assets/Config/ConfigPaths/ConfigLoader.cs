@@ -22,6 +22,7 @@ public static partial class ConfigLoader
         ConfigPaths.UnitsConfigPath = configPathsDto.UnitsConfigPath;
         ConfigPaths.UnitsTexturesPath = configPathsDto.UnitsTexturesPath;
         ConfigPaths.ResourceItemsConfig = configPathsDto.ResourceItemsConfig;
+        ConfigPaths.CraftingRecipesConfig = configPathsDto.CraftingRecipesConfig;
 
         Debug.Log("Config paths loaded");
 	}

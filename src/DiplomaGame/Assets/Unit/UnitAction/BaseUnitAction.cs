@@ -13,6 +13,9 @@ public abstract class BaseUnitAction : IUnitAction
     protected bool _isStopped = false;
     public bool IsStopped => _isStopped;
 
+    protected bool _isSuccessAction = false;
+    public bool IsSuccess => _isSuccessAction;
+
 
     public BaseUnitAction(UnitItem unit)
     {

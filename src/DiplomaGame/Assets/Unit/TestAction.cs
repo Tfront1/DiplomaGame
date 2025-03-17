@@ -11,12 +11,9 @@ public class TestAction : MonoBehaviour
 {
     public static List<Vector2> _path;
 
-    public UnitActionManager ActionManager = new();
-
-
     public Vector2 _end;
 
-    public TownItem _town = new TownItem("Test", Guid.NewGuid());
+    public static TownItem _town = new TownItem("Test", Guid.NewGuid());
     
     private void Update()
     {
@@ -25,7 +22,7 @@ public class TestAction : MonoBehaviour
             foreach (var unit in _town.Units)
             {
                 var waitAction = new WaitUnitAction(unit, 2000f);
-                ActionManager.QueueAction(waitAction);
+                UnitActionManager.Instance.QueueAction(waitAction);
             }
         }
         else if (Input.GetKeyDown(KeyCode.E))
@@ -35,12 +32,8 @@ public class TestAction : MonoBehaviour
             var unit = SelectorManager.SelectedItems.First() as UnitItem;
             if (unit != null)
             {
-                ItemListRegistry.ItemChanged += (type, action, item) => {
-                    FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
-                };
                 var moveAction = new MoveUnitAction(unit, _end);
-                ActionManager.ExecuteImmediately(moveAction);
-                FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
+                UnitActionManager.Instance.ExecuteImmediately(moveAction);
             }
         }
 
@@ -55,12 +48,7 @@ public class TestAction : MonoBehaviour
                 if (unit != null)
                 {
                     var moveGroupAction = new MoveGroupUnitAction(unit, _end, true);
-                    ActionManager.QueueAction(moveGroupAction);
-                    FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
-
-                    ItemListRegistry.ItemChanged += (type, action, item) => {
-                        FindAndDrawPath(new Vector2(unit.X, unit.Y), _end);
-                    };
+                    UnitActionManager.Instance.QueueAction(moveGroupAction);
                 }
             }
         }
@@ -72,36 +60,40 @@ public class TestAction : MonoBehaviour
         //Pause
         else if (Input.GetKeyDown(KeyCode.S))
         {
-            ActionManager.PauseAllActions();
+            UnitActionManager.Instance.PauseAllActions();
         }
         //Resume
         else if (Input.GetKeyDown(KeyCode.D))
         {
-            ActionManager.ResumeAllActions();
+            UnitActionManager.Instance.ResumeAllActions();
         }
         //Stop doing
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            foreach (var unit in _town.Units)
+            foreach (var item in SelectorManager.SelectedItems)
             {
-                ActionManager.InterruptCurrentAction(unit);
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    UnitActionManager.Instance.InterruptCurrentAction(unit);
+                }
             }
         }
-    }
-
-    private void FindAndDrawPath(Vector2 start, Vector2 end)
-    {/*
-        _path = PathFinder.Instance.FindPath(start, end);
-        if (_path == null || _path.Count() == 0)
+        //Bring Resources
+        else if (Input.GetKeyDown(KeyCode.Z))
         {
-            UtilsClass.CreateWorldTextPopup(
-                "No path found!",
-                UtilsClass.GetMouseWorldPosition(),
-                Color.red,
-                1.5f
-            );
+            var buildingItem = _town.Buildings[2];
+
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    var moveResources = new MoveResourcesForBuildingAction(unit, buildingItem);
+                    UnitActionManager.Instance.QueueAction(moveResources);
+                }
+            }
         }
-        UtilsClass.DrawPath(_path, Color.black, 1);*/
     }
 
     private List<UnitItem> SpawnUnit()
@@ -110,7 +102,7 @@ public class TestAction : MonoBehaviour
 
         var random = new System.Random();
         List<UnitItem> units = new();
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 1; i++)
         {
             var unitGameObject = new GameObject("TestUnit");
             var renderer = unitGameObject.AddComponent<SpriteRenderer>();
@@ -134,11 +126,17 @@ public class TestAction : MonoBehaviour
 
             var randomX = clickPosition.x + (float)(random.NextDouble() * 50);
             var randomY = clickPosition.y + (float)(random.NextDouble() * 50);
-            //randomX = clickPosition.x;
-            //randomY = clickPosition.y;
+            randomX = clickPosition.x;
+            randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
 
-            _town.AddUnit(UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, _town));
+            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, _town);
+
+            _town.AddUnit(unitItem);
+
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == 1);
+
+            //unitItem.Backpack.FillWithSingleItem(res);
         }
 
         return units;

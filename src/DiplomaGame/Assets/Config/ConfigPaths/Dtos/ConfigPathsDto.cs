@@ -14,5 +14,6 @@ public class ConfigPathsDto
     public string UnitsConfigPath;
     public string UnitsTexturesPath;
     public string ResourceItemsConfig;
+    public string CraftingRecipesConfig;
 }
 

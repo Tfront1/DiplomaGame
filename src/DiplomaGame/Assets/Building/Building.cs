@@ -11,10 +11,11 @@ public class Building
 	public int BackpackCapacity { get; set; }
 	public BuildingTypes BuildingType { get; set; }
     public List<int> CraftsIds { get; set; } = new();
+    public int BuildingCraftId { get; set; } = 1;
 
 	public enum BuildingTypes
     {
-		BuildingHouse,
+        Construction,
         TownHall,
         Blacksmith,
 		Vault,

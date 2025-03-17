@@ -31,17 +31,84 @@ public class BuildingManager : MonoBehaviour
 
     private static bool _isInitializedCaches = false;
 
+    private static ItemList<BuildingItem> _buildingItemList;
+    private static MapGrid<BuildingGridObject> _grid;
+
     /// <summary>
     /// Initializes building caches with data from configs
     /// </summary>
     private static void InitializeCaches()
     {
+        _buildingItemList = new ItemList<BuildingItem>();
+        _grid = new MapGrid<BuildingGridObject>(
+            MapConfig.MapWidth,
+            MapConfig.MapHeight,
+            MapConfig.CellSize,
+            new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+            (g, x, y) => new BuildingGridObject(g, x, y)
+        );
+
         _buildingTextureConfigCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId);
 
         _isInitializedCaches = true; 
     }
-    
-    public static bool Build(Vector2Int gridPosition, Building building, ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid, TownItem townItem)
+
+    public static bool BuildWithFoundation(Vector2Int gridPosition, Building building, Building construction, TownItem townItem)
+    {
+        if (!_isInitializedCaches)
+        {
+            InitializeCaches();
+        }
+
+        if (!GridService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(building.WidthCell,
+                    building.HeightCell),
+                GridRegistry.GetAllGridsList().ToArray()) ||
+            !ItemListService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(building.WidthCell, building.HeightCell),
+                ItemListRegistry.GetAllListsItemsList().ToArray()
+            ))
+        {
+            return false;
+        }
+
+        var buildingGuid = Guid.NewGuid();
+        var newBuildingObject = CreateBuildingGameObject(building.Name);
+
+        var buildingConstruction = SetConstructionVariables(building, construction);
+
+        if (buildingConstruction == null)
+        {
+            return false;
+        }
+
+        var buildingConstructionTexture = SetTextureConstructionVariables(_buildingTextureConfigCache[building.Id],
+            _buildingTextureConfigCache[construction.Id]);
+
+        SetupBuildingSprite(newBuildingObject, buildingConstructionTexture, construction);
+        SetBuildingPosition(newBuildingObject, gridPosition, buildingConstruction, buildingConstructionTexture);
+        SetupBuildingCollider(newBuildingObject, gridPosition, buildingConstruction, buildingConstructionTexture);
+
+        var buildingItem = CreateBuildingItem(gridPosition, buildingGuid, building, newBuildingObject, townItem, buildingConstruction);
+
+        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, building);
+        AddBuildingToList(buildingItem, _buildingItemList);
+        GridRegistry.UpsertGrid(_grid);
+        ItemListRegistry.UpsertList(_buildingItemList);
+
+        var buildingCraftingComponents = CraftingRecipesConfig
+            .CraftingRecipesDictionary[buildingItem.Building.BuildingCraftId].Components;
+
+        townItem.AddBuilding(buildingItem);
+
+        townItem.BuildingTownOrder.CreateOrder(buildingItem, buildingCraftingComponents, townItem);
+
+        return true;
+    }
+
+    public static bool BuildInstantly(Vector2Int gridPosition, Building building, TownItem townItem)
     {
         if (!_isInitializedCaches)
         {
@@ -69,29 +136,66 @@ public class BuildingManager : MonoBehaviour
         SetBuildingPosition(newBuildingObject, gridPosition, building, _buildingTextureConfigCache[building.Id]);
         SetupBuildingCollider(newBuildingObject, gridPosition, building, _buildingTextureConfigCache[building.Id]);
 
-        PlaceBuildingInGrid(gridPosition, buildingGuid, grid, building);
-        AddBuildingToList(gridPosition, buildingGuid, buildingItemList, building, newBuildingObject, townItem);
-        GridRegistry.UpsertGrid(grid);
-        ItemListRegistry.UpsertList(buildingItemList);
+        var buildingItem = CreateBuildingItem(gridPosition, buildingGuid, building, newBuildingObject, townItem);
+
+        PlaceBuildingInGrid(gridPosition, buildingGuid, _grid, building);
+        AddBuildingToList(buildingItem, _buildingItemList);
+        GridRegistry.UpsertGrid(_grid);
+        ItemListRegistry.UpsertList(_buildingItemList);
+
+        townItem.AddBuilding(buildingItem);
 
         return true;
     }
 
-    public static bool RemoveBuilding(Vector2Int gridPosition, BuildingItem test,
-        ItemList<BuildingItem> buildingItemList, MapGrid<BuildingGridObject> grid)
+    public static void CompleteBuilding(object sender, BuildingItem.BuildingCompletedEventArgs e)
     {
-        //Remove
-        var buildingItem = buildingItemList.GetValue(grid.GetGridObject(gridPosition).Guid);
+        var buildingItem = e.BuildingItem;
+        var buildingTexture = _buildingTextureConfigCache[buildingItem.Building.Id];
+
+        SetupBuildingSprite(buildingItem.BuildingGameObject, buildingTexture, buildingItem.Building, true);
+    }
+
+    public static bool RemoveBuilding(Vector2Int gridPosition)
+    {
+        var buildingId = _grid.GetGridObject(gridPosition);
+        if (buildingId == null)
+        {
+            return false;
+        }
+
+        var buildingItem = _buildingItemList.GetValue(buildingId.Guid);
         if (buildingItem == null)
         {
             return false;
         }
-        
-        RemoveBuildingFromGrid(gridPosition, grid, buildingItem.Building);
-        RemoveBuildingFromList(buildingItem.Id, buildingItemList);
-        Destroy(buildingItem.BuildingGameObject);
+
+        buildingItem.OnDestroyed -= RemoveBuilding;
+        buildingItem.OnBuildingComplete -= CompleteBuilding;
+
+        RemoveBuildingFromGrid(gridPosition, _grid, buildingItem.Building);
+        RemoveBuildingFromList(buildingItem.Id, _buildingItemList);
+
+        buildingItem.Destroy();
 
         return true;
+    }
+
+    private static void RemoveBuilding(object sender, BuildingItem.BuildingDestroyedEventArgs e)
+    {
+        var gridPosition = new Vector2Int(e.BuildingItem.X, e.BuildingItem.Y);
+
+        var buildingItem = _buildingItemList.GetValue(_grid.GetGridObject(gridPosition).Guid);
+        if (buildingItem == null)
+        {
+            return;
+        }
+
+        buildingItem.OnDestroyed -= RemoveBuilding;
+        buildingItem.OnBuildingComplete -= CompleteBuilding;
+
+        RemoveBuildingFromGrid(gridPosition, _grid, buildingItem.Building);
+        RemoveBuildingFromList(buildingItem.Id, _buildingItemList);
     }
 
     /// <summary>
@@ -128,9 +232,21 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingObject">Target building object</param>
     /// <param name="buildingTexture">Texture for the sprite</param>
     /// <param name="building">Building data</param>
-    private static void SetupBuildingSprite(GameObject buildingObject, BuildingTexture buildingTexture, Building building)
+    /// <param name="hasSpriteRender">Indicates whether the object already has a SpriteRenderer component.
+    /// If true, the existing renderer will be used;
+    /// if false, a new one will be added.</param>
+    private static void SetupBuildingSprite(GameObject buildingObject, BuildingTexture buildingTexture, Building building, bool hasSpriteRender = false)
     {
-        var renderer = buildingObject.AddComponent<SpriteRenderer>();
+        SpriteRenderer renderer;
+        if (!hasSpriteRender)
+        {
+            renderer = buildingObject.AddComponent<SpriteRenderer>();
+        }
+        else
+        {
+            renderer = buildingObject.GetComponent<SpriteRenderer>();
+        }
+
         var newBuildingSprite = Sprite.Create(
             buildingTexture.Texture,
             new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
@@ -171,6 +287,40 @@ public class BuildingManager : MonoBehaviour
         return (finalScale, new Vector2(textureUnitWidth * finalScale, textureUnitHeight * finalScale));
     }
 
+    private static BuildingItem CreateBuildingItem(Vector2Int gridPosition, Guid buildingGuid, Building building, 
+        GameObject buildingGameObject, TownItem townItem, Building buildingConstruction = null)
+    {
+        Backpack backpack = null;
+
+        if (buildingConstruction != null)
+        {
+            backpack = new Backpack(buildingConstruction.BackpackCapacity);
+        }
+        else if (building.BackpackCapacity > 0 )
+        {
+            backpack = new Backpack(building.BackpackCapacity);
+        }
+
+        var buildingItem =
+                BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack);
+
+        buildingItem.Construction = buildingConstruction;
+
+        buildingItem.OnDestroyed += RemoveBuilding;
+        if (buildingConstruction == null)
+        {
+            buildingItem.IsBuilt = true;
+
+        }
+        else
+        {
+            buildingItem.OnBuildingComplete += CompleteBuilding;
+            buildingItem.IsBuilt = false;
+        }
+
+        return buildingItem;
+    }
+
     /// <summary>
     /// Places building in grid and creates grid objects
     /// </summary>
@@ -203,16 +353,9 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private static void AddBuildingToList(Vector2Int gridPosition, Guid buildingGuid, ItemList<BuildingItem> buildingItemList, Building building, GameObject buildingGameObject, TownItem townItem)
+    private static void AddBuildingToList(BuildingItem buildingItem, ItemList<BuildingItem> buildingItemList)
     {
-        Backpack backpack = null;
-        if (building.BackpackCapacity > 0)
-        {
-            backpack = new Backpack(building.BackpackCapacity);
-        }
-
-        var buildingItemItem = BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack);
-        buildingItemList.Add(buildingItemItem);
+        buildingItemList.Add(buildingItem);
     }
 
     private static void RemoveBuildingFromList( Guid buildingGuid, ItemList<BuildingItem> buildingItemList)
@@ -333,5 +476,41 @@ public class BuildingManager : MonoBehaviour
             MapConfig.CellSize * building.WidthCell / 2 / finalScale - offset.x / finalScale,
             MapConfig.CellSize * building.HeightCell / 2 / finalScale - offset.y / finalScale
         );
+    }
+
+    private static Building SetConstructionVariables(Building building, Building construction)
+    {
+        var copyConstruction = new Building();
+
+        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(building.BuildingCraftId, out var buildingCraft);
+        if (buildingCraft == null)
+        {
+            return null;
+        }
+
+        copyConstruction.BackpackCapacity = buildingCraft.GetAllComponentsQuantity();
+
+        copyConstruction.HasMargin = building.HasMargin;
+        copyConstruction.Name = building.Name;
+        copyConstruction.HeightCell = building.HeightCell;
+        copyConstruction.WidthCell = building.WidthCell;
+        copyConstruction.BuildingType = construction.BuildingType;
+        copyConstruction.MaxHP = construction.MaxHP;
+
+        return copyConstruction;
+    }
+
+    private static BuildingTexture SetTextureConstructionVariables(BuildingTexture building, BuildingTexture construction)
+    {
+        var buildingTexture = new BuildingTexture
+        {
+            RandomPos = building.RandomPos,
+            Scale = building.Scale,
+            VisualHeightCell = building.VisualHeightCell,
+            VisualWidthCell = building.VisualWidthCell,
+            Texture = construction.Texture
+        };
+
+        return buildingTexture;
     }
 }

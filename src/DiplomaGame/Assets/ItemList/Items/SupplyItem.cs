@@ -73,7 +73,7 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
         SelectionIndicator.SetActive(false);
     }
 
-    public Guid GetGuid()
+    public Guid GetId()
     {
         return Id;
     }

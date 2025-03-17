@@ -8,6 +8,29 @@ using System.Linq;
 /// </summary>
 public class UnitActionManager
 {
+    private static UnitActionManager _instance;
+    private static readonly object _lock = new();
+
+    public static UnitActionManager Instance
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (_instance == null)
+                {
+                    _instance = new UnitActionManager();
+                }
+                return _instance;
+            }
+        }
+    }
+
+    private UnitActionManager()
+    {
+
+    }
+
     // Stores queued actions for each unit (by unit GUID)
     private Dictionary<Guid, Queue<IUnitAction>> _unitActionQueues = new();
 
@@ -279,5 +302,16 @@ public class UnitActionManager
             return 0;
         }
         return _unitActionQueues[unitGuid].Count;
+    }
+
+    /// <summary>
+    /// Returns the currently executing action.
+    /// </summary>
+    /// <param name="unit">The unit to check</param>
+    /// <returns>The currently executing action for unit</returns>
+    public IUnitAction GetCurrentUnitAction(UnitItem unit)
+    {
+        var unitGuid = unit.GetGuid();
+        return _currentActions.GetValueOrDefault(unitGuid);
     }
 }

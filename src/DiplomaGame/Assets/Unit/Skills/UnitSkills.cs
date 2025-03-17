@@ -8,7 +8,7 @@ public class UnitSkills
     private float _passiveExperienceRate = 0.1f;
     private BaseSkill _activeSkill;
 
-    public HashSet<BaseSkill> _skills = new();
+    private HashSet<BaseSkill> _skills = new();
 
     public UnitSkills()
     {
@@ -44,6 +44,11 @@ public class UnitSkills
         _activeSkill = null;
         Debug.Log($"Active skill reset to null");
 
+    }
+
+    public T GetSkill<T>() where T : BaseSkill
+    {
+        return _skills.OfType<T>().FirstOrDefault();
     }
 
     public void Update(float deltaTime)

@@ -17,6 +17,7 @@ namespace Town
         //ToDo: Logic for possible crafts
         public List<CraftingRecipe> PossibleCrafts { get; set; }
         public int DiedUnits { get; set; } = 0;
+        public BuildingTownOrder BuildingTownOrder { get; set; } = new();
 
         public TownItem(string name, Guid id)
         {
@@ -41,7 +42,8 @@ namespace Town
 
                 if (building.Backpack != null)
                 {
-                    building.Backpack.BackpackChanged += Building_BackpackChanged;
+                    building.Backpack.BackpackChanged += BuildingBackpackChanged;
+                    building.OnDestroyed += BuildingDestroyed;
 
                     RecalculateTotalResources();
                 }
@@ -53,10 +55,12 @@ namespace Town
             if (Buildings.Contains(building))
             {
                 Buildings.Remove(building);
+                BuildingTownOrder.RemoveOrdersForBuilding(building);
 
                 if (building.Backpack != null)
                 {
-                    building.Backpack.BackpackChanged -= Building_BackpackChanged;
+                    building.Backpack.BackpackChanged -= BuildingBackpackChanged;
+                    building.OnDestroyed -= BuildingDestroyed;
 
                     RecalculateTotalResources();
                 }
@@ -107,7 +111,7 @@ namespace Town
         public Dictionary<CraftingRecipe, bool> GetBuildingCrafts()
         {
             //ToDo: Logic for possible crafts
-            PossibleCrafts = CraftingRecipeConfig.CraftingRecipes;
+            PossibleCrafts = CraftingRecipesConfig.CraftingRecipes;
 
             var crafts = new Dictionary<CraftingRecipe, bool>();
 
@@ -126,7 +130,7 @@ namespace Town
         public Dictionary<CraftingRecipe, bool> GetAllPossibleCrafts()
         {
             //ToDo: Logic for possible crafts
-            PossibleCrafts = CraftingRecipeConfig.CraftingRecipes;
+            PossibleCrafts = CraftingRecipesConfig.CraftingRecipes;
 
             var crafts = new Dictionary<CraftingRecipe, bool>();
 
@@ -145,7 +149,7 @@ namespace Town
             {
                 Units.Add(unit);
 
-                unit.OnDied += Unit_Died;
+                unit.OnDied += UnitDied;
             }
         }
 
@@ -155,7 +159,7 @@ namespace Town
             {
                 Units.Remove(unit);
 
-                unit.OnDied -= Unit_Died;
+                unit.OnDied -= UnitDied;
             }
         }
 
@@ -184,7 +188,7 @@ namespace Town
             var totalCapacity = 0;
             foreach (var building in Buildings)
             {
-                if (building.Backpack != null)
+                if (building.Backpack != null && building.IsBuilt)
                 {
                     totalCapacity += building.Backpack.MaxCapacity;
                 }
@@ -198,25 +202,35 @@ namespace Town
             var result = new Backpack(TotalBackpackCapacity());
             foreach (var building in Buildings)
             {
-                building.Backpack?.GetAllItems().ForEach(item =>
+                if (building.IsBuilt)
                 {
-                    result.AddItem(item.Item, item.Quantity);
-                });
+                    building.Backpack?.GetAllItems().ForEach(item =>
+                    {
+                        result.AddItem(item.Item, item.Quantity);
+                    });
+                }
             }
 
             TotalBackpack = result;
         }
 
-        private void Building_BackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)
+        private void BuildingBackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)
         {
             RecalculateTotalResources();
+            BuildingTownOrder.RecalculateAllOrders();
         }
 
-        private void Unit_Died(object sender, UnitDiedEventArgs e)
+        private void UnitDied(object sender, UnitDiedEventArgs e)
         {
-            var deadUnit = e.Unit;
             DiedUnits++;
-            RemoveUnit(deadUnit);
+            RemoveUnit(e.Unit);
+        }
+
+        private void BuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs e)
+        {
+            RecalculateTotalResources();
+            BuildingTownOrder.RecalculateAllOrders();
+            RemoveBuilding(e.BuildingItem);
         }
     }
 }

@@ -35,5 +35,17 @@ namespace Assets.Items.Crafts
 
             ResultId = resultId;
         }
+        
+        public int GetAllComponentsQuantity()
+        {
+            var quantity = 0;
+
+            foreach (var component in Components)
+            {
+                quantity += component.Quantity;
+            }
+
+            return quantity;
+        }
     }
 }

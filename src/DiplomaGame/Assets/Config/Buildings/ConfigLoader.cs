@@ -58,7 +58,7 @@ public static partial class ConfigLoader
     {
         return type switch
         {
-            "BuildingHouse" => Building.BuildingTypes.BuildingHouse,
+            "Construction" => Building.BuildingTypes.Construction,
             "TownHall" => Building.BuildingTypes.TownHall,
             "Fence" => Building.BuildingTypes.Fence,
             "Vault" => Building.BuildingTypes.Vault,

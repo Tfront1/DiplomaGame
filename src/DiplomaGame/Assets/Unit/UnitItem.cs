@@ -19,7 +19,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     //Gameplay
     public UnitStats Stats { get; set; }
     public UnitSkills Skills { get; set; }
-    public Backpack UnitBackpack { get; set; }
+    public Backpack Backpack { get; set; }
     public TownItem HomeTown { get; set; }
 
     public Guid GroupId { get; set; } = Guid.Empty;
@@ -94,7 +94,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         TickRateSystem.Instance.OnTick += Skills.Update;
 
         //ToDo: Add config to unit
-        UnitBackpack = new Backpack(1000);
+        Backpack = new Backpack(500);
     }
 
     public void SetPosition(Vector2 position)
