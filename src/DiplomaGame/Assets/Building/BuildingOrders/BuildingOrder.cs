@@ -38,7 +38,7 @@ public class BuildingOrder
             DeliveredResources.Add(new CraftingComponent(resource.BackpackItem, 0));
         }
 
-        targetBuilding.OnResourcesDelivered += DeliverResources;
+        TargetBuilding.OnResourcesDelivered += DeliverResources;
         OrderPriority = orderPriority;
     }
 
@@ -71,6 +71,7 @@ public class BuildingOrder
     public bool AssignUnit(UnitItem unit)
     {
         var remainingResources = GetRemainingResources();
+
         if (remainingResources.Count == 0)
             return false;
 
@@ -80,37 +81,43 @@ public class BuildingOrder
         if (unit.HomeTown.Id != HomeTown.Id)
             return false;
 
-        var resourcesForUnit = CalculateResourcesForUnitToTake(unit);
+        var resourcesUnitHave = CalculateResourcesUnitHave(unit);
+        var resourcesForUnitToTake = CalculateResourcesForUnitToTake(unit);
+        var buildingsToTakeResources = GetClosestBuildingsWithResources(unit, resourcesForUnitToTake);
 
-        if (resourcesForUnit.Count == 0)
+        // If unit have resources
+        if (resourcesUnitHave.Count > 0)
+        {
+            // If no buildings to take resources OR distance is closer to target building than to collect resources from buildings
+            // Go directly to target building
+            if (buildingsToTakeResources.Count == 0 ||
+                ShouldGoDirectlyToTarget(unit, TargetBuilding, 
+                    buildingsToTakeResources.Select(x => x.Building).ToList(), 
+                    resourcesUnitHave, resourcesForUnitToTake))
+            {
+                AssignedUnits.Add(unit);
+                _assignedResources[unit.Id] = resourcesUnitHave;
+
+                var newAction = new MoveResourcesForBuildingAction(unit, TargetBuilding);
+                UnitActionManager.Instance.QueueAction(newAction);
+
+                return true;
+            }
+        }
+        else if(buildingsToTakeResources.Count > 0)
+        {
+            AssignedUnits.Add(unit);
+            _assignedResources[unit.Id] = resourcesForUnitToTake;
+
+            var newAction = new MoveResourcesForBuildingAction(unit, TargetBuilding, buildingsToTakeResources);
+            UnitActionManager.Instance.QueueAction(newAction);
+
+            return true;
+        }
+
+        if (resourcesForUnitToTake.Count == 0)
             return false;
-
-        AssignedUnits.Add(unit);
-        _assignedResources[unit.Id] = resourcesForUnit;
         
-        return true;
-    }
-
-    public bool AssignUnitWithHisResources(UnitItem unit)
-    {
-        var remainingResources = GetRemainingResources();
-        if (remainingResources.Count == 0)
-            return false;
-
-        if (AssignedUnits.Contains(unit))
-            return false;
-
-        if (unit.HomeTown.Id != HomeTown.Id)
-            return false;
-
-        var unitResources = CalculateResourcesUnitHave(unit);
-
-        if (unitResources.Count == 0)
-            return false;
-
-        AssignedUnits.Add(unit);
-        _assignedResources[unit.Id] = unitResources;
-
         return true;
     }
 
@@ -146,8 +153,6 @@ public class BuildingOrder
         AssignedUnits.Remove(args.Unit);
         _assignedResources.Remove(args.Unit.Id);
 
-        Debug.Log($"All resources delivered Order {TargetBuilding.Backpack}");
-
         CheckCompletion();
     }
 
@@ -177,11 +182,32 @@ public class BuildingOrder
 
     public void UnassignUnit(UnitItem unit)
     {
+        var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
+        if (action is MoveResourcesForBuildingAction moveAction)
+        {
+            moveAction._interruptedByOrder = true;
+            UnitActionManager.Instance.InterruptCurrentAction(unit);
+        }
+
         _assignedResources.Remove(unit.Id);
         AssignedUnits.Remove(unit);
     }
 
-    public List<CraftingComponent> CalculateResourcesUnitHave(UnitItem unit)
+    public void RecalculateAssignUnits()
+    {
+        var assignedUnitsCopy = new List<UnitItem>(AssignedUnits);
+        foreach (var unit in assignedUnitsCopy)
+        {
+            UnassignUnit(unit);
+        }
+
+        foreach (var unit in assignedUnitsCopy)
+        {
+            AssignUnit(unit);
+        }
+    }
+
+    private List<CraftingComponent> CalculateResourcesUnitHave(UnitItem unit)
     {
         var neededResources = GetRemainingResources();
         List<CraftingComponent> result = new();
@@ -202,7 +228,7 @@ public class BuildingOrder
         return result;
     }
 
-    public List<CraftingComponent> CalculateResourcesForUnitToTake(UnitItem unit)
+    private List<CraftingComponent> CalculateResourcesForUnitToTake(UnitItem unit)
     {
         var neededResources = GetRemainingResources();
         List<CraftingComponent> result = new();
@@ -238,20 +264,132 @@ public class BuildingOrder
 
         return result;
     }
-
-    public void RecalculateAssignUnits()
+    
+    private bool ShouldGoDirectlyToTarget(UnitItem unit, BuildingItem targetBuilding, List<BuildingItem> resourceBuildings, List<CraftingComponent> currentResources, List<CraftingComponent> resourcesToTake)
     {
-        var assignedUnitsCopy = new List<UnitItem>(AssignedUnits);
-        Cancel();
-
-        foreach (var unit in assignedUnitsCopy)
+        if (resourceBuildings.Count == 0)
         {
-            if (GetRemainingResources().Count != 0)
+            return true;
+        }
+
+        var currentResourcesTotal = currentResources.Sum(r => r.Quantity);
+        if (currentResourcesTotal == 0)
+        {
+            return false;
+        }
+
+        var distanceToTarget = Vector2.Distance(GridService.GetWorldPosition(targetBuilding.X, targetBuilding.Y), unit.Coords);
+        var distanceToResourceBuilding = Vector2.Distance(GridService.GetWorldPosition(resourceBuildings.First().X, resourceBuildings.First().Y), unit.Coords);
+        var distanceFromResourceToTarget = Vector2.Distance(GridService.GetWorldPosition(resourceBuildings.First().X, resourceBuildings.First().Y), GridService.GetWorldPosition(targetBuilding.X, targetBuilding.Y));
+        var totalIndirectRoute = distanceToResourceBuilding + distanceFromResourceToTarget;
+
+        var potentialResourcesTotal = currentResourcesTotal;
+        foreach (var resource in resourcesToTake)
+        {
+            potentialResourcesTotal += resource.Quantity;
+        }
+
+        var distanceEfficiency = distanceToTarget / totalIndirectRoute;
+
+        var resourceEfficiency = (float)currentResourcesTotal / potentialResourcesTotal;
+
+        const float DISTANCE_WEIGHT = 0.4f;
+        const float RESOURCE_WEIGHT = 0.6f;
+
+        var totalEfficiency = (distanceEfficiency * DISTANCE_WEIGHT) + (resourceEfficiency * RESOURCE_WEIGHT);
+
+        const float EFFICIENCY_THRESHOLD = 0.65f;
+
+        return totalEfficiency >= EFFICIENCY_THRESHOLD;
+    }
+
+    private List<(BuildingItem Building, List<CraftingComponent> ResourcesForBuilding)> GetClosestBuildingsWithResources(UnitItem unit, List<CraftingComponent> resourcesToTake)
+    {
+        var result = new List<(BuildingItem Building, List<CraftingComponent> ResourcesForBuilding)>();
+        if (resourcesToTake.Count == 0)
+        {
+            return result;
+        }
+
+        // Створюємо глибоку копію списку ресурсів, щоб не змінювати оригінальний список
+        var remainingResources = resourcesToTake.Select(r => 
+            new CraftingComponent(r.BackpackItem, r.Quantity))
+            .ToList();
+
+        // Перевіряємо, чи є будівлі, які містять всі необхідні ресурси
+        var buildingsWithAllResources = unit.HomeTown.Buildings
+            .Where(b => b.Backpack != null && b.IsBuilt)
+            .Where(b => remainingResources.All(r =>
+                b.Backpack.HasResource(r.BackpackItem) &&
+                b.Backpack.GetResourceQuantity(r.BackpackItem) >= r.Quantity))
+            .OrderBy(b => Vector2.Distance(new Vector2(unit.X, unit.Y), GridService.GetWorldPosition(b.X, b.Y)))
+            .ToList();
+
+        if (buildingsWithAllResources.Count > 0)
+        {
+            var closestVault = buildingsWithAllResources.First();
+            // Для цієї будівлі ми беремо всі необхідні ресурси
+            var resourcesToBeTaken = remainingResources.Select(r =>
+                new CraftingComponent(r.BackpackItem, r.Quantity))
+                .ToList();
+
+            result.Add((closestVault, resourcesToBeTaken));
+            return result;
+        }
+
+        var visitedBuildings = new HashSet<BuildingItem>();
+        while (remainingResources.Count > 0)
+        {
+            var bestBuilding = unit.HomeTown.Buildings
+                .Where(b => b.Backpack != null && b.IsBuilt && !visitedBuildings.Contains(b))
+                .Where(b => remainingResources.Any(r =>
+                    b.Backpack.HasResource(r.BackpackItem) &&
+                    b.Backpack.GetResourceQuantity(r.BackpackItem) > 0))
+                .OrderByDescending(b => remainingResources.Sum(r =>
+                    b.Backpack.HasResource(r.BackpackItem) ?
+                        Math.Min(b.Backpack.GetResourceQuantity(r.BackpackItem), r.Quantity) : 0))
+                .ThenBy(b => Vector2.Distance(new Vector2(unit.X, unit.Y), new Vector2(b.X, b.Y)))
+                .FirstOrDefault();
+
+            if (bestBuilding == null) break;
+
+            visitedBuildings.Add(bestBuilding);
+
+            // Список ресурсів, які будуть взяті з цієї будівлі
+            var resourcesFromThisBuilding = new List<CraftingComponent>();
+
+            foreach (var resource in remainingResources.ToList())
             {
-                var newAction = new MoveResourcesForBuildingAction(unit, TargetBuilding);
-                UnitActionManager.Instance.QueueAction(newAction);
+                if (bestBuilding.Backpack.HasResource(resource.BackpackItem))
+                {
+                    var available = bestBuilding.Backpack.GetResourceQuantity(resource.BackpackItem);
+                    var toTake = Math.Min(available, resource.Quantity);
+
+                    if (toTake > 0)
+                    {
+                        // Додаємо ресурс до списку ресурсів, які будуть взяті з цієї будівлі
+                        resourcesFromThisBuilding.Add(new CraftingComponent(resource.BackpackItem, toTake));
+
+                        // Оновлюємо залишковий список ресурсів
+                        resource.Quantity -= toTake;
+                        if (resource.Quantity <= 0)
+                        {
+                            remainingResources.Remove(resource);
+                        }
+                    }
+                }
+            }
+
+            // Додаємо будівлю та список ресурсів, які будуть з неї взяті
+            result.Add((bestBuilding, resourcesFromThisBuilding));
+
+            if (remainingResources.Count == 0)
+            {
+                break;
             }
         }
+
+        return result;
     }
 
     private void CheckCompletion()

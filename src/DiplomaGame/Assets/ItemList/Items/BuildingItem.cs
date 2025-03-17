@@ -92,7 +92,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
         if (buildingCraft != null)
         {
-            var deliveredResources = new List<CraftingComponent>();
+            //var deliveredResources = new List<CraftingComponent>();
 
             foreach (var component in buildingCraft.Components)
             {
@@ -107,16 +107,19 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
                         var resourceCount = Math.Min(unitResourceCount, resourceNeed);
 
-                        deliveredResources.Add(new CraftingComponent(component.BackpackItem, resourceCount));
+                        var deliveredResources =
+                            new List<CraftingComponent> { new(component.BackpackItem, resourceCount) };
+
+                        //deliveredResources.Add(new CraftingComponent(component.BackpackItem, resourceCount));
+
+                        var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
+                        OnResourcesDelivered?.Invoke(this, deliverArgs);
 
                         unitBackpack.RemoveResource(component.BackpackItem, resourceCount);
                         Backpack.AddItem(component.BackpackItem, resourceCount);
                     }
                 }
             }
-
-            var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
-            OnResourcesDelivered?.Invoke(this, deliverArgs);
 
             if (HasAllRequiredResources())
             {
@@ -217,6 +220,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     {
         return Id;
     }
+
 
     public class BuildingDestroyedEventArgs : EventArgs
     {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.Items.Interfaces;
-using UnityEngine;
 
 namespace Items.Resource.BackPack
 {
@@ -69,7 +68,6 @@ namespace Items.Resource.BackPack
             if (existingItem.Quantity == 0)
                 _items.Remove(existingItem);
 
-            Debug.Log(ToString());
             OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
 
             return true;

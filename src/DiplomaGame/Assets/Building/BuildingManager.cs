@@ -98,12 +98,7 @@ public class BuildingManager : MonoBehaviour
         GridRegistry.UpsertGrid(_grid);
         ItemListRegistry.UpsertList(_buildingItemList);
 
-        var buildingCraftingComponents = CraftingRecipesConfig
-            .CraftingRecipesDictionary[buildingItem.Building.BuildingCraftId].Components;
-
         townItem.AddBuilding(buildingItem);
-
-        townItem.BuildingTownOrder.CreateOrder(buildingItem, buildingCraftingComponents, townItem);
 
         return true;
     }

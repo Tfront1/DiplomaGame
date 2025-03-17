@@ -89,8 +89,7 @@ public class TestAction : MonoBehaviour
                 var unit = item as UnitItem;
                 if (unit != null)
                 {
-                    var moveResources = new MoveResourcesForBuildingAction(unit, buildingItem);
-                    UnitActionManager.Instance.QueueAction(moveResources);
+                    _town.BuildingTownOrder.AssignUnitToOrder(unit, buildingItem);
                 }
             }
         }

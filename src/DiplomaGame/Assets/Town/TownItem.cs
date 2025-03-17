@@ -47,6 +47,15 @@ namespace Town
 
                     RecalculateTotalResources();
                 }
+
+                if(!building.IsBuilt)
+                {
+                    var buildingCraftingComponents = CraftingRecipesConfig
+                        .CraftingRecipesDictionary[building.Building.BuildingCraftId].Components;
+
+                    BuildingTownOrder.CreateOrder(building, buildingCraftingComponents, this);
+
+                }
             }
         }
 
@@ -217,7 +226,7 @@ namespace Town
         private void BuildingBackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)
         {
             RecalculateTotalResources();
-            BuildingTownOrder.RecalculateAllOrders();
+            BuildingTownOrder.RecalculateAllOrders(this);
         }
 
         private void UnitDied(object sender, UnitDiedEventArgs e)
@@ -229,7 +238,7 @@ namespace Town
         private void BuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs e)
         {
             RecalculateTotalResources();
-            BuildingTownOrder.RecalculateAllOrders();
+            BuildingTownOrder.RecalculateAllOrders(this);
             RemoveBuilding(e.BuildingItem);
         }
     }

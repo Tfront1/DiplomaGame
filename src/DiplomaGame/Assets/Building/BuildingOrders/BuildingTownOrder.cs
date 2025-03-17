@@ -8,7 +8,7 @@ public class BuildingTownOrder
 {
     private Dictionary<BuildingItem, BuildingOrder> _activeOrders = new();
     private Dictionary<BuildingItem, BuildingOrder> _completedOrders = new();
-    
+
     public BuildingOrder CreateOrder(BuildingItem targetBuilding, List<CraftingComponent> requiredResources, TownItem townItem, int orderPriority = 1)
     {
         if (_activeOrders.ContainsKey(targetBuilding))
@@ -88,7 +88,7 @@ public class BuildingTownOrder
         }
     }
 
-    public void RecalculateAllOrders()
+    public void RecalculateAllOrders(TownItem town)
     {
         foreach (var order in _activeOrders.Values)
         {
@@ -101,16 +101,6 @@ public class BuildingTownOrder
         if (_activeOrders.TryGetValue(building, out var order))
         {
             return order.AssignUnit(unit);
-        }
-
-        return false;
-    }
-
-    public bool AssignUnitWithHisResourcesToOrder(UnitItem unit, BuildingItem building)
-    {
-        if (_activeOrders.TryGetValue(building, out var order))
-        {
-            return order.AssignUnitWithHisResources(unit);
         }
 
         return false;

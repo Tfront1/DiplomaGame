@@ -36,7 +36,7 @@ public class TickRateSystem : MonoBehaviour
         _instance = this;
         DontDestroyOnLoad(gameObject);
 
-        //StartTicking();
+        StartTicking();
     }
 
     private void OnDestroy()
