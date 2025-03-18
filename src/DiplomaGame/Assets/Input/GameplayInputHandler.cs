@@ -36,15 +36,6 @@ public class GameplayInputHandler : MonoBehaviour
         _instance = this;
     }
 
-    private void OnDestroy()
-    {
-        if (_instance == this)
-        {
-            _instance = null;
-            Destroy(gameObject);
-        }
-    }
-
     private InputActionAsset _inputActions;
 
     // Middle mouse
