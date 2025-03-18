@@ -47,8 +47,9 @@ public class MoveUnitAction : BaseUnitAction
         {
             var group = GroupManager.Instance.GetGroup(_unit.GroupId);
             group.RemoveUnitFromGroup(_unit);
-            _unit.CanGroup = false;
         }
+
+        _unit.CanGroup = false;
 
         PathFinderManager.RequestPath(
             _unit.Coords,

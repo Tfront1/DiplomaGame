@@ -52,7 +52,7 @@ public class UnitActionManager
     /// <param name="action">The action to queue or execute</param>
     public void QueueAction(IUnitAction action)
     {
-        var unitGuid = action.GetUnit().GetGuid();
+        var unitGuid = action.GetUnit().GetId();
 
         // If unit isn't busy and action can execute, run it immediately
         if (!_currentActions.ContainsKey(unitGuid))
@@ -149,7 +149,7 @@ public class UnitActionManager
     {
         action.OnActionCompleted -= HandleActionCompleted;
 
-        var unitGuid = action.GetUnit().GetGuid();
+        var unitGuid = action.GetUnit().GetId();
         if (_currentActions.ContainsKey(unitGuid) && _currentActions[unitGuid] == action)
         {
             _currentActions.Remove(unitGuid);
@@ -202,7 +202,7 @@ public class UnitActionManager
     /// <returns>True if the action could be executed, false otherwise</returns>
     public bool ExecuteImmediately(IUnitAction action)
     {
-        var unitGuid = action.GetUnit().GetGuid();
+        var unitGuid = action.GetUnit().GetId();
 
         // Cancel the current action if one exists
         if (_currentActions.ContainsKey(unitGuid))
@@ -243,7 +243,7 @@ public class UnitActionManager
     /// <param name="unit">The unit whose actions should be interrupted</param>
     public void InterruptCurrentAction(UnitItem unit)
     {
-        var unitGuid = unit.GetGuid();
+        var unitGuid = unit.GetId();
 
         // Cancel current action if one exists
         if (_currentActions.ContainsKey(unitGuid))
@@ -284,7 +284,7 @@ public class UnitActionManager
     /// <returns>True if the unit is busy, false if idle</returns>
     public bool IsUnitBusy(UnitItem unit)
     {
-        var unitGuid = unit.GetGuid();
+        var unitGuid = unit.GetId();
         return _currentActions.ContainsKey(unitGuid) || (_unitActionQueues.ContainsKey(unitGuid) && _unitActionQueues[unitGuid].Count > 0);
     }
 
@@ -296,7 +296,7 @@ public class UnitActionManager
     /// <returns>The number of queued actions</returns>
     public int GetQueuedActionCount(UnitItem unit)
     {
-        var unitGuid = unit.GetGuid();
+        var unitGuid = unit.GetId();
         if (!_unitActionQueues.ContainsKey(unitGuid))
         {
             return 0;
@@ -311,7 +311,7 @@ public class UnitActionManager
     /// <returns>The currently executing action for unit</returns>
     public IUnitAction GetCurrentUnitAction(UnitItem unit)
     {
-        var unitGuid = unit.GetGuid();
+        var unitGuid = unit.GetId();
         return _currentActions.GetValueOrDefault(unitGuid);
     }
 }

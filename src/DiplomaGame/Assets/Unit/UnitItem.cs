@@ -190,7 +190,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         OnDied?.Invoke(this, args);
     }
 
-    public Guid GetGuid()
+    public Guid GetId()
     {
         return Id;
     }

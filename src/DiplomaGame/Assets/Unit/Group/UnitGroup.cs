@@ -38,8 +38,17 @@ public class UnitGroup
             if (CountGroupUnits > 0)
             {
                 var newLeader = GroupUnits.First();
+                var oldLeader = UnitLeader;
+
                 ChangeGroupLeader(newLeader);
+
+                GroupUnits.Remove(oldLeader);
+                oldLeader.IsInGroup = false;
+                oldLeader.GroupId = Guid.Empty;
+                oldLeader.ShowUnit();
+
                 UpdateGroupCounter();
+                return;
             }
             else
             {
@@ -53,7 +62,7 @@ public class UnitGroup
             }
         }
 
-        if (CountGroupUnits == 1)
+        if (CountGroupUnits == 1 && GroupUnits.Contains(unit))
         {
             unit.IsInGroup = false;
             unit.GroupId = Guid.Empty;
@@ -62,6 +71,7 @@ public class UnitGroup
             UnitLeader.IsInGroup = false;
             UnitLeader.GroupId = Guid.Empty;
             UnitLeader.ShowUnit();
+            HideUnitCounter(UnitLeader);
 
             GroupManager.Instance.RemoveGroup(Id);
             return;
@@ -90,7 +100,7 @@ public class UnitGroup
         newLeader.ShowUnit();
         UnitLeader.HideUnit();
         GroupUnits.Add(UnitLeader);
-
+        HideUnitCounter(UnitLeader);
         UnitLeader = newLeader;
 
         UpdateGroupCounter();

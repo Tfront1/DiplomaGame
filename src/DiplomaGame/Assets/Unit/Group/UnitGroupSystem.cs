@@ -77,6 +77,11 @@ public class UnitGroupSystem
 
         if (!unit.CanGroup)
         {
+            if (unit.IsInGroup)
+            {
+                var group = GroupManager.Instance.GetGroup(unit.GroupId);
+                group.RemoveUnitFromGroup(unit);
+            }
             return;
         }
 
