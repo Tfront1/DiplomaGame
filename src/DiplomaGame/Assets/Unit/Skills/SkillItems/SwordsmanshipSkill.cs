@@ -7,7 +7,7 @@ public class SwordsmanshipSkill : BaseSkill
     public override string Name => "Swordsmanship";
 
     public SwordsmanshipSkill(float level, float maxLevel, float baseExperience)
-        : base("Name", level, maxLevel, baseExperience, 1.15f)
+        : base("Swordsmanship", level, maxLevel, baseExperience, 1.15f)
     {
     }
 }

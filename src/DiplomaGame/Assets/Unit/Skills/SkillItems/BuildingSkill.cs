@@ -4,7 +4,7 @@
     public override string Name => "Building";
 
     public BuildingSkill(float level, float maxLevel, float baseExperience) 
-        : base("Name", level, maxLevel, baseExperience, 1.15f)
+        : base("Building", level, maxLevel, baseExperience, 1.15f)
     {
     }
 }

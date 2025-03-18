@@ -10,12 +10,8 @@ public class BuildingTownOrder
     private Dictionary<BuildingItem, BuildingOrder> _activeOrders = new();
     private Dictionary<BuildingItem, BuildingOrder> _completedOrders = new();
 
-    private static int test = 1;
-
     public BuildingOrder CreateOrder(BuildingItem targetBuilding, List<CraftingComponent> requiredResources, TownItem townItem, int orderPriority = 1)
     {
-        orderPriority = test;
-        test++;
         if (_activeOrders.ContainsKey(targetBuilding))
             return null;
 
@@ -61,7 +57,7 @@ public class BuildingTownOrder
 
     public void AddBuilder(UnitItem unit)
     {
-        Builders.Add(unit, true);
+        Builders.TryAdd(unit, true);
 
         if (_activeOrders.Count == 0)
             return;

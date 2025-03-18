@@ -14,6 +14,7 @@ public class BuildingOrder
     public List<CraftingComponent> DeliveredResources { get; }
     public HashSet<UnitItem> AssignedUnits { get; }
     public TownItem HomeTown { get; }
+    public bool IsAllDelivered { get; set; } = false;
     public bool IsStopped { get; set; } = false;
     public int OrderPriority { get; set; }
 
@@ -38,7 +39,8 @@ public class BuildingOrder
             DeliveredResources.Add(new CraftingComponent(resource.BackpackItem, 0));
         }
 
-        TargetBuilding.OnResourcesDelivered += DeliverResources;
+        TargetBuilding.OnResourcesDelivered += OnDeliverResources;
+        TargetBuilding.OnBuildingComplete += OnCompleteBuilding;
         OrderPriority = orderPriority;
     }
 
@@ -70,16 +72,29 @@ public class BuildingOrder
 
     public bool AssignUnit(UnitItem unit)
     {
-        var remainingResources = GetRemainingResources();
-
-        if (remainingResources.Count == 0)
-            return false;
-
         if (AssignedUnits.Contains(unit))
             return false;
 
         if (unit.HomeTown.Id != HomeTown.Id)
             return false;
+
+        var remainingResources = GetRemainingResources();
+
+        if (IsAllDelivered || remainingResources.Count == 0)
+        {
+            AssignedUnits.Add(unit);
+            _builders.Add(unit);
+
+            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
+            {
+                HomeTown.BuildingTownOrder.Builders[unit] = false;
+            }
+
+            var newAction = new BuildAction(unit, TargetBuilding);
+            UnitActionManager.Instance.QueueAction(newAction);
+
+            return true;
+        }
 
         var resourcesUnitHave = CalculateResourcesUnitHave(unit);
         var resourcesForUnitToTake = CalculateResourcesForUnitToTake(unit);
@@ -152,7 +167,7 @@ public class BuildingOrder
         return hasResource;
     }
 
-    public void DeliverResources(object sender, ResourceDeliveredArgs args)
+    public void OnDeliverResources(object sender, ResourceDeliveredArgs args)
     {
         foreach (var deliveredComponent in args.DeliveredComponents)
         {
@@ -169,6 +184,14 @@ public class BuildingOrder
         CheckCompletion();
     }
 
+    public void OnCompleteBuilding(object sender, BuildingCompletedEventArgs args)
+    {
+        Cancel();
+        
+        var completeArgs = new OrderCompletedArgs(this);
+        OnCompleted?.Invoke(this, completeArgs);
+    }
+
     public void Cancel()
     {
         foreach (var unit in AssignedUnits)
@@ -177,6 +200,12 @@ public class BuildingOrder
             if (action is MoveResourcesForBuildingAction moveAction)
             {
                 moveAction._interruptedByOrder = true;
+                UnitActionManager.Instance.InterruptCurrentAction(unit);
+            }
+
+            if (action is BuildAction buildAction)
+            {
+                buildAction._interruptedByOrder = true;
                 UnitActionManager.Instance.InterruptCurrentAction(unit);
             }
         }
@@ -189,7 +218,8 @@ public class BuildingOrder
             }
         }
 
-        TargetBuilding.OnResourcesDelivered -= DeliverResources;
+        TargetBuilding.OnResourcesDelivered -= OnDeliverResources;
+        TargetBuilding.OnBuildingComplete -= OnCompleteBuilding;
 
         AssignedUnits.Clear();
         _assignedResources.Clear();
@@ -230,31 +260,53 @@ public class BuildingOrder
             return;
         }
 
-        var availableBuilders = new List<UnitItem>(_builders);
-        var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
-        var allUnits = new List<UnitItem>(availableBuilders);
-        allUnits.AddRange(currentlyAssignedUnits);
-        
-        var allUnitsSet = allUnits.ToHashSet();
-
-        foreach (var unit in allUnitsSet)
+        if (IsAllDelivered)
         {
-            UnassignUnit(unit);
-        }
+            var availableBuilders = new List<UnitItem>(_builders);
+            var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
+            var allUnits = new List<UnitItem>(availableBuilders);
+            allUnits.AddRange(currentlyAssignedUnits);
 
-        var sortedUnits = GetUnitsNotToUpdate(allUnitsSet.ToList());
+            var allUnitsSet = allUnits.ToHashSet();
 
-        foreach (var unit in allUnitsSet)
-        {
-            if (!sortedUnits.Contains(unit))
+            foreach (var unit in allUnitsSet)
             {
-                sortedUnits.Add(unit);
+                UnassignUnit(unit);
+            }
+
+            foreach (var unit in allUnitsSet)
+            {
+                AssignUnit(unit);
             }
         }
-
-        foreach (var unit in sortedUnits)
+        else
         {
-            AssignUnit(unit);
+            var availableBuilders = new List<UnitItem>(_builders);
+            var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
+            var allUnits = new List<UnitItem>(availableBuilders);
+            allUnits.AddRange(currentlyAssignedUnits);
+
+            var allUnitsSet = allUnits.ToHashSet();
+
+            foreach (var unit in allUnitsSet)
+            {
+                UnassignUnit(unit);
+            }
+
+            var sortedUnits = GetUnitsNotToUpdate(allUnitsSet.ToList());
+
+            foreach (var unit in allUnitsSet)
+            {
+                if (!sortedUnits.Contains(unit))
+                {
+                    sortedUnits.Add(unit);
+                }
+            }
+
+            foreach (var unit in sortedUnits)
+            {
+                AssignUnit(unit);
+            }
         }
     }
 
@@ -473,10 +525,9 @@ public class BuildingOrder
 
         if (allDelivered)
         {
-            Cancel();
-
-            var args = new OrderCompletedArgs(this);
-            OnCompleted?.Invoke(this, args);
+            RecalculateAssignUnits();
+            IsAllDelivered = true;
+            TargetBuilding.IsAllDelivered = true;
         }
     }
 

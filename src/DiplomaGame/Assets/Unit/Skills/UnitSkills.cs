@@ -26,11 +26,6 @@ public class UnitSkills
         if (skill != null)
         {
             _activeSkill = skill;
-            Debug.Log($"Active skill set to {skill.Name}");
-        }
-        else
-        {
-            Debug.LogWarning($"Skill of type {skillType.Name} not found in skills collection");
         }
     }
 
@@ -42,8 +37,6 @@ public class UnitSkills
     public void ResetActiveSkill()
     {
         _activeSkill = null;
-        Debug.Log($"Active skill reset to null");
-
     }
 
     public T GetSkill<T>() where T : BaseSkill

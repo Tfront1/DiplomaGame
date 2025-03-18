@@ -30,6 +30,6 @@ public class UnitStats
             Stamina.StartRegeneration();
         }
 
-        Debug.Log($"Stamina: {Stamina}\n Hunger: {Hunger}");
+        //Debug.Log($"Stamina: {Stamina}\n Hunger: {Hunger}");
     }
 }

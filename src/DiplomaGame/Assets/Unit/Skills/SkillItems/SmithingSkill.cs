@@ -7,7 +7,7 @@ public class SmithingSkill : BaseSkill
     public override string Name => "Smithing";
 
     public SmithingSkill(float level, float maxLevel, float baseExperience)
-        : base("Name", level, maxLevel, baseExperience, 1.15f)
+        : base("Smithing", level, maxLevel, baseExperience, 1.15f)
     {
     }
 

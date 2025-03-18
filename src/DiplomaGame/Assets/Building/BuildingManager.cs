@@ -147,8 +147,14 @@ public class BuildingManager : MonoBehaviour
     {
         var buildingItem = e.BuildingItem;
         var buildingTexture = _buildingTextureConfigCache[buildingItem.Building.Id];
+        var buildingGameObject = buildingItem.BuildingGameObject;
 
-        SetupBuildingSprite(buildingItem.BuildingGameObject, buildingTexture, buildingItem.Building, true);
+        SetupBuildingSprite(buildingGameObject, buildingTexture, buildingItem.Building, true);
+        SetBuildingPosition(buildingGameObject, buildingItem.Coords, buildingItem.Building, _buildingTextureConfigCache[buildingItem.Building.Id]);
+        SetupBuildingCollider(buildingGameObject, buildingItem.Coords, buildingItem.Building, _buildingTextureConfigCache[buildingItem.Building.Id]);
+
+        buildingItem.HP = buildingItem.Building.MaxHP;
+        buildingItem.Backpack.SetMaxCapacity(buildingItem.Building.BackpackCapacity);
     }
 
     public static bool RemoveBuilding(Vector2Int gridPosition)

@@ -11,7 +11,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     public Guid Id { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
-    public Vector2Int Coords => new Vector2Int(X, Y);
+    public Vector2Int Coords => new(X, Y);
     public Building Building { get; set; }
     public GameObject BuildingGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
@@ -20,7 +20,9 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     //Gameplay
     public Building Construction { get; set; }
     public bool IsBuilt { get; set; }
+    public bool IsAllDelivered { get; set; } = false;
     public float  BuildingTimePassed { get; set; }
+    private CraftingRecipe _buildingCraft;
 
     public event EventHandler<ResourceDeliveredArgs> OnResourcesDelivered;
     public event EventHandler<BuildingCompletedEventArgs> OnBuildingComplete;
@@ -71,6 +73,8 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         Backpack = backpack;
         HomeTown = townItem;
         building.CraftsIds.ForEach(craft => Crafts.Add(CraftingRecipesConfig.CraftingRecipes.Find(recipe => recipe.Id == craft)));
+        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
+        _buildingCraft = buildingCraft;
     }
 
     public void OnSelect()
@@ -89,12 +93,9 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     {
         var unitBackpack = unit.Backpack;
 
-        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
-        if (buildingCraft != null)
+        if (_buildingCraft != null)
         {
-            //var deliveredResources = new List<CraftingComponent>();
-
-            foreach (var component in buildingCraft.Components)
+            foreach (var component in _buildingCraft.Components)
             {
                 if (unitBackpack.HasResource(component.BackpackItem))
                 {
@@ -110,8 +111,6 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
                         var deliveredResources =
                             new List<CraftingComponent> { new(component.BackpackItem, resourceCount) };
 
-                        //deliveredResources.Add(new CraftingComponent(component.BackpackItem, resourceCount));
-
                         var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
                         OnResourcesDelivered?.Invoke(this, deliverArgs);
 
@@ -120,23 +119,17 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
                     }
                 }
             }
-
-            if (HasAllRequiredResources())
-            {
-                Debug.Log("Building have all resources");
-            }
         }
     }
 
     public bool CanProvideResources(Backpack unitBackpack)
     {
-        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
-        if (buildingCraft == null)
+        if (_buildingCraft == null)
         {
             return false;
         }
 
-        foreach (var component in buildingCraft.Components)
+        foreach (var component in _buildingCraft.Components)
         {
             var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
 
@@ -153,13 +146,12 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public bool HasAllRequiredResources()
     {
-        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
-        if (buildingCraft == null)
+        if (_buildingCraft == null)
         {
             return false;
         }
 
-        foreach (var component in buildingCraft.Components)
+        foreach (var component in _buildingCraft.Components)
         {
             var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
 
@@ -171,39 +163,35 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         return true;
     }
 
-    public void UpdateBuildingProgress(float deltaTime, UnitItem builder)
+    public bool UpdateBuildingProgress(float deltaTime, UnitItem builder)
     {
         if (HasAllRequiredResources())
         {
-            CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
-            if (buildingCraft == null)
+            if (_buildingCraft == null)
             {
-                return;
-            }
-
-            var buildingSkill = builder.Skills.GetSkill<BuildingSkill>();
-            if (buildingSkill != null)
-            {
-                deltaTime *= buildingSkill.BuildSpeedBonus;
+                return false;
             }
 
             BuildingTimePassed += deltaTime;
 
-            if (BuildingTimePassed >= buildingCraft.CraftingTime)
+            if (BuildingTimePassed >= _buildingCraft.CraftingTime)
             {
                 CompleteBuildingConstruction();
+                return true;
             }
         }
+
+        return false;
     }
 
     private void CompleteBuildingConstruction()
     {
         var args = new BuildingCompletedEventArgs(this);
 
+        OnBuildingComplete?.Invoke(this, args);
+
         Backpack?.Clear();
         IsBuilt = true;
-
-        OnBuildingComplete?.Invoke(this, args);
     }
 
     public void Destroy()
