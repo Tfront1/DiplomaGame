@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Assets.Items.Crafts;
 using Items.Resource.BackPack;
+using UnityEngine;
 using static UnitItem;
 
 namespace Town
@@ -225,6 +226,7 @@ namespace Town
 
         private void BuildingBackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)
         {
+            //Debug.Log("Recal Town");
             RecalculateTotalResources();
             BuildingTownOrder.RecalculateAllOrders(this);
         }

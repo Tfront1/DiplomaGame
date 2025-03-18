@@ -38,7 +38,7 @@
       "HasMargin": true,
       "MaxHP": 500,
       "BuildingType": "Vault",
-      "BackpackCapacity": 1000
+      "BackpackCapacity": 2000
     },
     {
       "Id": 5,

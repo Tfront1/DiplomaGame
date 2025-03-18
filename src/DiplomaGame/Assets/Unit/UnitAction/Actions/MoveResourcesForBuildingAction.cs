@@ -209,7 +209,7 @@ public class MoveResourcesForBuildingAction : BaseUnitAction
     {
         if (!_interruptedByOrder && _buildingOrder.HasAssignedUnit(_unit))
         {
-            _buildingOrder.UnassignUnit(_unit);
+            _buildingOrder.UnassignUnit(_unit, false);
         }
     }
 }

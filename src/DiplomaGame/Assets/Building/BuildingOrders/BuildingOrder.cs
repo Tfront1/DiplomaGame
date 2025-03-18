@@ -12,22 +12,22 @@ public class BuildingOrder
     public BuildingItem TargetBuilding { get; set; }
     public List<CraftingComponent> RequiredResources { get; }
     public List<CraftingComponent> DeliveredResources { get; }
-    public List<UnitItem> AssignedUnits { get; }
+    public HashSet<UnitItem> AssignedUnits { get; }
     public TownItem HomeTown { get; }
     public bool IsStopped { get; set; } = false;
     public int OrderPriority { get; set; }
 
     private Dictionary<Guid, List<CraftingComponent>> _assignedResources;
+    private HashSet<UnitItem> _builders = new();
 
     public event EventHandler<OrderCompletedArgs> OnCompleted;
-
     public BuildingOrder(Guid orderId, BuildingItem targetBuilding, List<CraftingComponent> requiredResources, TownItem townItem, int orderPriority)
     {
         Id = orderId;
         TargetBuilding = targetBuilding;
         RequiredResources = requiredResources;
         DeliveredResources = new List<CraftingComponent>();
-        AssignedUnits = new List<UnitItem>();
+        AssignedUnits = new HashSet<UnitItem>();
         HomeTown = townItem;
         OrderPriority = orderPriority;
 
@@ -83,6 +83,12 @@ public class BuildingOrder
 
         var resourcesUnitHave = CalculateResourcesUnitHave(unit);
         var resourcesForUnitToTake = CalculateResourcesForUnitToTake(unit);
+        if (resourcesForUnitToTake.Count == 0 && resourcesUnitHave.Count == 0)
+        {
+            UnassignUnit(unit, false);
+            return false;
+        }
+
         var buildingsToTakeResources = GetClosestBuildingsWithResources(unit, resourcesForUnitToTake);
 
         // If unit have resources
@@ -98,10 +104,15 @@ public class BuildingOrder
                 AssignedUnits.Add(unit);
                 _assignedResources[unit.Id] = resourcesUnitHave;
 
+                _builders.Add(unit);
+
+                if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
+                {
+                    HomeTown.BuildingTownOrder.Builders[unit] = false;
+                }
+
                 var newAction = new MoveResourcesForBuildingAction(unit, TargetBuilding);
                 UnitActionManager.Instance.QueueAction(newAction);
-
-                return true;
             }
         }
         else if(buildingsToTakeResources.Count > 0)
@@ -109,15 +120,17 @@ public class BuildingOrder
             AssignedUnits.Add(unit);
             _assignedResources[unit.Id] = resourcesForUnitToTake;
 
+            _builders.Add(unit);
+
+            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
+            {
+                HomeTown.BuildingTownOrder.Builders[unit] = false;
+            }
+
             var newAction = new MoveResourcesForBuildingAction(unit, TargetBuilding, buildingsToTakeResources);
             UnitActionManager.Instance.QueueAction(newAction);
-
-            return true;
         }
 
-        if (resourcesForUnitToTake.Count == 0)
-            return false;
-        
         return true;
     }
 
@@ -164,15 +177,23 @@ public class BuildingOrder
             if (action is MoveResourcesForBuildingAction moveAction)
             {
                 moveAction._interruptedByOrder = true;
+                UnitActionManager.Instance.InterruptCurrentAction(unit);
             }
+        }
 
-            UnitActionManager.Instance.InterruptCurrentAction(unit);
+        foreach (var builder in _builders)
+        {
+            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(builder))
+            {
+                HomeTown.BuildingTownOrder.Builders[builder] = true;
+            }
         }
 
         TargetBuilding.OnResourcesDelivered -= DeliverResources;
 
         AssignedUnits.Clear();
         _assignedResources.Clear();
+        _builders.Clear();
     }
 
     public bool HasAssignedUnit(UnitItem unit)
@@ -180,8 +201,17 @@ public class BuildingOrder
         return AssignedUnits.Contains(unit);
     }
 
-    public void UnassignUnit(UnitItem unit)
+    public void UnassignUnit(UnitItem unit, bool continueToWork = true)
     {
+        if (!continueToWork)
+        {
+            _builders.Remove(unit);
+            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
+            {
+                HomeTown.BuildingTownOrder.Builders[unit] = true;
+            }
+        }
+
         var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
         if (action is MoveResourcesForBuildingAction moveAction)
         {
@@ -195,16 +225,59 @@ public class BuildingOrder
 
     public void RecalculateAssignUnits()
     {
-        var assignedUnitsCopy = new List<UnitItem>(AssignedUnits);
-        foreach (var unit in assignedUnitsCopy)
+        if (_builders.Count == 0 && AssignedUnits.Count == 0)
+        {
+            return;
+        }
+
+        var availableBuilders = new List<UnitItem>(_builders);
+        var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
+        var allUnits = new List<UnitItem>(availableBuilders);
+        allUnits.AddRange(currentlyAssignedUnits);
+        
+        var allUnitsSet = allUnits.ToHashSet();
+
+        foreach (var unit in allUnitsSet)
         {
             UnassignUnit(unit);
         }
 
-        foreach (var unit in assignedUnitsCopy)
+        var sortedUnits = GetUnitsNotToUpdate(allUnitsSet.ToList());
+
+        foreach (var unit in allUnitsSet)
+        {
+            if (!sortedUnits.Contains(unit))
+            {
+                sortedUnits.Add(unit);
+            }
+        }
+
+        foreach (var unit in sortedUnits)
         {
             AssignUnit(unit);
         }
+    }
+
+    public List<UnitItem> GetUnitsNotToUpdate(List<UnitItem> units)
+    {
+        var result = new List<UnitItem>();
+
+        var otherUnits = new List<UnitItem>();
+
+        foreach (var unit in units)
+        {
+            var resourcesUnitHave = CalculateResourcesUnitHave(unit);
+            var resourcesForUnitToTake = CalculateResourcesForUnitToTake(unit);
+
+            if (resourcesForUnitToTake.Count == 0 && resourcesUnitHave.Count >= 0)
+            {
+                otherUnits.Add(unit);
+            }
+        }
+
+        result.AddRange(otherUnits);
+
+        return result;
     }
 
     private List<CraftingComponent> CalculateResourcesUnitHave(UnitItem unit)
@@ -311,12 +384,10 @@ public class BuildingOrder
             return result;
         }
 
-        // Створюємо глибоку копію списку ресурсів, щоб не змінювати оригінальний список
         var remainingResources = resourcesToTake.Select(r => 
             new CraftingComponent(r.BackpackItem, r.Quantity))
             .ToList();
 
-        // Перевіряємо, чи є будівлі, які містять всі необхідні ресурси
         var buildingsWithAllResources = unit.HomeTown.Buildings
             .Where(b => b.Backpack != null && b.IsBuilt)
             .Where(b => remainingResources.All(r =>
@@ -328,7 +399,6 @@ public class BuildingOrder
         if (buildingsWithAllResources.Count > 0)
         {
             var closestVault = buildingsWithAllResources.First();
-            // Для цієї будівлі ми беремо всі необхідні ресурси
             var resourcesToBeTaken = remainingResources.Select(r =>
                 new CraftingComponent(r.BackpackItem, r.Quantity))
                 .ToList();
@@ -355,7 +425,6 @@ public class BuildingOrder
 
             visitedBuildings.Add(bestBuilding);
 
-            // Список ресурсів, які будуть взяті з цієї будівлі
             var resourcesFromThisBuilding = new List<CraftingComponent>();
 
             foreach (var resource in remainingResources.ToList())
@@ -367,10 +436,8 @@ public class BuildingOrder
 
                     if (toTake > 0)
                     {
-                        // Додаємо ресурс до списку ресурсів, які будуть взяті з цієї будівлі
                         resourcesFromThisBuilding.Add(new CraftingComponent(resource.BackpackItem, toTake));
 
-                        // Оновлюємо залишковий список ресурсів
                         resource.Quantity -= toTake;
                         if (resource.Quantity <= 0)
                         {
@@ -380,7 +447,6 @@ public class BuildingOrder
                 }
             }
 
-            // Додаємо будівлю та список ресурсів, які будуть з неї взяті
             result.Add((bestBuilding, resourcesFromThisBuilding));
 
             if (remainingResources.Count == 0)

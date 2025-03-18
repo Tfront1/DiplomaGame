@@ -93,6 +93,18 @@ public class TestAction : MonoBehaviour
                 }
             }
         }
+        //Add builders to town
+        else if (Input.GetKeyDown(KeyCode.X))
+        {
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    _town.BuildingTownOrder.AddBuilder(unit);
+                }
+            }
+        }
     }
 
     private List<UnitItem> SpawnUnit()
