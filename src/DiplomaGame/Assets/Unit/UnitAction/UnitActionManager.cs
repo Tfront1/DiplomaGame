@@ -26,11 +26,6 @@ public class UnitActionManager
         }
     }
 
-    private UnitActionManager()
-    {
-
-    }
-
     // Stores queued actions for each unit (by unit GUID)
     private Dictionary<Guid, Queue<IUnitAction>> _unitActionQueues = new();
 

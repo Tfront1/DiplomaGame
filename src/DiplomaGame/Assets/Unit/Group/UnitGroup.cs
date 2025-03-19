@@ -67,6 +67,7 @@ public class UnitGroup
             unit.IsInGroup = false;
             unit.GroupId = Guid.Empty;
             unit.ShowUnit();
+            HideUnitCounter(unit);
 
             UnitLeader.IsInGroup = false;
             UnitLeader.GroupId = Guid.Empty;
@@ -82,6 +83,7 @@ public class UnitGroup
             unit.IsInGroup = false;
             unit.GroupId = Guid.Empty;
             unit.ShowUnit();
+            HideUnitCounter(unit);
             UpdateGroupCounter();
         }
     }

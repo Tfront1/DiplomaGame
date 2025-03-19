@@ -104,6 +104,50 @@ namespace Selection
                 }
             }
         }
+        
+        public List<ISelectable> GetSelectedItem(Vector2 position)
+        {
+            var result = new List<ISelectable>();
+
+            var hit = Physics2D.OverlapPoint(position, _selectableLayerMask);
+            if (hit != null)
+            {
+                var collider = hit.GetComponent<BoxCollider2D>();
+
+                if (collider)
+                {
+                    var unitItem = collider.GetComponent<UnitItem>();
+                    if (unitItem != null)
+                    {
+                        if (unitItem.IsInGroup)
+                        {
+                            result.AddRange(GetSelectedUnitGroup(unitItem));
+                        }
+                        else
+                        {
+                            result.Add(unitItem);
+                        }
+                        return result;
+                    }
+
+                    var buildingItem = collider.GetComponent<BuildingItem>();
+                    if (buildingItem != null)
+                    {
+                        result.Add(buildingItem);
+                        return result;
+                    }
+
+                    var supplyItem = collider.GetComponent<SupplyItem>();
+                    if (supplyItem != null)
+                    {
+                        result.Add(supplyItem);
+                        return result;
+                    }
+                }
+            }
+
+            return result;
+        }
 
         public void StartSelectArea(Vector2 startPosition)
         {
@@ -250,6 +294,19 @@ namespace Selection
             }
             SelectedItems.Add(group.UnitLeader);
             group.UnitLeader.OnSelect();
+        }
+        
+        private List<ISelectable> GetSelectedUnitGroup(UnitItem unit)
+        {
+            var group = GroupManager.Instance.GetGroup(unit.GroupId);
+            var selectedUnits = new List<ISelectable>();
+            foreach (var groupUnit in group.GroupUnits)
+            {
+                selectedUnits.Add(groupUnit);
+            }
+            selectedUnits.Add(group.UnitLeader);
+
+            return selectedUnits;
         }
     }
 }

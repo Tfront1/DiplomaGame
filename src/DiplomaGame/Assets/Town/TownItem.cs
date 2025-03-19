@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Assets.Items.Crafts;
 using Items.Resource.BackPack;
-using UnityEngine;
 using static UnitItem;
 
 namespace Town

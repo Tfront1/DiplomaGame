@@ -47,4 +47,28 @@ public class BackpackTransfer
             }
         }
     }
+
+    public void TransferSpecificResource(Backpack fromBackpack, Backpack toBackpack, BackpackItem item)
+    {
+        var resourceType = item.Item;
+        var requiredAmount = item.Quantity;
+
+        var availableResources = fromBackpack.GetDetailedItems();
+        if (!availableResources.ContainsKey(resourceType) || availableResources[resourceType] <= 0)
+            return;
+
+        var availableAmount = availableResources[resourceType];
+
+        var targetFreeSpace = toBackpack.GetFreeQuantity();
+
+        var amountToTransfer = Mathf.Min(requiredAmount, availableAmount, targetFreeSpace);
+
+        if (amountToTransfer > 0)
+        {
+            toBackpack.AddItem(resourceType, amountToTransfer);
+            fromBackpack.RemoveResource(resourceType, amountToTransfer);
+        }
+
+        return;
+    }
 }

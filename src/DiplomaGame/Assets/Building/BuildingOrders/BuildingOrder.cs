@@ -470,7 +470,7 @@ public class BuildingOrder
                 .OrderByDescending(b => remainingResources.Sum(r =>
                     b.Backpack.HasResource(r.BackpackItem) ?
                         Math.Min(b.Backpack.GetResourceQuantity(r.BackpackItem), r.Quantity) : 0))
-                .ThenBy(b => Vector2.Distance(new Vector2(unit.X, unit.Y), new Vector2(b.X, b.Y)))
+                .ThenBy(b => Vector2.Distance(new Vector2(unit.X, unit.Y), GridService.GetWorldPosition(b.X, b.Y)))
                 .FirstOrDefault();
 
             if (bestBuilding == null) break;

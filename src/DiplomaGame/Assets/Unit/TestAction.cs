@@ -105,6 +105,31 @@ public class TestAction : MonoBehaviour
                 }
             }
         }
+        else if (Input.GetKeyDown(KeyCode.C))
+        {
+            var mousePosition = UtilsClass.GetMouseWorldPosition();
+            var selectedItems = SelectorManager.Instance.GetSelectedItem(mousePosition);
+
+            SupplyItem supply = null;
+
+            if (selectedItems.Count == 1)
+            {
+                if (selectedItems.First() is SupplyItem supplyItem)
+                {
+                    supply = supplyItem;
+                }
+            }
+
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    var collectAction = new CollectSupplyAction(unit, supply);
+                    UnitActionManager.Instance.QueueAction(collectAction);
+                }
+            }
+        }
     }
 
     private List<UnitItem> SpawnUnit()
@@ -152,6 +177,4 @@ public class TestAction : MonoBehaviour
 
         return units;
     }
-
-
 }

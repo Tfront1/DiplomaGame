@@ -121,6 +121,11 @@ namespace Items.Resource.BackPack
             return _currentCapacity >= _maxCapacity;
         }
 
+        public bool IsEmpty()
+        {
+            return _currentCapacity == 0;
+        }
+
         public void Clear()
         {
             _items.Clear();

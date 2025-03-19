@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-public class UnitStats
+﻿public class UnitStats
 {
     public Health Health { get; }
     public Armor Armor { get; }
