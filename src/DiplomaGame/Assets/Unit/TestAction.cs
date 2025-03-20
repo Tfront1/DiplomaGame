@@ -3,8 +3,6 @@ using GameUtilities.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using System.Linq;
-using Selection;
 using Town;
 
 public class TestAction : MonoBehaviour
@@ -13,10 +11,17 @@ public class TestAction : MonoBehaviour
 
     public Vector2 _end;
 
-    public static TownItem _town = new TownItem("Test", Guid.NewGuid());
+    public static TownItem _town = new("Test", Guid.NewGuid());
     
     private void Update()
     {
+        //Spawn unit
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _town.Units.AddRange(SpawnUnit());
+        }
+
+        /*
         if (Input.GetKeyDown(KeyCode.R))
         {
             foreach (var unit in _town.Units)
@@ -112,9 +117,9 @@ public class TestAction : MonoBehaviour
 
             SupplyItem supply = null;
 
-            if (selectedItems.Count == 1)
+            if (selectedItems.Item1.Count == 1)
             {
-                if (selectedItems.First() is SupplyItem supplyItem)
+                if (selectedItems.Item1.First() is SupplyItem supplyItem)
                 {
                     supply = supplyItem;
                 }
@@ -130,6 +135,7 @@ public class TestAction : MonoBehaviour
                 }
             }
         }
+        */
     }
 
     private List<UnitItem> SpawnUnit()
