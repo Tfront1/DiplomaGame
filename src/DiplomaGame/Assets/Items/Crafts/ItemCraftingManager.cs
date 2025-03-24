@@ -20,6 +20,24 @@ namespace Assets.Items.Crafts
             return true;
         }
 
+        public static bool CanCraftMultiple(CraftingRecipe recipe, Backpack inBackpack, int count)
+        {
+            if (recipe == null || inBackpack == null || count <= 0)
+                return false;
+
+            foreach (var component in recipe.Components)
+            {
+                var availableAmount = inBackpack.GetResourceQuantity(component.BackpackItem);
+
+                var requiredAmount = component.Quantity * count;
+
+                if (availableAmount < requiredAmount)
+                    return false;
+            }
+
+            return true;
+        }
+
         public static bool CanCraft(int recipeId, Backpack inBackpack)
         {
             var recipe = CraftingRecipesConfig.CraftingRecipes.Find(x => x.Id == recipeId);
@@ -33,7 +51,7 @@ namespace Assets.Items.Crafts
 
             foreach (var component in recipe.Components)
             {
-                inBackpack.RemoveResource(component.BackpackItem, component.Quantity);
+                inBackpack.RemoveItem(component.BackpackItem, component.Quantity);
             }
 
             var craftedItem = ItemFactory.CreateItem(recipe.ResultId, recipe.ResultType);

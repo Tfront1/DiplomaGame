@@ -21,6 +21,10 @@ public class GameplayInputHandler : MonoBehaviour
 
     private InputActionAsset _inputActions;
 
+    // Mouse position
+    public delegate void MousePositionHandler(Vector2 position);
+    public event MousePositionHandler OnMousePosition;
+
     // Middle mouse
     public delegate void MiddleMouseHoldHandler(bool flag);
     public event MiddleMouseHoldHandler OnMiddleMouseHold;
@@ -42,7 +46,7 @@ public class GameplayInputHandler : MonoBehaviour
     private Vector2 _mouseScreenPosition;
     private Vector2 _mouseWorldPosition;
     private float _positionUpdateTimer = 0f;
-    private const float _positionUpdateInterval = 0f;
+    private const float _positionUpdateInterval = 0.05f;
 
     // Left mouse click
     public delegate void MouseLeftClickHandler(Vector2 position);
@@ -93,7 +97,8 @@ public class GameplayInputHandler : MonoBehaviour
         _holdMiddleClickAction.performed += OnHoldMiddleClick;
         _holdMiddleClickAction.canceled += OnReleaseMiddleClick;
         _scrollWheelAction.performed += OnScrollMouse;
-        _mousePositionAction.performed += OnMousePosition;
+        _mousePositionAction.performed += OnMousePositionNearEdge;
+        _mousePositionAction.performed += MousePosition;
 
         _mouseLeftClickAction.performed += MouseLeftDown;
         _mouseLeftClickAction.canceled += MouseLeftUp;
@@ -123,7 +128,8 @@ public class GameplayInputHandler : MonoBehaviour
 
         _scrollWheelAction.performed -= OnScrollMouse;
 
-        _mousePositionAction.performed -= OnMousePosition;
+        _mousePositionAction.performed -= OnMousePositionNearEdge;
+        _mousePositionAction.performed -= MousePosition;
 
         _mouseLeftClickAction.performed -= MouseLeftDown;
         _mouseLeftClickAction.canceled -= MouseLeftUp;
@@ -165,7 +171,7 @@ public class GameplayInputHandler : MonoBehaviour
         OnScroll?.Invoke(scrollDirection);
     }
 
-    private void OnMousePosition(InputAction.CallbackContext context)
+    private void OnMousePositionNearEdge(InputAction.CallbackContext context)
     {
         _positionUpdateTimer += Time.deltaTime;
         if (_positionUpdateTimer >= _positionUpdateInterval)
@@ -174,6 +180,11 @@ public class GameplayInputHandler : MonoBehaviour
             _mouseWorldPosition = CameraFollow.GetWorldPosition(_mouseScreenPosition);
             _positionUpdateTimer = 0f;
         }
+    }
+
+    private void MousePosition(InputAction.CallbackContext context)
+    {
+        OnMousePosition?.Invoke(_mouseWorldPosition);
     }
 
 #region RightMouseButton

@@ -10,8 +10,9 @@ public class Building
 	public float MaxHP { get; set; }
 	public int BackpackCapacity { get; set; }
 	public BuildingTypes BuildingType { get; set; }
+	public bool HasCrafts { get; set; }
+    public int BuildingCraftId { get; set; }
     public List<int> CraftsIds { get; set; } = new();
-    public int BuildingCraftId { get; set; } = 1;
 
 	public enum BuildingTypes
     {

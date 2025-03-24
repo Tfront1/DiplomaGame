@@ -11,7 +11,24 @@
       ],
       "CraftingTime": 60,
       "ResultType": "Building",
-      "ResultId": 5
+      "ResultId": 5,
+      "WhereToCraftId": 0,
+      "MaxUnitToCraftCount": 0
+    },
+    {
+      "Id": 2,
+      "Name": "Wooden Sword",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1500
+        }
+      ],
+      "CraftingTime": 60,
+      "ResultType": "Weapon",
+      "ResultId": 1,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
     }
   ]
 }

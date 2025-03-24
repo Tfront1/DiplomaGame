@@ -49,7 +49,7 @@ public class MoveUnitAction : BaseUnitAction
             group.RemoveUnitFromGroup(_unit);
         }
 
-        _unit.CanGroup = false;
+        _unit.CanGroup = true;
 
         PathFinderManager.RequestPath(
             _unit.Coords,

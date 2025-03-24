@@ -8,7 +8,8 @@
       "HasMargin": true,
       "MaxHP": 1,
       "BuildingType": "Construction",
-      "BackpackCapacity": 1
+      "BackpackCapacity": 1,
+      "HasCrafts": false
     },
     {
       "Id": 2,
@@ -18,7 +19,8 @@
       "HasMargin": true,
       "MaxHP": 1000,
       "BuildingType": "TownHall",
-      "BackpackCapacity": 2000
+      "BackpackCapacity": 2000,
+      "HasCrafts": false
     },
     {
       "Id": 3,
@@ -28,7 +30,8 @@
       "HasMargin": false,
       "MaxHP": 1500,
       "BuildingType": "Fence",
-      "BackpackCapacity": 0
+      "BackpackCapacity": 0,
+      "HasCrafts": false
     },
     {
       "Id": 4,
@@ -38,7 +41,8 @@
       "HasMargin": true,
       "MaxHP": 500,
       "BuildingType": "Vault",
-      "BackpackCapacity": 2000
+      "BackpackCapacity": 2000,
+      "HasCrafts": false
     },
     {
       "Id": 5,
@@ -48,7 +52,8 @@
       "HasMargin": true,
       "MaxHP": 500,
       "BuildingType": "Blacksmith",
-      "BackpackCapacity": 0
+      "BackpackCapacity": 0,
+      "HasCrafts": true
     }
   ]
 }

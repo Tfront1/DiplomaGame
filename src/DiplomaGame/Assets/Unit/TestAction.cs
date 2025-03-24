@@ -11,8 +11,13 @@ public class TestAction : MonoBehaviour
 
     public Vector2 _end;
 
-    public static TownItem _town = new("Test", Guid.NewGuid());
-    
+    public static TownItem _town;
+
+    public void Awake()
+    {
+        _town = new TownItem("Test", Guid.NewGuid());
+    }
+
     private void Update()
     {
         //Spawn unit

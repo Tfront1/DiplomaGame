@@ -1,47 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Items;
 using Assets.Items.Crafts;
-using Town;
+using Items.Resource.BackPack;
 using UnityEngine;
-using static BuildingItem;
 
-public class BuildingOrder
+public class BuildingCraftingSystem
 {
-    public Guid Id { get; set; }
-    public BuildingItem TargetBuilding { get; set; }
+    public BuildingItem Building { get; }
+    public CraftingRecipe CurrentCraftingRecipe { get; private set; }
+    public int CurrentCraftingCount { get; private set; } = 0;
+    public bool IsCrafting { get; private set; } = false;
+    public float CraftingProcessTime { get; private set; } = 0f;
     public List<CraftingComponent> RequiredResources { get; }
     public List<CraftingComponent> DeliveredResources { get; }
+    public Backpack Backpack { get; set; }
     public HashSet<UnitItem> AssignedUnits { get; }
-    public TownItem HomeTown { get; }
     public bool IsAllDelivered { get; set; } = false;
-    public bool IsStopped { get; set; } = false;
-    public int OrderPriority { get; set; }
 
     private Dictionary<Guid, List<CraftingComponent>> _assignedResources;
-    private HashSet<UnitItem> _builders = new();
+    private HashSet<UnitItem> _deliverers = new();
 
-    public event EventHandler<OrderCompletedArgs> OnCompleted;
-    public BuildingOrder(Guid orderId, BuildingItem targetBuilding, List<CraftingComponent> requiredResources, TownItem townItem, int orderPriority)
+    public float CraftingProgress => IsCrafting ?
+        CraftingProcessTime / (CurrentCraftingRecipe?.CraftingTime ?? 1f) : 0f;
+
+    private int MaxUnitCraftingCount = 5;
+
+    public BuildingCraftingSystem(BuildingItem building)
     {
-        Id = orderId;
-        TargetBuilding = targetBuilding;
-        RequiredResources = requiredResources;
+        Building = building;
+
         DeliveredResources = new List<CraftingComponent>();
         AssignedUnits = new HashSet<UnitItem>();
-        HomeTown = townItem;
-        OrderPriority = orderPriority;
-
+        RequiredResources = new List<CraftingComponent>();
         _assignedResources = new Dictionary<Guid, List<CraftingComponent>>();
+    }
 
-        foreach (var resource in requiredResources)
+    public bool CanCraftRecipe(CraftingRecipe recipe, int count = 1)
+    {
+        if (recipe.WhereToCraftId != Building.Building.Id && recipe.WhereToCraftId != 0)
+            return false;
+
+        return ItemCraftingManager.CanCraftMultiple(recipe, Building.HomeTown.TotalBackpack, count);
+    }
+
+    public int GetMaxPossibleCrafts(CraftingRecipe recipe)
+    {
+        return ItemCraftingManager.CalculateMaxPossibleCrafts(recipe, Building.HomeTown.TotalBackpack);
+    }
+
+    public void StartCraft(CraftingRecipe recipe, int count = 1)
+    {
+        if (recipe == null)
+            return;
+
+        CurrentCraftingRecipe = recipe;
+        IsCrafting = true;
+        CurrentCraftingCount = count;
+
+        var totalResourceCount = 0;
+
+        foreach (var resource in CurrentCraftingRecipe.Components)
         {
             DeliveredResources.Add(new CraftingComponent(resource.BackpackItem, 0));
+            RequiredResources.Add(new CraftingComponent(resource.BackpackItem, resource.Quantity));
+            totalResourceCount += resource.Quantity;
         }
 
-        TargetBuilding.OnResourcesDelivered += OnDeliverResources;
-        TargetBuilding.OnBuildingComplete += OnCompleteBuilding;
-        OrderPriority = orderPriority;
+        Backpack = new Backpack(totalResourceCount);
     }
 
     public List<CraftingComponent> GetRemainingResources()
@@ -70,12 +97,82 @@ public class BuildingOrder
         return remainingResources;
     }
 
-    public bool AssignUnit(UnitItem unit)
+    public void StopCraft()
     {
-        if (AssignedUnits.Contains(unit))
+        var assignedUnitsCopy = AssignedUnits.ToList();
+
+        foreach (var unit in AssignedUnits)
+        {
+            var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
+            if (action is TransportResourcesForBuildingAction moveAction)
+            {
+                moveAction.InterruptedByOrder = true;
+                UnitActionManager.Instance.InterruptCurrentAction(unit);
+            }
+
+            if (action is CraftAction buildAction)
+            {
+                buildAction.InterruptedByCraft = true;
+                UnitActionManager.Instance.InterruptCurrentAction(unit);
+            }
+        }
+
+        foreach (var unit in assignedUnitsCopy)
+        {
+            UnassignUnitFromCraft(unit);
+        }
+
+        IsCrafting = false;
+        IsAllDelivered = false;
+        CurrentCraftingCount = 0;
+        CurrentCraftingRecipe = null;
+        CraftingProcessTime = 0f;
+
+        Backpack.Clear();
+        AssignedUnits.Clear();
+        _assignedResources.Clear();
+        _deliverers.Clear();
+    }
+
+    public bool UpdateCraftingProgress(float deltaTime)
+    {
+        CraftingProcessTime += deltaTime;
+
+        var isCompleted = CraftingProcessTime >= CurrentCraftingRecipe.CraftingTime;
+
+        if (isCompleted)
+        {
+            CompleteCraft();
+        }
+
+        return isCompleted;
+    }
+
+    private void CompleteCraft()
+    {
+        var craftedItem = ItemFactory.CreateItem(CurrentCraftingRecipe.ResultId, CurrentCraftingRecipe.ResultType);
+        if (BackpackTransfer.Instance.AddItemToTownHall(Building.HomeTown, craftedItem))
+        {
+            CurrentCraftingCount--;
+            if (CurrentCraftingCount > 0)
+            {
+                StartCraft(CurrentCraftingRecipe, CurrentCraftingCount);
+            }
+        }
+        else
+        {
+            Debug.Log("No space for created craft");
+        }
+
+        StopCraft();
+    }
+
+    public bool AssignUnitToCraft(UnitItem unit)
+    {
+        if (AssignedUnits.Count >= MaxUnitCraftingCount)
             return false;
 
-        if (unit.HomeTown.Id != HomeTown.Id)
+        if (AssignedUnits.Contains(unit))
             return false;
 
         var remainingResources = GetRemainingResources();
@@ -83,15 +180,10 @@ public class BuildingOrder
         if (IsAllDelivered || remainingResources.Count == 0)
         {
             AssignedUnits.Add(unit);
-            _builders.Add(unit);
+            _deliverers.Add(unit);
 
-            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
-            {
-                HomeTown.BuildingTownOrder.Builders[unit] = false;
-            }
-
-            var newAction = new BuildAction(unit, TargetBuilding);
-            UnitActionManager.Instance.ExecuteImmediately(newAction);
+            var craftAction = new CraftAction(unit, this);
+            UnitActionManager.Instance.ExecuteImmediately(craftAction);
 
             return true;
         }
@@ -100,7 +192,7 @@ public class BuildingOrder
         var resourcesForUnitToTake = CalculateResourcesForUnitToTake(unit);
         if (resourcesForUnitToTake.Count == 0 && resourcesUnitHave.Count == 0)
         {
-            UnassignUnit(unit, false);
+            UnassignUnitFromCraft(unit, false);
             return false;
         }
 
@@ -112,21 +204,16 @@ public class BuildingOrder
             // If no buildings to take resources OR distance is closer to target building than to collect resources from buildings
             // Go directly to target building
             if (buildingsToTakeResources.Count == 0 ||
-                ShouldGoDirectlyToTarget(unit, TargetBuilding, 
-                    buildingsToTakeResources.Select(x => x.Building).ToList(), 
+                ShouldGoDirectlyToTarget(unit, Building,
+                    buildingsToTakeResources.Select(x => x.Building).ToList(),
                     resourcesUnitHave, resourcesForUnitToTake))
             {
                 AssignedUnits.Add(unit);
                 _assignedResources[unit.Id] = resourcesUnitHave;
 
-                _builders.Add(unit);
+                _deliverers.Add(unit);
 
-                if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
-                {
-                    HomeTown.BuildingTownOrder.Builders[unit] = false;
-                }
-
-                var newAction = new TransportResourcesForBuildingAction(unit, TargetBuilding);
+                var newAction = new TransportResourcesForBuildingAction(unit, Building);
                 UnitActionManager.Instance.ExecuteImmediately(newAction);
             }
             else if (buildingsToTakeResources.Count > 0)
@@ -134,174 +221,75 @@ public class BuildingOrder
                 AssignedUnits.Add(unit);
                 _assignedResources[unit.Id] = resourcesForUnitToTake;
 
-                _builders.Add(unit);
+                _deliverers.Add(unit);
 
-                if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
-                {
-                    HomeTown.BuildingTownOrder.Builders[unit] = false;
-                }
-
-                var newAction = new TransportResourcesForBuildingAction(unit, TargetBuilding, buildingsToTakeResources);
+                var newAction = new TransportResourcesForBuildingAction(unit, Building, buildingsToTakeResources);
                 UnitActionManager.Instance.ExecuteImmediately(newAction);
             }
         }
-        else if(buildingsToTakeResources.Count > 0)
+        else if (buildingsToTakeResources.Count > 0)
         {
             AssignedUnits.Add(unit);
             _assignedResources[unit.Id] = resourcesForUnitToTake;
 
-            _builders.Add(unit);
+            _deliverers.Add(unit);
 
-            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
-            {
-                HomeTown.BuildingTownOrder.Builders[unit] = false;
-            }
-
-            var newAction = new TransportResourcesForBuildingAction(unit, TargetBuilding, buildingsToTakeResources);
+            var newAction = new TransportResourcesForBuildingAction(unit, Building, buildingsToTakeResources);
             UnitActionManager.Instance.ExecuteImmediately(newAction);
         }
 
         return true;
     }
 
-    public bool HasAnyResourceForBuilding()
+    public void UnassignUnitFromCraft(UnitItem unit, bool continueToWork = true)
     {
-        var hasResource = false;
-
-        foreach (var resource in RequiredResources)
+        if (!continueToWork)
         {
-            var availableInTown = HomeTown.TotalBackpack.GetResourceQuantity(resource.BackpackItem);
-
-            if (availableInTown > 0)
-            {
-                hasResource = true;
-                break;
-            }
+            _deliverers.Remove(unit);
         }
 
-        return hasResource;
-    }
-
-    public void OnDeliverResources(object sender, ResourceDeliveredArgs args)
-    {
-        foreach (var deliveredComponent in args.DeliveredComponents)
-        {
-            var existingComponent = DeliveredResources.FirstOrDefault(c => c.BackpackItem.Id == deliveredComponent.BackpackItem.Id);
-            if (existingComponent != null)
-            {
-                existingComponent.Quantity += deliveredComponent.Quantity;
-            }
-        }
-
-        AssignedUnits.Remove(args.Unit);
-        _assignedResources.Remove(args.Unit.Id);
-
-        CheckCompletion();
-    }
-
-    public void OnCompleteBuilding(object sender, BuildingCompletedEventArgs args)
-    {
-        Cancel();
-        
-        var completeArgs = new OrderCompletedArgs(this);
-        OnCompleted?.Invoke(this, completeArgs);
-    }
-
-    public void Cancel()
-    {
-        foreach (var unit in AssignedUnits)
+        if (!IsAllDelivered)
         {
             var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
             if (action is TransportResourcesForBuildingAction moveAction)
             {
                 moveAction.InterruptedByOrder = true;
-                UnitActionManager.Instance.InterruptCurrentAction(unit);
+                moveAction.Cancel();
             }
 
-            if (action is BuildAction buildAction)
-            {
-                buildAction.InterruptedByOrder = true;
-                UnitActionManager.Instance.InterruptCurrentAction(unit);
-            }
+            _assignedResources.Remove(unit.Id);
+            AssignedUnits.Remove(unit);
         }
-
-        foreach (var builder in _builders)
+        else
         {
-            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(builder))
+            if (AssignedUnits.Contains(unit))
             {
-                HomeTown.BuildingTownOrder.Builders[builder] = true;
+                AssignedUnits.Remove(unit);
+                var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
+                if (action is CraftAction craftAction)
+                {
+                    craftAction.InterruptedByCraft = true;
+                    craftAction.Cancel();
+                }
             }
         }
-
-        TargetBuilding.OnResourcesDelivered -= OnDeliverResources;
-        TargetBuilding.OnBuildingComplete -= OnCompleteBuilding;
-
-        AssignedUnits.Clear();
-        _assignedResources.Clear();
-        _builders.Clear();
-    }
-
-    public bool HasAssignedUnit(UnitItem unit)
-    {
-        return AssignedUnits.Contains(unit);
-    }
-
-    public void UnassignUnit(UnitItem unit, bool continueToWork = true)
-    {
-        if (!continueToWork)
-        {
-            _builders.Remove(unit);
-            if (HomeTown.BuildingTownOrder.Builders.ContainsKey(unit))
-            {
-                HomeTown.BuildingTownOrder.Builders[unit] = true;
-            }
-        }
-
-        var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
-        if (action is TransportResourcesForBuildingAction moveAction)
-        {
-            moveAction.InterruptedByOrder = true;
-            UnitActionManager.Instance.InterruptCurrentAction(unit);
-        }
-
-        _assignedResources.Remove(unit.Id);
-        AssignedUnits.Remove(unit);
     }
 
     public void RecalculateAssignUnits()
     {
-        if (_builders.Count == 0 && AssignedUnits.Count == 0)
+        if (CurrentCraftingRecipe == null)
         {
             return;
         }
 
-        if (IsAllDelivered)
+        if (_deliverers.Count == 0 && AssignedUnits.Count == 0)
         {
-            var availableBuilders = new List<UnitItem>(_builders);
-            var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
-
-            foreach (var unit in currentlyAssignedUnits)
-            {
-                var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
-
-                if (action is not BuildAction)
-                {
-                    UnassignUnit(unit);
-                    AssignUnit(unit);
-                }
-            }
-
-            foreach (var unit in availableBuilders)
-            {
-                if (!AssignedUnits.Contains(unit))
-                {
-                    AssignUnit(unit);
-                }
-            }
+            return;
         }
-        else
+
+        if (!IsAllDelivered)
         {
-            var availableBuilders = new List<UnitItem>(_builders);
+            var availableDeliverers = new List<UnitItem>(_deliverers);
             var currentlyAssignedUnits = new List<UnitItem>(AssignedUnits);
 
             var unitsToSkip = new HashSet<UnitItem>();
@@ -319,13 +307,13 @@ public class BuildingOrder
                 }
             }
 
-            var unitsToReassign = new HashSet<UnitItem>();
+            var allUnitsToReassign = new HashSet<UnitItem>();
 
-            foreach (var unit in availableBuilders)
+            foreach (var unit in availableDeliverers)
             {
                 if (!unitsToSkip.Contains(unit))
                 {
-                    unitsToReassign.Add(unit);
+                    allUnitsToReassign.Add(unit);
                 }
             }
 
@@ -333,22 +321,41 @@ public class BuildingOrder
             {
                 if (!unitsToSkip.Contains(unit))
                 {
-                    unitsToReassign.Add(unit);
+                    allUnitsToReassign.Add(unit);
                 }
             }
 
-            foreach (var unit in unitsToReassign)
+            foreach (var unit in allUnitsToReassign)
             {
-                UnassignUnit(unit);
+                UnassignUnitFromCraft(unit);
             }
-            
-            foreach (var unit in unitsToReassign)
+
+            foreach (var unit in allUnitsToReassign)
             {
-                AssignUnit(unit);
+                AssignUnitToCraft(unit);
+            }
+        }
+        else
+        {
+            var availableBuilders = new List<UnitItem>(_deliverers);
+
+            foreach (var unit in availableBuilders)
+            {
+                var action = UnitActionManager.Instance.GetCurrentUnitAction(unit);
+
+                if (action is not CraftAction)
+                {
+                    if (AssignedUnits.Contains(unit))
+                    {
+                        UnassignUnitFromCraft(unit, false);
+                    }
+
+                    AssignUnitToCraft(unit);
+                }
             }
         }
     }
-
+    
     private bool ShouldReassignTransportUnit(UnitItem unit)
     {
         if (unit.Backpack.CurrentCapacity == 0)
@@ -360,7 +367,7 @@ public class BuildingOrder
 
         foreach (var item in unit.Backpack.GetAllItems())
         {
-            foreach (var component in RequiredResources)
+            foreach (var component in CurrentCraftingRecipe.Components)
             {
                 if (component.BackpackItem.Id == item.Item.Id)
                 {
@@ -375,6 +382,57 @@ public class BuildingOrder
         }
 
         return false;
+    }
+
+    public void AddCraftingMaterials(UnitItem unit)
+    {
+        var unitBackpack = unit.Backpack;
+
+        foreach (var component in CurrentCraftingRecipe.Components)
+        {
+            if (unitBackpack.HasResource(component.BackpackItem))
+            {
+                var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
+                var resourceNeed = component.Quantity - resourceHave;
+
+                if (resourceNeed > 0)
+                {
+                    var unitResourceCount = unitBackpack.GetResourceQuantity(component.BackpackItem);
+
+                    var resourceCount = Math.Min(unitResourceCount, resourceNeed);
+
+                    unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
+                    Backpack.AddItem(component.BackpackItem, resourceCount);
+                }
+            }
+        }
+
+        CheckCompletionDelivery();
+    }
+    
+    public bool HasAssignedUnit(UnitItem unit)
+    {
+        return AssignedUnits.Contains(unit);
+    }
+
+    private void CheckCompletionDelivery()
+    {
+        var allDelivered = true;
+
+        for (var i = 0; i < RequiredResources.Count; i++)
+        {
+            if (DeliveredResources[i].Quantity < RequiredResources[i].Quantity)
+            {
+                allDelivered = false;
+                break;
+            }
+        }
+
+        if (allDelivered)
+        {
+            IsAllDelivered = true;
+            RecalculateAssignUnits();
+        }
     }
 
     private List<CraftingComponent> CalculateResourcesUnitHave(UnitItem unit)
@@ -418,7 +476,7 @@ public class BuildingOrder
             if (stillNeeded <= 0)
                 continue;
 
-            var availableInTown = HomeTown.TotalBackpack.GetResourceQuantity(resource.BackpackItem);
+            var availableInTown = Building.HomeTown.TotalBackpack.GetResourceQuantity(resource.BackpackItem);
 
             if (availableInTown <= 0)
                 continue;
@@ -434,7 +492,7 @@ public class BuildingOrder
 
         return result;
     }
-    
+
     private bool ShouldGoDirectlyToTarget(UnitItem unit, BuildingItem targetBuilding, List<BuildingItem> resourceBuildings, List<CraftingComponent> currentResources, List<CraftingComponent> resourcesToTake)
     {
         if (resourceBuildings.Count == 0)
@@ -481,7 +539,7 @@ public class BuildingOrder
             return result;
         }
 
-        var remainingResources = resourcesToTake.Select(r => 
+        var remainingResources = resourcesToTake.Select(r =>
             new CraftingComponent(r.BackpackItem, r.Quantity))
             .ToList();
 
@@ -553,36 +611,5 @@ public class BuildingOrder
         }
 
         return result;
-    }
-
-    private void CheckCompletion()
-    {
-        var allDelivered = true;
-
-        for (var i = 0; i < RequiredResources.Count; i++)
-        {
-            if (DeliveredResources[i].Quantity < RequiredResources[i].Quantity)
-            {
-                allDelivered = false;
-                break;
-            }
-        }
-
-        if (allDelivered)
-        {
-            RecalculateAssignUnits();
-            IsAllDelivered = true;
-            TargetBuilding.IsAllDelivered = true;
-        }
-    }
-
-    public class OrderCompletedArgs : EventArgs
-    {
-        public BuildingOrder BuildingOrder { get; set; }
-
-        public OrderCompletedArgs(BuildingOrder order)
-        {
-            BuildingOrder = order;
-        }
     }
 }

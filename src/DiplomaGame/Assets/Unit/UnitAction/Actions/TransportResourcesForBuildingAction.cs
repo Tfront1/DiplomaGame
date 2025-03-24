@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Assets.Items.Crafts;
 using UnityEngine;
 
-public class MoveResourcesForBuildingAction : BaseUnitAction
+public class TransportResourcesForBuildingAction : BaseUnitAction
 {
     private BuildingItem _targetBuilding;
     private BuildingOrder _buildingOrder;
@@ -12,9 +12,9 @@ public class MoveResourcesForBuildingAction : BaseUnitAction
     private bool _movementSuccess = false;
     private List<(BuildingItem, List<CraftingComponent>)> _buildingsToTakeResources;
     
-    public bool _interruptedByOrder = false;
+    public bool InterruptedByOrder { get; set; }= false;
 
-    public MoveResourcesForBuildingAction(UnitItem unit, BuildingItem targetBuilding, List<(BuildingItem, List<CraftingComponent>)> buildingsToTakeResources = null) : base(unit)
+    public TransportResourcesForBuildingAction(UnitItem unit, BuildingItem targetBuilding, List<(BuildingItem, List<CraftingComponent>)> buildingsToTakeResources = null) : base(unit)
     {
         _targetBuilding = targetBuilding;
         _buildingOrder = targetBuilding.HomeTown.BuildingTownOrder.GetOrder(_targetBuilding);
@@ -94,7 +94,14 @@ public class MoveResourcesForBuildingAction : BaseUnitAction
 
             if (_movementSuccess)
             {
-                _targetBuilding.AddBuildingMaterials(_unit);
+                if (!_targetBuilding.IsBuilt && _buildingOrder != null)
+                {
+                    _targetBuilding.AddBuildingMaterials(_unit);
+                }
+                else if(_targetBuilding.BuildingCraftingSystem != null)
+                {
+                    _targetBuilding.BuildingCraftingSystem.AddCraftingMaterials(_unit);
+                }
             }
             else
             {
@@ -118,7 +125,14 @@ public class MoveResourcesForBuildingAction : BaseUnitAction
 
             if (_movementSuccess)
             {
-                _targetBuilding.AddBuildingMaterials(_unit);
+                if (!_targetBuilding.IsBuilt && _buildingOrder != null)
+                {
+                    _targetBuilding.AddBuildingMaterials(_unit);
+                }
+                else if (_targetBuilding.BuildingCraftingSystem != null)
+                {
+                    _targetBuilding.BuildingCraftingSystem.AddCraftingMaterials(_unit);
+                }
             }
             else
             {
@@ -207,9 +221,19 @@ public class MoveResourcesForBuildingAction : BaseUnitAction
 
     private void UnassignUnit()
     {
-        if (!_interruptedByOrder && _buildingOrder.HasAssignedUnit(_unit))
+        if (!_targetBuilding.IsBuilt && _buildingOrder != null)
         {
-            _buildingOrder.UnassignUnit(_unit, false);
+            if (!InterruptedByOrder && _buildingOrder.HasAssignedUnit(_unit))
+            {
+                _buildingOrder.UnassignUnit(_unit, false);
+            }
+        }
+        else if (_targetBuilding.BuildingCraftingSystem != null)
+        {
+            if (!InterruptedByOrder && _targetBuilding.BuildingCraftingSystem.HasAssignedUnit(_unit))
+            {
+                _targetBuilding.BuildingCraftingSystem.UnassignUnitFromCraft(_unit, false);
+            }
         }
     }
 }

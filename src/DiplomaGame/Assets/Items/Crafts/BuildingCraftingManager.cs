@@ -33,7 +33,7 @@ namespace Assets.Items.Crafts
 
             foreach (var component in recipe.Components)
             {
-                inBackpack.RemoveResource(component.BackpackItem, component.Quantity);
+                inBackpack.RemoveItem(component.BackpackItem, component.Quantity);
             }
 
             var craftedBuilding = BuildingsConfig.Buildings.Find(x => x.Id == recipe.ResultId);

@@ -21,6 +21,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public UnitSkills Skills { get; set; }
     public Backpack Backpack { get; set; }
     public TownItem HomeTown { get; set; }
+    public UnitEquipment UnitEquipment { get; set; }
 
     public Guid GroupId { get; set; } = Guid.Empty;
     public bool IsInGroup { get; set; } = false;
@@ -45,56 +46,15 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         Unit = unit;
         UnitGameObject = gameObject;
         HomeTown = townItem;
-
         SpriteRenderer = UnitGameObject.GetComponent<SpriteRenderer>();
-        DisplayGroupCounter = UnitGameObject.AddComponent<UnitCounterDisplay>();
+
         SetPosition(position);
+        SetupCollider();
+        DisplayGroupCounter = UnitGameObject.AddComponent<UnitCounterDisplay>();
 
-        var spriteSize = SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit;
-        Collider = UnitGameObject.AddComponent<BoxCollider2D>();
-        Collider.size = spriteSize;
-        Collider.offset = new Vector2(spriteSize.x / 2f, spriteSize.y / 2f);
-        UnitGameObject.layer = LayerMask.NameToLayer("Units");
-
-        if (SelectionIndicator == null)
-        {
-            SelectionIndicator = new GameObject("SelectionIndicator");
-            SelectionIndicator.transform.SetParent(transform);
-            SelectionIndicator.transform.localPosition = Vector3.zero;
-
-            var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
-            indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
-            indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
-            indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
-
-            SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
-
-
-            var offset = new Vector3(spriteSize.x * 0.5f, spriteSize.y * 0.5f, 0);
-            var locPosX = -(offset * (1.2f - 1.0f)).x;
-            var locPosY = -(offset * (1.2f - 1.0f)).y;
-            SelectionIndicator.transform.localPosition = new Vector3(locPosX, locPosY, offset.z);
-        }
-        SelectionIndicator.SetActive(false);
-
-        //ToDo: Config for stats
-        Stats = new UnitStats(
-            health: 100f,
-            maxHealth: 100f,
-            armor: 10f,
-            maxArmor: 50f,
-            stamina: 100f,
-            maxStamina: 100f,
-            hunger: 100f,
-            maxHunger: 100f
-        );
-
-        Skills = new UnitSkills();
-        TickRateSystem.Instance.OnTick += Stats.Update;
-        TickRateSystem.Instance.OnTick += Skills.Update;
-
-        //ToDo: Add config to unit
-        Backpack = new Backpack(500);
+        SetupSelectionIndicator();
+        InitializeStats();
+        InitializeInventory();
     }
 
     public void SetPosition(Vector2 position)
@@ -176,6 +136,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         TickRateSystem.Instance.OnTick -= Stats.Update;
         TickRateSystem.Instance.OnTick -= Skills.Update;
 
+        Backpack.BackpackChanged -= OnBackpackChanged;
+
         UnitGroupManager.Instance.RemoveUnitTracking(this);
 
         OnUnitDied();
@@ -193,6 +155,79 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public Guid GetId()
     {
         return Id;
+    }
+
+    private void SetupCollider()
+    {
+        var spriteSize = SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit;
+        Collider = UnitGameObject.AddComponent<BoxCollider2D>();
+        Collider.size = spriteSize;
+        Collider.offset = new Vector2(spriteSize.x / 2f, spriteSize.y / 2f);
+        UnitGameObject.layer = LayerMask.NameToLayer("Units");
+    }
+
+    private void SetupSelectionIndicator()
+    {
+        if (SelectionIndicator == null)
+        {
+            var spriteSize = SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit;
+            SelectionIndicator = new GameObject("SelectionIndicator");
+            SelectionIndicator.transform.SetParent(transform);
+            SelectionIndicator.transform.localPosition = Vector3.zero;
+
+            var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
+            indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
+            indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
+            indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
+
+            SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+
+            var offset = new Vector3(spriteSize.x * 0.5f, spriteSize.y * 0.5f, 0);
+            var locPosX = -(offset * (1.2f - 1.0f)).x;
+            var locPosY = -(offset * (1.2f - 1.0f)).y;
+            SelectionIndicator.transform.localPosition = new Vector3(locPosX, locPosY, offset.z);
+        }
+
+        SelectionIndicator.SetActive(false);
+    }
+
+    private void InitializeStats()
+    {
+        // TODO: Add to config
+        Stats = new UnitStats(
+            health: 100f,
+            maxHealth: 100f,
+            armor: 10f,
+            maxArmor: 50f,
+            stamina: 100f,
+            maxStamina: 100f,
+            hunger: 100f,
+            maxHunger: 100f
+        );
+
+        Skills = new UnitSkills();
+
+        TickRateSystem.Instance.OnTick += Stats.Update;
+        TickRateSystem.Instance.OnTick += Skills.Update;
+    }
+
+    private void InitializeInventory()
+    {
+        // TODO: Add to config
+        Backpack = new Backpack(500);
+        Backpack.BackpackChanged += OnBackpackChanged;
+        UnitEquipment = new UnitEquipment(this);
+    }
+
+    private void OnBackpackChanged(object sender, Backpack.BackpackChangedEventArgs args)
+    {
+        var item = args.Item;
+        var backpackChangeType = args.ChangeType;
+
+        if (backpackChangeType != Backpack.BackpackChangeType.Added)
+            return;
+
+        UnitEquipment.TryAutoEquip(item, args.Quantity);
     }
 
     public class UnitDiedEventArgs : EventArgs

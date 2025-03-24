@@ -9,4 +9,5 @@ public class BuildingDto
     public float MaxHP;
     public string BuildingType;
     public int BackpackCapacity;
+    public bool HasCrafts;
 }

@@ -31,6 +31,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     public float HP { get; set; }
     public Backpack Backpack { get; set; }
     public List<CraftingRecipe> Crafts { get; set; } = new();
+    public BuildingCraftingSystem BuildingCraftingSystem { get; set; }
     public TownItem HomeTown { get; set; }
 
     public bool IsSelected { get; set; } = false;
@@ -43,38 +44,14 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         return buildingItem;
     }
 
-    public void Initialize(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, Backpack backpack, TownItem townItem)
+    public void Initialize(Vector2Int position, Guid guid, Building building,
+        GameObject buildingGameObject, Backpack backpack, TownItem townItem)
     {
-        X = position.x;
-        Y = position.y;
-        Id = guid;
-        Building = building;
-        BuildingGameObject = buildingGameObject;
-
-        SpriteRenderer = BuildingGameObject.GetComponent<SpriteRenderer>();
-        Collider = BuildingGameObject.GetComponent<BoxCollider2D>();
-
-        if (SelectionIndicator == null)
-        {
-            SelectionIndicator = new GameObject("SelectionIndicator");
-            SelectionIndicator.transform.SetParent(transform);
-            SelectionIndicator.transform.localPosition = Vector3.zero;
-
-            var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
-            indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
-            indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
-            indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
-
-            SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
-        }
-        SelectionIndicator.SetActive(false);
-
-        HP = building.MaxHP;
-        Backpack = backpack;
-        HomeTown = townItem;
-        building.CraftsIds.ForEach(craft => Crafts.Add(CraftingRecipesConfig.CraftingRecipes.Find(recipe => recipe.Id == craft)));
-        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
-        _buildingCraft = buildingCraft;
+        SetBasicProperties(position, guid, building, buildingGameObject);
+        SetupComponents();
+        CreateSelectionIndicator();
+        SetupGameplayProperties(building, backpack, townItem);
+        LoadCrafts(building);
     }
 
     public void OnSelect()
@@ -114,7 +91,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
                         var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
                         OnResourcesDelivered?.Invoke(this, deliverArgs);
 
-                        unitBackpack.RemoveResource(component.BackpackItem, resourceCount);
+                        unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
                         Backpack.AddItem(component.BackpackItem, resourceCount);
                     }
                 }
@@ -209,6 +186,60 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         return Id;
     }
 
+    private void SetBasicProperties(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject)
+    {
+        X = position.x;
+        Y = position.y;
+        Id = guid;
+        Building = building;
+        BuildingGameObject = buildingGameObject;
+    }
+
+    private void SetupComponents()
+    {
+        SpriteRenderer = BuildingGameObject.GetComponent<SpriteRenderer>();
+        Collider = BuildingGameObject.GetComponent<BoxCollider2D>();
+    }
+
+    private void CreateSelectionIndicator()
+    {
+        if (SelectionIndicator == null)
+        {
+            SelectionIndicator = new GameObject("SelectionIndicator");
+            SelectionIndicator.transform.SetParent(transform);
+            SelectionIndicator.transform.localPosition = Vector3.zero;
+
+            var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
+            indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
+            indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
+            indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
+            SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+        }
+
+        SelectionIndicator.SetActive(false);
+    }
+
+    private void SetupGameplayProperties(Building building, Backpack backpack, TownItem townItem)
+    {
+        HP = building.MaxHP;
+        Backpack = backpack;
+        HomeTown = townItem;
+    }
+
+    private void LoadCrafts(Building building)
+    {
+        building.CraftsIds.ForEach(craftId =>
+            Crafts.Add(CraftingRecipesConfig.CraftingRecipes.Find(recipe => recipe.Id == craftId))
+        );
+
+        CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(Building.BuildingCraftId, out var buildingCraft);
+        _buildingCraft = buildingCraft;
+
+        if (Crafts.Count > 0)
+        {
+            BuildingCraftingSystem = new BuildingCraftingSystem(this);
+        }
+    }
 
     public class BuildingDestroyedEventArgs : EventArgs
     {

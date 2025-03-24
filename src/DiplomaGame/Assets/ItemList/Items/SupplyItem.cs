@@ -15,30 +15,47 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public SpriteRenderer SpriteRenderer { get; set; }
     public BoxCollider2D Collider { get; set; }
 
-    //Gameplay
+    // Gameplay
     public Backpack Backpack { get; set; }
     public ResourceElement ResourceElement { get; set; }
+
     public bool IsSelected { get; set; } = false;
     public GameObject SelectionIndicator { get; set; }
 
-    public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply, GameObject supplyGameObject, Backpack backpack)
+    public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply,
+                                   GameObject supplyGameObject, Backpack backpack)
     {
         var supplyItem = supplyGameObject.AddComponent<SupplyItem>();
         supplyItem.Initialize(position, guid, supply, supplyGameObject, backpack);
         return supplyItem;
     }
 
-    public void Initialize(Vector2Int position, Guid guid, Supply supply, GameObject supplyGameObject, Backpack backpack)
+    public void Initialize(Vector2Int position, Guid guid, Supply supply,
+                          GameObject supplyGameObject, Backpack backpack)
+    {
+        SetBasicProperties(position, guid, supply, supplyGameObject);
+        SetupComponents();
+        CreateSelectionIndicator();
+        SetupResourceSystem(backpack, supply);
+    }
+
+    private void SetBasicProperties(Vector2Int position, Guid guid, Supply supply, GameObject supplyGameObject)
     {
         X = position.x;
         Y = position.y;
         Id = guid;
         Supply = supply;
         SupplyGameObject = supplyGameObject;
+    }
 
+    private void SetupComponents()
+    {
         SpriteRenderer = SupplyGameObject.GetComponent<SpriteRenderer>();
         Collider = SupplyGameObject.GetComponent<BoxCollider2D>();
+    }
 
+    private void CreateSelectionIndicator()
+    {
         if (SelectionIndicator == null)
         {
             SelectionIndicator = new GameObject("SelectionIndicator");
@@ -49,15 +66,19 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
             indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
             indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
             indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
-
             SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
         }
-        SelectionIndicator.SetActive(false);
 
+        SelectionIndicator.SetActive(false);
+    }
+
+    private void SetupResourceSystem(Backpack backpack, Supply supply)
+    {
         Backpack = backpack;
         ResourceElement = ResourcesConfig.ResourceElements.Find(x => x.Id == supply.ResourceId);
 
         Backpack.FillWithSingleItem(ResourceElement);
+
         Debug.Log($"Resource:{ResourceElement.Name} Count:{Backpack.GetResourceQuantity(ResourceElement)}");
     }
 

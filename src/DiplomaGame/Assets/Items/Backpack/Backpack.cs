@@ -31,25 +31,29 @@ namespace Items.Resource.BackPack
             if (_currentCapacity + quantity > _maxCapacity)
                 return false;
 
+            var backpackChangeType = BackpackChangeType.Nothing;
+
             var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
 
             if (existingItem != null)
             {
                 existingItem.Quantity += quantity;
+                backpackChangeType = BackpackChangeType.Updated;
             }
             else
             {
                 _items.Add(new BackpackItem(backpackItem, quantity));
+                backpackChangeType = BackpackChangeType.Added;
             }
 
             _currentCapacity += quantity;
 
-            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
+            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, backpackChangeType));
 
             return true;
         }
 
-        public bool RemoveResource(IBackpackItem backpackItem, int quantity)
+        public bool RemoveItem(IBackpackItem backpackItem, int quantity)
         {
             if (quantity <= 0)
                 return false;
@@ -68,7 +72,7 @@ namespace Items.Resource.BackPack
             if (existingItem.Quantity == 0)
                 _items.Remove(existingItem);
 
-            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity));
+            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, BackpackChangeType.Removed));
 
             return true;
         }
@@ -141,7 +145,7 @@ namespace Items.Resource.BackPack
         public void SetMaxCapacity(int maxCapacity)
         {
             _maxCapacity = maxCapacity;
-            OnBackpackChanged(new BackpackChangedEventArgs(null, 0));
+            OnBackpackChanged(new BackpackChangedEventArgs(null, 0, BackpackChangeType.Nothing));
         }
 
         public override string ToString()
@@ -165,17 +169,27 @@ namespace Items.Resource.BackPack
         {
             public IBackpackItem Item { get; }
             public int Quantity { get; }
+            public BackpackChangeType ChangeType { get; }
 
-            public BackpackChangedEventArgs(IBackpackItem item, int quantity)
+            public BackpackChangedEventArgs(IBackpackItem item, int quantity, BackpackChangeType changeType)
             {
                 Item = item;
                 Quantity = quantity;
+                ChangeType = changeType;
             }
         }
 
         protected virtual void OnBackpackChanged(BackpackChangedEventArgs e)
         {
             BackpackChanged?.Invoke(this, e);
+        }
+
+        public enum BackpackChangeType
+        {
+            Nothing,
+            Added,
+            Removed,
+            Updated
         }
     }
 }

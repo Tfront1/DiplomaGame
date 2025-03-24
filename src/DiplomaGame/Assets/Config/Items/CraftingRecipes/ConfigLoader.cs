@@ -10,29 +10,29 @@ public static partial class ConfigLoader
     public static void LoadCraftingRecipesConfig()
     {
         var json = File.ReadAllText(ConfigPaths.CraftingRecipesConfig);
-        var CraftingRecipesDto = JsonUtility.FromJson<CraftingRecipesDto>(json);
+        var craftingRecipesDto = JsonUtility.FromJson<CraftingRecipesDto>(json);
 
-        if (CraftingRecipesDto == null)
+        if (craftingRecipesDto == null)
         {
             Debug.Log("Error crafting recipes config");
             return;
         }
 
-        var nonPositiveIds = CraftingRecipesDto.Recipes
+        var nonPositiveIds = craftingRecipesDto.Recipes
             .Where(x => x.Id <= 0)
             .Select(x => x.Id)
             .ToList();
 
         if (nonPositiveIds.Any())
         {
-            throw new System.Exception($"Crafting recipes Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
+            throw new Exception($"Crafting recipes Id must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveIds)}");
         }
 
-        var hasDuplicates = CraftingRecipesDto.Recipes
+        var hasDuplicates = craftingRecipesDto.Recipes
             .GroupBy(x => x.Id)
             .Any(group => group.Count() > 1);
 
-        var repeatedIds = CraftingRecipesDto.Recipes
+        var repeatedIds = craftingRecipesDto.Recipes
             .GroupBy(x => x.Id)
             .Where(group => group.Count() > 1)
             .Select(group => group.Key)
@@ -43,32 +43,62 @@ public static partial class ConfigLoader
             throw new Exception($"Crafting recipes Id repeats: {repeatedIds}");
         }
 
-        var craftingRecipesResourcesErrors = ValidateCraftingRecipesResources(CraftingRecipesDto);
+        var craftingRecipesResourcesErrors = ValidateCraftingRecipesResources(craftingRecipesDto);
 
         if (craftingRecipesResourcesErrors != null)
         {
             throw new Exception(string.Join("\n", craftingRecipesResourcesErrors));
         }
 
-        var craftingRecipesResultsErrors = ValidateCraftingRecipesResult(CraftingRecipesDto);
+        var craftingRecipesResultsErrors = ValidateCraftingRecipesResult(craftingRecipesDto);
 
         if (craftingRecipesResultsErrors != null)
         {
             throw new Exception(string.Join("\n", craftingRecipesResultsErrors));
         }
 
-        CraftingRecipesDto.Recipes.ForEach(x => CraftingRecipesConfig.CraftingRecipes
-            .Add(new CraftingRecipe(
-                x.Id, 
+        var craftingWhereToCraftErrors = ValidateWhereToCraft(craftingRecipesDto);
+
+        if (craftingWhereToCraftErrors != null)
+        {
+            throw new Exception(string.Join("\n", craftingWhereToCraftErrors));
+        }
+
+        craftingRecipesDto.Recipes.ForEach(x =>
+        {
+            var craftRecipe = new CraftingRecipe(
+                x.Id,
                 x.Name,
                 x.Components.Select(component =>
-                    new CraftingComponent(ResourcesConfig.ResourceElements
-                        .Find(res => res.Id == component.ResourceId), component.Quantity))
-                .ToList(),
+                        new CraftingComponent(ResourcesConfig.ResourceElements
+                            .Find(res => res.Id == component.ResourceId), component.Quantity))
+                    .ToList(),
                 x.CraftingTime,
                 x.ResultType,
-                x.ResultId))
-        );
+                x.ResultId,
+                x.WhereToCraftId,
+                x.MaxUnitToCraftCount);
+
+            CraftingRecipesConfig.CraftingRecipes.Add(craftRecipe);
+
+            if (craftRecipe.WhereToCraftId != 0)
+            {
+                var buildings = BuildingsConfig.Buildings.FindAll(b => b.Id == craftRecipe.WhereToCraftId);
+                foreach (var building in buildings)
+                {
+                    building.CraftsIds.Add(craftRecipe.Id);
+                }
+            }
+
+            if (craftRecipe.ResultType == typeof(Building))
+            {
+                var buildings = BuildingsConfig.Buildings.FindAll(b => b.Id == craftRecipe.ResultId);
+                foreach (var building in buildings)
+                {
+                    building.BuildingCraftId = craftRecipe.Id;
+                }
+            }
+        });
 
         CraftingRecipesConfig.CraftingRecipesDictionary = CraftingRecipesConfig.CraftingRecipes
             .ToDictionary(recipe => recipe.Id);
@@ -108,6 +138,24 @@ public static partial class ConfigLoader
         if (missingResults.Any())
         {
             errors.Add($"Results in craft: {string.Join(", ", missingResults)} not exists in All Items");
+        }
+
+        return errors.Any() ? errors : null;
+    }
+
+    private static List<string> ValidateWhereToCraft(CraftingRecipesDto craftingRecipes)
+    {
+        var errors = new List<string>();
+
+        var missingBuildings = craftingRecipes.Recipes
+            .Where(recipe => recipe.WhereToCraftId != 0 && BuildingsConfig.Buildings.All(building => building.Id == recipe.WhereToCraftId && !building.HasCrafts))
+            .Select(recipe => recipe.WhereToCraftId.ToString())
+            .Distinct()
+            .ToList();
+
+        if (missingBuildings.Any())
+        {
+            errors.Add($"Buildings in craft: {string.Join(", ", missingBuildings)} not exists in BuildingsConfig");
         }
 
         return errors.Any() ? errors : null;

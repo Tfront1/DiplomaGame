@@ -2,16 +2,14 @@
 using System.Collections;
 using UnityEngine;
 
-public class BuildAction : BaseUnitAction
+public class AttackBuildingAction : BaseUnitAction
 {
     private BuildingItem _targetBuilding;
-    public bool InterruptedByOrder { get; set; } = false;
 
-    private float _fixedDeltaTime = 0.5f;
     private bool _movementCompleted = false;
     private bool _movementSuccess = false;
 
-    public BuildAction(UnitItem unit, BuildingItem targetBuilding) : base(unit)
+    public AttackBuildingAction(UnitItem unit, BuildingItem targetBuilding) : base(unit)
     {
         _targetBuilding = targetBuilding;
     }
@@ -25,15 +23,15 @@ public class BuildAction : BaseUnitAction
     {
         if (!CanExecute())
         {
-            Debug.Log("Can`t execute building.");
+            Debug.Log("Can`t execute moving resources for building. No resources");
             return;
         }
 
         _idAction = Guid.NewGuid();
-        CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Build());
+        CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Attack());
     }
 
-    private IEnumerator Build()
+    private IEnumerator Attack()
     {
         if (IsStopped)
         {
@@ -44,12 +42,6 @@ public class BuildAction : BaseUnitAction
         while (IsPaused)
         {
             yield return null;
-        }
-
-        var buildingSkill = _unit.Skills.GetSkill<BuildingSkill>();
-        if (buildingSkill != null)
-        {
-            _fixedDeltaTime *= buildingSkill.BuildSpeedBonus;
         }
 
         yield return MoveToPoint(GridService.GetWorldPosition(_targetBuilding.X, _targetBuilding.Y));
@@ -67,42 +59,7 @@ public class BuildAction : BaseUnitAction
 
         if (_movementSuccess)
         {
-            while (!_targetBuilding.IsAllDelivered)
-            {
-                if (IsStopped)
-                {
-                    CompleteAction();
-                    yield break;
-                }
 
-                while (IsPaused)
-                {
-                    yield return null;
-                }
-
-                yield return null;
-            }
-            
-            _unit.Skills.SetActiveSkill(typeof(BuildingSkill));
-
-            while (!_targetBuilding.UpdateBuildingProgress(_fixedDeltaTime, _unit))
-            {
-                if (IsStopped)
-                {
-                    _unit.Skills.ResetActiveSkill();
-                    CompleteAction();
-                    yield break;
-                }
-
-                while (IsPaused)
-                {
-                    yield return null;
-                }
-
-                yield return new WaitForSeconds(0.5f);
-            }
-
-            _unit.Skills.ResetActiveSkill();
         }
         else
         {
@@ -111,34 +68,6 @@ public class BuildAction : BaseUnitAction
 
         _isSuccessAction = true;
         CompleteAction();
-    }
-
-    public override void Cancel()
-    {
-        UnassignUnit();
-        base.Cancel();
-    }
-
-    protected override void CompleteAction()
-    {
-        if (!InterruptedByOrder)
-        {
-            UnassignUnit();
-        }
-        else if (!IsSuccess)
-        {
-            UnassignUnit();
-        }
-        base.CompleteAction();
-    }
-
-    private void UnassignUnit()
-    {
-        var buildingOrder = _targetBuilding.HomeTown.BuildingTownOrder.GetOrder(_targetBuilding);
-        if (!InterruptedByOrder && buildingOrder.HasAssignedUnit(_unit))
-        {
-            buildingOrder.UnassignUnit(_unit, false);
-        }
     }
 
     private IEnumerator MoveToPoint(Vector2 targetPosition)

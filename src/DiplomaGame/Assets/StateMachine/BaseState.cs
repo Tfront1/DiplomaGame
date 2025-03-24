@@ -63,9 +63,8 @@ namespace StateMachine
             }
         }
 
-        public  void HandleLeftHoldEnd(Vector2 position)
+        public void HandleLeftHoldEnd(Vector2 position)
         {
-
             if (_stateMachine.SelectionAreaVisual != null)
             {
                 _stateMachine.SelectionAreaVisual.SetActive(false);

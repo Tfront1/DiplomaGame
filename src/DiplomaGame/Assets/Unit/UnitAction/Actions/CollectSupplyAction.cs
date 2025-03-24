@@ -12,7 +12,6 @@ public class CollectSupplyAction : BaseUnitAction
     private bool _broughtResourcesCompleted = false;
     private bool _broughtResourcesSuccess = false;
 
-
     public CollectSupplyAction(UnitItem unit, SupplyItem supply) : base(unit)
     {
         _supply = supply;

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Items.Resource.BackPack;
 using Town;
+using UnityEditor.EditorTools;
 using UnityEngine;
+using static Building;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 
@@ -33,6 +35,13 @@ public class BuildingManager : MonoBehaviour
 
     private static ItemList<BuildingItem> _buildingItemList;
     private static MapGrid<BuildingGridObject> _grid;
+
+    private static GameObject _previewBuildingObject;
+    private static Building _previewBuilding;
+    private static BuildingTexture _previewBuildingTexture;
+    private static SpriteRenderer _previewSpriteRenderer;
+    private static bool _canPlaceBuilding;
+    private static TownItem _town;
 
     /// <summary>
     /// Initializes building caches with data from configs
@@ -180,6 +189,151 @@ public class BuildingManager : MonoBehaviour
         buildingItem.Destroy();
 
         return true;
+    }
+
+    public static void PrePlacementBuilding(Building building, TownItem town)
+    {
+        if (!_isInitializedCaches)
+        {
+            InitializeCaches();
+        }
+
+        _town = town;
+
+        ClearPrePlacementBuilding();
+
+        _previewBuilding = building;
+        _previewBuildingTexture = _buildingTextureConfigCache[building.Id];
+
+        _previewBuildingObject = CreateBuildingGameObject($"Preview_{building.Name}");
+        SetupPreviewBuildingSprite(_previewBuildingObject, _previewBuildingTexture, building);
+
+        GameplayInputHandler.Instance.OnMousePosition += MovePrePlacementBuilding;
+        GameplayInputHandler.Instance.OnMouseLeftClick += TryPlaceBuilding;
+        GameplayInputHandler.Instance.OnMouseRightClick += CancelPrePlacementBuilding;
+
+        MovePrePlacementBuilding(Input.mousePosition);
+
+        Debug.Log($"Started placement mode for {building.Name}");
+    }
+
+    private static void SetupPreviewBuildingSprite(GameObject buildingObject, BuildingTexture buildingTexture, Building building)
+    {
+        _previewSpriteRenderer = buildingObject.AddComponent<SpriteRenderer>();
+
+        var newBuildingSprite = Sprite.Create(
+            buildingTexture.Texture,
+            new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
+            Vector2.zero
+        );
+        _previewSpriteRenderer.sprite = newBuildingSprite;
+
+        var (finalScale, _) = CalculateBuildingScale(building, buildingTexture);
+        buildingObject.transform.localScale = new Vector3(finalScale, finalScale, 1);
+
+        _previewSpriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+        _previewSpriteRenderer.sortingOrder = 100;
+    }
+
+    private static void MovePrePlacementBuilding(Vector2 mousePosition)
+    {
+        if (_previewBuildingObject == null || _previewBuilding == null)
+            return;
+
+        var gridPosition = GridService.GetCellGridPosition(mousePosition);
+
+        _canPlaceBuilding = GridService.CanPlaceAtPosition(
+            gridPosition,
+            new Vector2Int(_previewBuilding.WidthCell, _previewBuilding.HeightCell),
+            GridRegistry.GetAllGridsList().ToArray()) &&
+            ItemListService.CanPlaceAtPosition(
+                gridPosition,
+                new Vector2Int(_previewBuilding.WidthCell, _previewBuilding.HeightCell),
+                ItemListRegistry.GetAllListsItemsList().ToArray()
+            );
+
+        UpdatePreviewColor(_canPlaceBuilding);
+
+        SetBuildingPosition(_previewBuildingObject, gridPosition, _previewBuilding, _previewBuildingTexture);
+    }
+
+    private static void UpdatePreviewColor(bool canPlace)
+    {
+        if (_previewSpriteRenderer == null)
+            return;
+
+        if (canPlace)
+        {
+            _previewSpriteRenderer.color = new Color(0.7f, 0.7f, 0.7f, 0.7f);
+        }
+        else
+        {
+            _previewSpriteRenderer.color = new Color(1.0f, 0.3f, 0.3f, 0.7f);
+        }
+    }
+
+    private static void TryPlaceBuilding(Vector2 mousePosition)
+    {
+        if (_previewBuildingObject == null || _previewBuilding == null)
+            return;
+
+        var gridPosition = GridService.GetCellGridPosition(mousePosition);
+
+        if (_canPlaceBuilding)
+        {
+            var success = false;
+            if(CraftingRecipesConfig.CraftingRecipesDictionary.TryGetValue(_previewBuilding.BuildingCraftId, out var craft))
+            {
+                if (craft != null)
+                {
+                    if (craft.CraftingTime == 0f)
+                    {
+                        success = BuildInstantly(gridPosition, _previewBuilding, _town);
+                    }
+                    else
+                    {
+                        success = BuildWithFoundation(gridPosition, _previewBuilding,
+                            BuildingsConfig.Buildings.Find(x => x.Id == 1), _town);
+                    }
+                }
+            }
+
+            if (success)
+            {
+                Debug.Log($"Successfully placed {_previewBuilding.Name} at {gridPosition}");
+                ClearPrePlacementBuilding();
+            }
+        }
+        else
+        {
+            Debug.Log($"Cannot place {_previewBuilding.Name} at {gridPosition}");
+        }
+    }
+
+    private static void CancelPrePlacementBuilding(Vector2 mousePosition)
+    {
+        ClearPrePlacementBuilding();
+        Debug.Log("Building placement canceled");
+    }
+
+    private static void ClearPrePlacementBuilding()
+    {
+        if (_previewBuildingObject != null)
+        {
+            GameObject.Destroy(_previewBuildingObject);
+            _previewBuildingObject = null;
+        }
+
+        _previewBuilding = null;
+        _previewBuildingTexture = null;
+        _previewSpriteRenderer = null;
+
+        if (GameplayInputHandler.Instance != null)
+        {
+            GameplayInputHandler.Instance.OnMousePosition -= MovePrePlacementBuilding;
+            GameplayInputHandler.Instance.OnMouseLeftClick -= TryPlaceBuilding;
+            GameplayInputHandler.Instance.OnMouseRightClick -= CancelPrePlacementBuilding;
+        }
     }
 
     private static void RemoveBuilding(object sender, BuildingItem.BuildingDestroyedEventArgs e)

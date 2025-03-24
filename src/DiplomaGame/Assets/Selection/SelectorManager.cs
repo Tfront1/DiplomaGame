@@ -129,6 +129,11 @@ namespace Selection
                 }
             }
 
+            if (result.Count == 0)
+            {
+                state = SelectedStates.NothingSelect;
+            }
+
             return (result, state);
         }
         

@@ -2,18 +2,18 @@
 using System.Collections;
 using UnityEngine;
 
-public class BuildAction : BaseUnitAction
+public class CraftAction : BaseUnitAction
 {
-    private BuildingItem _targetBuilding;
-    public bool InterruptedByOrder { get; set; } = false;
-
+    private BuildingCraftingSystem _crafting;
+    public bool InterruptedByCraft { get; set; } = false;
+    
     private float _fixedDeltaTime = 0.5f;
     private bool _movementCompleted = false;
     private bool _movementSuccess = false;
-
-    public BuildAction(UnitItem unit, BuildingItem targetBuilding) : base(unit)
+    
+    public CraftAction(UnitItem unit, BuildingCraftingSystem crafting) : base(unit)
     {
-        _targetBuilding = targetBuilding;
+        _crafting = crafting;
     }
 
     public override bool CanExecute()
@@ -25,15 +25,15 @@ public class BuildAction : BaseUnitAction
     {
         if (!CanExecute())
         {
-            Debug.Log("Can`t execute building.");
+            Debug.Log("Can`t execute crafting.");
             return;
         }
 
         _idAction = Guid.NewGuid();
-        CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Build());
+        CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Craft());
     }
 
-    private IEnumerator Build()
+    private IEnumerator Craft()
     {
         if (IsStopped)
         {
@@ -46,13 +46,13 @@ public class BuildAction : BaseUnitAction
             yield return null;
         }
 
-        var buildingSkill = _unit.Skills.GetSkill<BuildingSkill>();
-        if (buildingSkill != null)
+        var smithingSkill = _unit.Skills.GetSkill<SmithingSkill>();
+        if (smithingSkill != null)
         {
-            _fixedDeltaTime *= buildingSkill.BuildSpeedBonus;
+            _fixedDeltaTime *= smithingSkill.CraftSpeedBonus;
         }
 
-        yield return MoveToPoint(GridService.GetWorldPosition(_targetBuilding.X, _targetBuilding.Y));
+        yield return MoveToPoint(GridService.GetWorldPosition(_crafting.Building.X, _crafting.Building.Y));
 
         if (IsStopped)
         {
@@ -67,25 +67,9 @@ public class BuildAction : BaseUnitAction
 
         if (_movementSuccess)
         {
-            while (!_targetBuilding.IsAllDelivered)
-            {
-                if (IsStopped)
-                {
-                    CompleteAction();
-                    yield break;
-                }
+            _unit.Skills.SetActiveSkill(typeof(SmithingSkill));
 
-                while (IsPaused)
-                {
-                    yield return null;
-                }
-
-                yield return null;
-            }
-            
-            _unit.Skills.SetActiveSkill(typeof(BuildingSkill));
-
-            while (!_targetBuilding.UpdateBuildingProgress(_fixedDeltaTime, _unit))
+            while (!_crafting.IsCrafting)
             {
                 if (IsStopped)
                 {
@@ -98,6 +82,8 @@ public class BuildAction : BaseUnitAction
                 {
                     yield return null;
                 }
+
+                _crafting.UpdateCraftingProgress(_fixedDeltaTime);
 
                 yield return new WaitForSeconds(0.5f);
             }
@@ -121,7 +107,7 @@ public class BuildAction : BaseUnitAction
 
     protected override void CompleteAction()
     {
-        if (!InterruptedByOrder)
+        if (!InterruptedByCraft)
         {
             UnassignUnit();
         }
@@ -134,10 +120,9 @@ public class BuildAction : BaseUnitAction
 
     private void UnassignUnit()
     {
-        var buildingOrder = _targetBuilding.HomeTown.BuildingTownOrder.GetOrder(_targetBuilding);
-        if (!InterruptedByOrder && buildingOrder.HasAssignedUnit(_unit))
+        if (!InterruptedByCraft && _crafting.HasAssignedUnit(_unit))
         {
-            buildingOrder.UnassignUnit(_unit, false);
+            _crafting.UnassignUnitFromCraft(_unit);
         }
     }
 
@@ -191,6 +176,7 @@ public class BuildAction : BaseUnitAction
 
         moveAction.OnActionCompleted -= OnMovementComplete;
     }
+
 
     private void OnMovementComplete(IUnitAction action)
     {

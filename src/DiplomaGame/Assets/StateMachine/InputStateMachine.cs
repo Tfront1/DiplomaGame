@@ -13,17 +13,18 @@ namespace StateMachine
         private static InputStateMachine _instance;
         private static readonly object _lock = new();
 
-        private Vector3 _selectionAreaPosition = new();
-
-        private IInputState _currentState;
-
-        private Dictionary<SelectedStates, IInputState> _states;
-
         public bool IsSelectingUnitsOnly { get; set; } = true;
         public HashSet<ISelectable> SelectedItems { get; set; } = new();
         public GameObject SelectionAreaVisual { get; set; }
         public RectTransform SelectionRectTransform { get; set; }
         public Vector2 StartSelectPosition { get; set; }
+
+        private Vector3 _selectionAreaPosition = new();
+
+        private IInputState _currentState;
+
+        private Dictionary<SelectedStates, IInputState> _states;
+        private Canvas canvas = null;
 
         public static InputStateMachine Instance
         {
@@ -146,27 +147,6 @@ namespace StateMachine
         {
             foreach (var item in items)
             {
-                /*
-                if (item is UnitItem unit)
-                {
-                    if (unit.IsInGroup)
-                    {
-                        var group = GroupManager.Instance.GetGroup(unit.GroupId);
-                        if (group != null && group.UnitLeader.Id == unit.Id)
-                        {
-                            unit.OnSelect();
-                        }
-                    }
-                    else
-                    {
-                        unit.OnSelect();
-                    }
-                }
-                else
-                {
-                    item.OnSelect();
-                }
-                */
                 item.OnSelect();
             }
         }
@@ -175,7 +155,6 @@ namespace StateMachine
         {
             var selectionArea = new GameObject("SelectionArea");
 
-            var canvas = FindObjectOfType<Canvas>();
             if (canvas == null)
             {
                 var canvasObj = new GameObject("SelectionCanvas");

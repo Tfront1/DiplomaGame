@@ -9,4 +9,6 @@ public class CraftingRecipeDto
     public float CraftingTime;
     public string ResultType;
     public int ResultId;
+    public int WhereToCraftId;
+    public int MaxUnitToCraftCount;
 }

@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 
 public class InputSystemSetup : MonoBehaviour
 {
@@ -19,6 +21,8 @@ public class InputSystemSetup : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         InitializeInputActionAsset();
+        SetupEventSystem();
+        SetupUIInputActions();
     }
 
     private void InitializeInputActionAsset()
@@ -61,6 +65,65 @@ public class InputSystemSetup : MonoBehaviour
                         .WithGroup(bindingConfig.BindingGroup);
                 }
             }
+        }
+    }
+
+    private void SetupEventSystem()
+    {
+        if (EventSystem.current == null)
+        {
+            var eventSystemObj = new GameObject("EventSystem");
+            var eventSystem = eventSystemObj.AddComponent<EventSystem>();
+
+            var inputModule = eventSystemObj.AddComponent<InputSystemUIInputModule>();
+
+            inputModule.actionsAsset = _inputActionAsset;
+        }
+        else
+        {
+
+            var inputModule = EventSystem.current.GetComponent<InputSystemUIInputModule>();
+            if (inputModule == null)
+            {
+                inputModule = EventSystem.current.gameObject.AddComponent<InputSystemUIInputModule>();
+            }
+
+            inputModule.actionsAsset = _inputActionAsset;
+        }
+    }
+
+    private void SetupUIInputActions()
+    {
+        var inputActions = _instance._inputActionAsset;
+
+        var uiMap = inputActions.FindActionMap("UI");
+        if (uiMap == null)
+        {
+            uiMap = inputActions.AddActionMap("UI");
+
+            var pointAction = uiMap.AddAction("Point", InputActionType.PassThrough);
+            pointAction.AddBinding("<Mouse>/position");
+            pointAction.AddBinding("<Pen>/position");
+            pointAction.AddBinding("<Touchscreen>/touch*/position");
+
+            var clickAction = uiMap.AddAction("LeftClick", InputActionType.PassThrough);
+            clickAction.AddBinding("<Mouse>/leftButton");
+            clickAction.AddBinding("<Pen>/tip");
+            clickAction.AddBinding("<Touchscreen>/touch*/press");
+
+            var rightClickAction = uiMap.AddAction("RightClick", InputActionType.PassThrough);
+            rightClickAction.AddBinding("<Mouse>/rightButton");
+
+            uiMap.Enable();
+
+        }
+
+        var inputModule = EventSystem.current?.GetComponent<InputSystemUIInputModule>();
+        if (inputModule != null)
+        {
+            inputModule.point = InputActionReference.Create(uiMap.FindAction("Point"));
+            inputModule.leftClick = InputActionReference.Create(uiMap.FindAction("LeftClick"));
+            inputModule.rightClick = InputActionReference.Create(uiMap.FindAction("RightClick"));
         }
     }
 }

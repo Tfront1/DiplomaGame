@@ -14,4 +14,5 @@ public static class ConfigPaths
     public static string UnitsTexturesPath { get; set; }
     public static string ResourceItemsConfig { get; set; }
     public static string CraftingRecipesConfig { get; set; }
+    public static string WeaponsConfig { get; set; }
 }

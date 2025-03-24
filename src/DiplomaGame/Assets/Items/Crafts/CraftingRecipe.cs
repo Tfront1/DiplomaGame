@@ -15,13 +15,17 @@ namespace Assets.Items.Crafts
         public float CraftingTime { get; set; }
         public Type ResultType { get; set; }
         public int ResultId { get; set; }
+        public int WhereToCraftId { get; set; }
+        public int MaxUnitToCraftCount { get; set; }
 
-        public CraftingRecipe(int recipeId, string name, List<CraftingComponent> components, float craftingTime = 0, string resultType = null, int resultId = 0)
+        public CraftingRecipe(int recipeId, string name, List<CraftingComponent> components, float craftingTime = 0, string resultType = null, int resultId = 0, int whereToCraftId = 0, int maxUnitToCraftCount = 0)
         {
             Id = recipeId;
             Name = name;
             Components = components;
             CraftingTime = craftingTime;
+            WhereToCraftId = whereToCraftId;
+            MaxUnitToCraftCount = maxUnitToCraftCount;
 
             ResultType = resultType switch
             {
@@ -46,6 +50,20 @@ namespace Assets.Items.Crafts
             }
 
             return quantity;
+        }
+
+        public string GetComponentsToString()
+        {
+            if (Components == null || Components.Count == 0)
+                return "No components";
+
+            var componentsString = new System.Text.StringBuilder();
+            foreach (var component in Components)
+            {
+                componentsString.AppendLine($"{component.BackpackItem.Name}: {component.Quantity} ");
+            }
+
+            return componentsString.ToString().TrimEnd();
         }
     }
 }

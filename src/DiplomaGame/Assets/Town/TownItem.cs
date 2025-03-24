@@ -10,6 +10,7 @@ namespace Town
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public bool IsUnitControlTown { get; set; }
         public List<BuildingItem> Buildings { get; set; } = new();
         public List<UnitItem> Units { get; set; } = new();
         public BuildingItem TownHall { get; set; }
@@ -19,11 +20,17 @@ namespace Town
         public int DiedUnits { get; set; } = 0;
         public BuildingTownOrder BuildingTownOrder { get; set; } = new();
 
-        public TownItem(string name, Guid id)
+        public TownItem(string name, Guid id, bool isUnitControlTown = true)
         {
             Name = name;
             Id = id;
             TownRegistry.AddTown(this);
+            IsUnitControlTown = isUnitControlTown;
+            if (IsUnitControlTown)
+            {
+                this.SetAsPlayerTown();
+                this.NotifyUIChanged();
+            }
         }
 
         public TownItem(string name, Guid id, BuildingItem townHall)
@@ -54,8 +61,9 @@ namespace Town
                         .CraftingRecipesDictionary[building.Building.BuildingCraftId].Components;
 
                     BuildingTownOrder.CreateOrder(building, buildingCraftingComponents, this);
-
                 }
+
+                this.NotifyUIChanged();
             }
         }
 
@@ -73,6 +81,8 @@ namespace Town
 
                     RecalculateTotalResources();
                 }
+
+                this.NotifyUIChanged();
             }
         }
         
@@ -159,6 +169,8 @@ namespace Town
                 Units.Add(unit);
 
                 unit.OnDied += UnitDied;
+
+                this.NotifyUIChanged();
             }
         }
 
@@ -169,6 +181,8 @@ namespace Town
                 Units.Remove(unit);
 
                 unit.OnDied -= UnitDied;
+
+                this.NotifyUIChanged();
             }
         }
 
@@ -225,15 +239,30 @@ namespace Town
 
         private void BuildingBackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)
         {
-            //Debug.Log("Recal Town");
             RecalculateTotalResources();
+            RecalculateAllCraftingSystems();
             BuildingTownOrder.RecalculateAllOrders(this);
+
+            this.NotifyUIChanged();
+        }
+
+        private void RecalculateAllCraftingSystems()
+        {
+            foreach (var building in Buildings)
+            {
+                if (building.Crafts.Count > 0 && building.BuildingCraftingSystem != null && !building.BuildingCraftingSystem.IsAllDelivered)
+                {
+                    building.BuildingCraftingSystem.RecalculateAssignUnits();
+                }
+            }
         }
 
         private void UnitDied(object sender, UnitDiedEventArgs e)
         {
             DiedUnits++;
             RemoveUnit(e.Unit);
+
+            this.NotifyUIChanged();
         }
 
         private void BuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs e)
@@ -241,6 +270,8 @@ namespace Town
             RecalculateTotalResources();
             BuildingTownOrder.RecalculateAllOrders(this);
             RemoveBuilding(e.BuildingItem);
+
+            this.NotifyUIChanged();
         }
     }
 }

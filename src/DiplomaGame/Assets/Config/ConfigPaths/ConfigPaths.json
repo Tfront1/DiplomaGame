@@ -12,5 +12,6 @@
   "UnitsConfigPath": "Assets/Config/Units/UnitsConfig.json",
   "UnitsTexturesPath": "Assets/Config/Textures/Units/UnitsTexturesConfig.json",
   "ResourceItemsConfig": "Assets/Config/Items/Resources/ResourcesConfig.json",
-  "CraftingRecipesConfig": "Assets/Config/Items/CraftingRecipes/CraftingRecipesConfig.json"
+  "CraftingRecipesConfig": "Assets/Config/Items/CraftingRecipes/CraftingRecipesConfig.json",
+  "WeaponsConfig": "Assets/Config/Items/Weapons/Weapon.json"
 }
