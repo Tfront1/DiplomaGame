@@ -46,7 +46,7 @@ public class GameplayInputHandler : MonoBehaviour
     private Vector2 _mouseScreenPosition;
     private Vector2 _mouseWorldPosition;
     private float _positionUpdateTimer = 0f;
-    private const float _positionUpdateInterval = 0.05f;
+    private const float _positionUpdateInterval = 0.00f;
 
     // Left mouse click
     public delegate void MouseLeftClickHandler(Vector2 position);

@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Items.Resource.BackPack;
 using Town;
-using UnityEditor.EditorTools;
 using UnityEngine;
-using static Building;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 

@@ -13,12 +13,22 @@ namespace StateMachine.States
 
         public override void Enter()
         {
-            Debug.Log("Entering UnitSelected state");
+            Debug.Log("Enter UnitSelected state");
+            if (_stateMachine.SelectedItems.Count == 1)
+            {
+                var unit = _stateMachine.SelectedItems.First() as UnitItem;
+                if (unit != null)
+                {
+                    UnitUIManager.Instance.ShowUnitInfo(unit);
+                }
+            }
+            
         }
 
         public override void Exit()
         {
             Debug.Log("Exiting UnitSelected state");
+            UnitUIManager.Instance.HideUnitInfo();
         }
 
         public override void HandleRightClick(Vector2 position)

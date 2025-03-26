@@ -197,7 +197,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         Stats = new UnitStats(
             health: 100f,
             maxHealth: 100f,
-            armor: 10f,
+            armor: 0f,
             maxArmor: 50f,
             stamina: 100f,
             maxStamina: 100f,

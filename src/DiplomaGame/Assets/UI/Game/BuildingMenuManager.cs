@@ -48,20 +48,7 @@ public class BuildingMenuManager : MonoBehaviour
 
     private void InitializeUI()
     {
-        mainCanvas = FindObjectOfType<Canvas>();
-        if (mainCanvas == null)
-        {
-            var canvasObj = new GameObject("MainCanvas");
-            mainCanvas = canvasObj.AddComponent<Canvas>();
-            mainCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-
-            var scaler = canvasObj.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(Screen.width, Screen.height);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            canvasObj.AddComponent<GraphicRaycaster>();
-        }
+        mainCanvas = MainCanvasUI.MainCanvas;
 
         CreateBuildingButton();
         CreateBuildingMenuPanel();

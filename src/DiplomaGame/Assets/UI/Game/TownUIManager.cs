@@ -33,19 +33,7 @@ public class TownUIManager : MonoBehaviour
 
     private void CreateMainCanvas()
     {
-        mainCanvas = GetComponent<Canvas>();
-        if (mainCanvas == null)
-        {
-            mainCanvas = gameObject.AddComponent<Canvas>();
-            mainCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-
-            var scaler = gameObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(Screen.width, Screen.height);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            gameObject.AddComponent<GraphicRaycaster>();
-        }
+        mainCanvas = MainCanvasUI.MainCanvas;
     }
 
     private RectTransform CreatePlayerTownPanel()
