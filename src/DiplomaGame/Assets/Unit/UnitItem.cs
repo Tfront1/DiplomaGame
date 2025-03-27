@@ -32,6 +32,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public GameObject SelectionIndicator { get; set; }
 
     public event EventHandler<UnitDiedEventArgs> OnDied;
+    public event EventHandler<UnitUIToChangeEventArgs> UIToChange;
 
     public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
@@ -235,6 +236,16 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         public UnitItem Unit { get; }
 
         public UnitDiedEventArgs(UnitItem unit)
+        {
+            Unit = unit;
+        }
+    }
+
+    public class UnitUIToChangeEventArgs : EventArgs
+    {
+        public UnitItem Unit { get; }
+
+        public UnitUIToChangeEventArgs(UnitItem unit)
         {
             Unit = unit;
         }

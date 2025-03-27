@@ -48,11 +48,24 @@ namespace Supplies
 
         private static Random _random = new();
 
+        private static ItemList<SupplyItem> _supplyItemList;
+
+        private static MapGrid<SupplyGridObject> _grid;
+
         /// <summary>
         /// Initializes supply caches with data from configs
         /// </summary>
         private static void InitializeCaches()
         {
+            _supplyItemList = new ItemList<SupplyItem>();
+            _grid = new MapGrid<SupplyGridObject>(
+                MapConfig.MapWidth,
+                MapConfig.MapHeight,
+                MapConfig.CellSize,
+                new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
+                (g, x, y) => new SupplyGridObject(g, x, y)
+            );
+
             _suppliesCache = SuppliesConfig.Supplies.ToDictionary(s => s.Id);
             _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
             _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
@@ -64,17 +77,8 @@ namespace Supplies
         /// Displays supplies on the map based on provided grid data
         /// </summary>
         /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
-        /// <param name="supplyItemsList">List of supplies items</param>
-        public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts, ItemList<SupplyItem> supplyItemsList)
+        public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts)
         {
-            var grid = new MapGrid<SupplyGridObject>(
-                MapConfig.MapWidth,
-                MapConfig.MapHeight,
-                MapConfig.CellSize,
-                new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY),
-                (g, x, y) => new SupplyGridObject(g, x, y)
-            );
-
             if (!_isInitializedCaches)
             {
                 InitializeCaches();
@@ -92,7 +96,7 @@ namespace Supplies
                 var supplyTexture = _supplyTextureConfigCache[supplyId];
                 var supply = _suppliesCache[supplyId];
 
-                GridRegistry.UpsertGrid(grid);
+                GridRegistry.UpsertGrid(_grid);
 
                 if (!GridService.CanPlaceAtPosition(
                         gridPosition,
@@ -117,24 +121,30 @@ namespace Supplies
                 SetSupplyPosition(newSupplyObject, gridPosition, texture, supplyTexture);
                 SetupSupplyCollider(newSupplyObject, gridPosition, texture, supply, supplyTexture);
 
-                AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply, newSupplyObject);
-                PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
+                AddSupplyToList(gridPosition, supplyGuid, _supplyItemList, supply, newSupplyObject);
+                PlaceSupplyInGrid(gridPosition, supplyGuid, _grid, supply);
 
-                ItemListRegistry.UpsertList(supplyItemsList);
+                ItemListRegistry.UpsertList(_supplyItemList);
             }
         }
 
-        public static bool RemoveSupply(Vector2Int gridPosition, SupplyItem supplyItem,
-            ItemList<SupplyItem> supplyItemList, MapGrid<SupplyGridObject> grid)
+        public static bool RemoveSupply(Vector2Int gridPosition)
         {
+            var supplyId = _grid.GetGridObject(gridPosition);
+            if (supplyId == null)
+            {
+                return false;
+            }
+
+            var supplyItem = _supplyItemList.GetValue(supplyId.Guid);
             if (supplyItem == null)
             {
                 return false;
             }
 
-            RemoveSupplyFromGrid(gridPosition, grid, supplyItem.Supply);
-            RemoveSupplyFromList(supplyItem.Id, supplyItemList);
-            Destroy(supplyItem.SupplyGameObject);
+            RemoveSupplyFromGrid(gridPosition, _grid, supplyItem.Supply);
+            RemoveSupplyFromList(supplyItem.Id, _supplyItemList);
+            supplyItem.Destroy();
 
             return true;
         }

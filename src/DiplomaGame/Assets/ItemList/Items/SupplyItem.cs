@@ -10,6 +10,7 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public Guid Id { get; set; }
     public int X { get; set; }
     public int Y { get; set; }
+    public Vector2Int Coords => new(X, Y);
     public Supply Supply { get; set; }
     public GameObject SupplyGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
@@ -21,6 +22,10 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
 
     public bool IsSelected { get; set; } = false;
     public GameObject SelectionIndicator { get; set; }
+
+    public event EventHandler<SupplyUIToChangeEventArgs> UIToChange;
+    public event EventHandler<SupplyDestroyedEventArgs> OnDestroyed;
+
 
     public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply,
                                    GameObject supplyGameObject, Backpack backpack)
@@ -78,8 +83,17 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
         ResourceElement = ResourcesConfig.ResourceElements.Find(x => x.Id == supply.ResourceId);
 
         Backpack.FillWithSingleItem(ResourceElement);
+    }
 
-        Debug.Log($"Resource:{ResourceElement.Name} Count:{Backpack.GetResourceQuantity(ResourceElement)}");
+    public void CollectResources(UnitItem unit, BackpackItem toCollect)
+    {
+        BackpackTransfer.Instance.TransferSpecificResource(Backpack, unit.Backpack, toCollect);
+        UIToChange?.Invoke(this, new SupplyUIToChangeEventArgs(this));
+
+        if (Backpack.IsEmpty())
+        {
+            SupplyManager.RemoveSupply(Coords);
+        }
     }
 
     public void OnSelect()
@@ -94,8 +108,37 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
         SelectionIndicator.SetActive(false);
     }
 
+    public void Destroy()
+    {
+        Backpack?.Clear();
+
+        OnDestroyed?.Invoke(this, new SupplyDestroyedEventArgs(this));
+
+        Destroy(SupplyGameObject);
+    }
+
     public Guid GetId()
     {
         return Id;
+    }
+
+    public class SupplyUIToChangeEventArgs : EventArgs
+    {
+        public SupplyItem Supply { get; }
+
+        public SupplyUIToChangeEventArgs(SupplyItem supply)
+        {
+            Supply = supply;
+        }
+    }
+
+    public class SupplyDestroyedEventArgs : EventArgs
+    {
+        public SupplyItem Supply { get; }
+
+        public SupplyDestroyedEventArgs(SupplyItem supply)
+        {
+            Supply = supply;
+        }
     }
 }

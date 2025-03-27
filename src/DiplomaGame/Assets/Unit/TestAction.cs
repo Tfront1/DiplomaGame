@@ -167,7 +167,7 @@ public class TestAction : MonoBehaviour
                 Vector2.zero
             );
 
-            var unit = new Unit { Speed = 15f };
+            var unit = new Unit { Name = UtilsClass.GetRandomName(),Speed = 15f };
             renderer.sprite = newBuildingSprite;
             unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
 

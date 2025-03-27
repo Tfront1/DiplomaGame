@@ -367,7 +367,7 @@ public class UnitUIManager : MonoBehaviour
 
     private GameObject CreateBackpackItemPrefab()
     {
-        var prefab = new GameObject("BackpackItemPrefab");
+        var prefab = new GameObject("UnitBackpackItemPrefab");
         prefab.SetActive(false);
         prefab.transform.SetParent(_unitInfoPanel.transform, false);
 
@@ -544,5 +544,18 @@ public class UnitUIManager : MonoBehaviour
             nameText.text = itemStack.Item.Name;
             quantityText.text = $"x{itemStack.Quantity}";
         }
+    }
+
+    public void UpdateUnitInfo(UnitItem unit)
+    {
+        if (_currentUnit == unit)
+        {
+            UpdateBackpackUI(unit.Backpack);
+        }
+    }
+
+    public void UpdateUnitInfo(object sender, UnitItem.UnitUIToChangeEventArgs args)
+    {
+        UpdateUnitInfo(args.Unit);
     }
 }

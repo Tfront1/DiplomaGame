@@ -89,7 +89,7 @@ public class CollectSupplyAction : BaseUnitAction
                     yield return null;
                 }
 
-                BackpackTransfer.Instance.TransferSpecificResource(_supply.Backpack, _unit.Backpack, resource);
+                _supply.CollectResources(_unit, resource);
 
                 yield return new WaitForSeconds(1.0f);
             }

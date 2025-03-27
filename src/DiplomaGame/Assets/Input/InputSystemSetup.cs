@@ -5,19 +5,19 @@ using UnityEngine.InputSystem.UI;
 
 public class InputSystemSetup : MonoBehaviour
 {
-    public static InputSystemSetup _instance { get; private set; }
+    public static InputSystemSetup Instance { get; private set; }
 
-    public InputActionAsset _inputActionAsset { get; private set; }
+    public InputActionAsset InputActionAsset { get; private set; }
     
     private void Awake()
     {
-        if (_instance != null && _instance != this)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
-        _instance = this;
+        Instance = this;
         DontDestroyOnLoad(gameObject);
 
         InitializeInputActionAsset();
@@ -27,9 +27,9 @@ public class InputSystemSetup : MonoBehaviour
 
     private void InitializeInputActionAsset()
     {
-        if (_inputActionAsset == null)
+        if (InputActionAsset == null)
         {
-            _inputActionAsset = ScriptableObject.CreateInstance<InputActionAsset>();
+            InputActionAsset = ScriptableObject.CreateInstance<InputActionAsset>();
 
             SetupInputActionAsset();
         }
@@ -43,7 +43,7 @@ public class InputSystemSetup : MonoBehaviour
     {
         foreach (var actionMapConfig in InputSystemConfig.ActionMap)
         {
-            var actionMap = _inputActionAsset.AddActionMap(actionMapConfig.MapName);
+            var actionMap = InputActionAsset.AddActionMap(actionMapConfig.MapName);
 
             foreach (var actionConfig in actionMapConfig.Actions)
             {
@@ -77,7 +77,7 @@ public class InputSystemSetup : MonoBehaviour
 
             var inputModule = eventSystemObj.AddComponent<InputSystemUIInputModule>();
 
-            inputModule.actionsAsset = _inputActionAsset;
+            inputModule.actionsAsset = InputActionAsset;
         }
         else
         {
@@ -88,14 +88,13 @@ public class InputSystemSetup : MonoBehaviour
                 inputModule = EventSystem.current.gameObject.AddComponent<InputSystemUIInputModule>();
             }
 
-            inputModule.actionsAsset = _inputActionAsset;
+            inputModule.actionsAsset = InputActionAsset;
         }
     }
 
     private void SetupUIInputActions()
     {
-        var inputActions = _instance._inputActionAsset;
-
+        var inputActions = Instance.InputActionAsset;
         var uiMap = inputActions.FindActionMap("UI");
         if (uiMap == null)
         {
@@ -114,8 +113,14 @@ public class InputSystemSetup : MonoBehaviour
             var rightClickAction = uiMap.AddAction("RightClick", InputActionType.PassThrough);
             rightClickAction.AddBinding("<Mouse>/rightButton");
 
-            uiMap.Enable();
+            var scrollAction = uiMap.AddAction("Scroll", InputActionType.PassThrough);
+            scrollAction.AddBinding("<Mouse>/scroll");
 
+            var shiftAction = uiMap.AddAction("Shift", InputActionType.Button);
+            shiftAction.AddBinding("<Keyboard>/leftShift");
+            shiftAction.AddBinding("<Keyboard>/rightShift");
+
+            uiMap.Enable();
         }
 
         var inputModule = EventSystem.current?.GetComponent<InputSystemUIInputModule>();
@@ -124,6 +129,8 @@ public class InputSystemSetup : MonoBehaviour
             inputModule.point = InputActionReference.Create(uiMap.FindAction("Point"));
             inputModule.leftClick = InputActionReference.Create(uiMap.FindAction("LeftClick"));
             inputModule.rightClick = InputActionReference.Create(uiMap.FindAction("RightClick"));
+
+            inputModule.scrollWheel = InputActionReference.Create(uiMap.FindAction("Scroll"));
         }
     }
 }

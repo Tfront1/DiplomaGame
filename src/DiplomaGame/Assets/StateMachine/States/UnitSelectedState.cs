@@ -1,11 +1,16 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Selection;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace StateMachine.States
 {
     public class UnitSelectedState : BaseState
     {
+        private UnitItem _unit;
+        private List<UnitItem> _units = new();
+
         public UnitSelectedState(InputStateMachine stateMachine): base(stateMachine)
         {
 
@@ -16,19 +21,56 @@ namespace StateMachine.States
             Debug.Log("Enter UnitSelected state");
             if (_stateMachine.SelectedItems.Count == 1)
             {
-                var unit = _stateMachine.SelectedItems.First() as UnitItem;
-                if (unit != null)
+                _unit = _stateMachine.SelectedItems.First() as UnitItem;
+                if (_unit != null)
                 {
-                    UnitUIManager.Instance.ShowUnitInfo(unit);
+                    _unit.UIToChange += UnitUIManager.Instance.UpdateUnitInfo;
+                    _unit.OnDied += OnUnitDied;
+                    UnitUIManager.Instance.ShowUnitInfo(_unit);
+
+                    UnitListUIManager.Instance.HideUnitList();
                 }
             }
-            
+            else
+            {
+                _units = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
+                if (_units.Count == _stateMachine.SelectedItems.Count)
+                {
+                    UnitListUIManager.Instance.UpdateUnitList(_units);
+                    UnitListUIManager.Instance.ShowUnitList();
+
+                    UnitUIManager.Instance.HideUnitInfo();
+
+                    foreach (var unit in _units)
+                    {
+                        unit.OnDied += OnUnitDied;
+                    }
+                }
+            }
         }
 
         public override void Exit()
         {
+            if (_unit != null && !_unit.IsDestroyed())
+            {
+                _unit.UIToChange -= UnitUIManager.Instance.UpdateUnitInfo;
+                _unit.OnDied -= OnUnitDied;
+            }
+
+            foreach (var unit in _units)
+            {
+                if (unit != null && !unit.IsDestroyed())
+                {
+                    unit.OnDied -= OnUnitDied;
+                }
+            }
+
+            _units.Clear();
+            _unit = null;
+
             Debug.Log("Exiting UnitSelected state");
             UnitUIManager.Instance.HideUnitInfo();
+            UnitListUIManager.Instance.HideUnitList();
         }
 
         public override void HandleRightClick(Vector2 position)
@@ -171,6 +213,37 @@ namespace StateMachine.States
 
                     Debug.Log("Units collecting supplies");
                     break;
+            }
+        }
+
+        private void OnUnitDied(object sender, UnitItem.UnitDiedEventArgs args)
+        {
+            var unit = args.Unit;
+            _stateMachine.SelectedItems.Remove(unit);
+            _units.Remove(unit);
+
+            unit.OnDied -= OnUnitDied;
+            unit.UIToChange -= UnitUIManager.Instance.UpdateUnitInfo;
+
+            if (_stateMachine.SelectedItems.Count == 0)
+            {
+                _unit = null;
+                Exit();
+            }
+            else if (_stateMachine.SelectedItems.Count == 1)
+            {
+                UnitListUIManager.Instance.HideUnitList();
+
+                _unit = _stateMachine.SelectedItems.First() as UnitItem;
+                if (_unit != null)
+                {
+                    Exit();
+                    _stateMachine.ChangeState(SelectedStates.UnitSelect);
+                }
+            }
+            else
+            {
+                UnitListUIManager.Instance.RemoveDeadUnit(unit);
             }
         }
     }

@@ -2,7 +2,6 @@
 using Selection.Interfaces;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
 using StateMachine.Interfaces;
 using StateMachine.States;
 
@@ -117,20 +116,6 @@ namespace StateMachine
             else
             {
                 Debug.LogError($"State {newState} not found!");
-            }
-        }
-
-        public void ChoseHalfOfSelected()
-        {
-            var count = SelectedItems.Count;
-            var halfCount = count / 2;
-
-            var selectedList = SelectedItems.ToList();
-
-            for (var i = 0; i < halfCount; i++)
-            {
-                selectedList[i].OnDeselect();
-                SelectedItems.Remove(selectedList[i]);
             }
         }
 

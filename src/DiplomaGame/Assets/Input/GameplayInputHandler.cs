@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using GameUtilities.MonoBehaviours;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class GameplayInputHandler : MonoBehaviour
 {
@@ -20,6 +23,13 @@ public class GameplayInputHandler : MonoBehaviour
     }
 
     private InputActionAsset _inputActions;
+
+    private bool _isPointerOverUI = false;
+    private bool _mousePositionChanged = false;
+    private Canvas _specificCanvas;
+    private GraphicRaycaster _graphicRaycaster;
+    private PointerEventData _pointerEventData;
+    private EventSystem _eventSystem;
 
     // Mouse position
     public delegate void MousePositionHandler(Vector2 position);
@@ -79,6 +89,14 @@ public class GameplayInputHandler : MonoBehaviour
 
     public bool _isMouseRightHold = false;
     private InputAction _mouseRightHoldAction;
+
+    private void Awake()
+    {
+        _specificCanvas = MainCanvasUI.MainCanvas;
+        _graphicRaycaster = _specificCanvas.GetComponent<GraphicRaycaster>();
+        _eventSystem = EventSystem.current;
+        _pointerEventData = new PointerEventData(_eventSystem);
+    }
 
     private void OnEnable()
     {
@@ -154,18 +172,27 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void OnHoldMiddleClick(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         _isHoldingMiddleClick = true;
         OnMiddleMouseHold?.Invoke(_isHoldingMiddleClick);
     }
 
     private void OnReleaseMiddleClick(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         _isHoldingMiddleClick = false;
         OnMiddleMouseHold?.Invoke(_isHoldingMiddleClick);
     }
 
     private void OnScrollMouse(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         var scrollValue = context.ReadValue<Vector2>();
         var scrollDirection = scrollValue.y > 0 ? 1 : -1;
         OnScroll?.Invoke(scrollDirection);
@@ -184,6 +211,7 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void MousePosition(InputAction.CallbackContext context)
     {
+        _mousePositionChanged = true;
         OnMousePosition?.Invoke(_mouseWorldPosition);
     }
 
@@ -191,22 +219,34 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void MouseRightDown(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseRightClick?.Invoke(_mouseWorldPosition);
     }
 
     private void MouseRightUp(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseRightUp?.Invoke(_mouseWorldPosition);
     }
 
     private void MouseRightHoldStart(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseRightHoldStart?.Invoke(_mouseWorldPosition);
         _isMouseLeftHold = true;
     }
 
     private void MouseRightHold(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         if (_isMouseRightHold)
         {
             OnMouseRightHold?.Invoke(_mouseWorldPosition);
@@ -215,6 +255,9 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void MouseRightHoldEnd(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseRightHoldEnd?.Invoke(_mouseWorldPosition);
         _isMouseRightHold = false;
     }
@@ -225,22 +268,34 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void MouseLeftDown(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseLeftClick?.Invoke(_mouseWorldPosition);
     }
 
     private void MouseLeftUp(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseLeftUp?.Invoke(_mouseWorldPosition);
     }
 
     private void MouseLeftHoldStart(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseLeftHoldStart?.Invoke(_mouseWorldPosition);
         _isMouseLeftHold = true;
     }
 
     private void MouseLeftHold(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         if (_isMouseLeftHold)
         {
             OnMouseLeftHold?.Invoke(_mouseWorldPosition);
@@ -249,6 +304,9 @@ public class GameplayInputHandler : MonoBehaviour
 
     private void MouseLeftHoldEnd(InputAction.CallbackContext context)
     {
+        if (_isPointerOverUI)
+            return;
+
         OnMouseLeftHoldEnd?.Invoke(_mouseWorldPosition);
         _isMouseLeftHold = false;
     }
@@ -265,10 +323,30 @@ public class GameplayInputHandler : MonoBehaviour
         {
             OnMouseNearEdge?.Invoke(_mouseScreenPosition);
         }
+
+        if (_mousePositionChanged)
+        {
+            _isPointerOverUI = IsPointerOverSpecificCanvas();
+            _mousePositionChanged = false;
+        }
+    }
+
+    private bool IsPointerOverSpecificCanvas()
+    {
+        if (_graphicRaycaster == null || _eventSystem == null)
+            return false;
+
+        _pointerEventData.position = Mouse.current.position.ReadValue();
+
+        var results = new List<RaycastResult>();
+
+        _graphicRaycaster.Raycast(_pointerEventData, results);
+
+        return results.Count > 0;
     }
 
     private void SetupInputAction()
     {
-        _inputActions = InputSystemSetup._instance._inputActionAsset;
+        _inputActions = InputSystemSetup.Instance.InputActionAsset;
     }
 }

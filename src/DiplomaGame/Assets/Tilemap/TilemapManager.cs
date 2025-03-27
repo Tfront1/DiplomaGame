@@ -36,11 +36,10 @@ public class TilemapManager : MonoBehaviour
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"SupplyMap generation time: {(endTime - startTime) * 1000:F2}ms");
         
-        var supplyItemList = new ItemList<SupplyItem>();
         var supplyListInt = supplyOut.Item2;
 
         startTime = Time.realtimeSinceStartup;
-        SupplyManager.DisplaySupplyMap(supplyListInt, supplyItemList);
+        SupplyManager.DisplaySupplyMap(supplyListInt);
         endTime = Time.realtimeSinceStartup;
         Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
 
