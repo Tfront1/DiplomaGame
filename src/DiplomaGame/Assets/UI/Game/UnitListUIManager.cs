@@ -426,7 +426,7 @@ public class UnitListUIManager : MonoBehaviour
     {
         if (_selectedUnits.Count != 0)
         {
-            InputStateMachine.Instance.SelectedItems.Clear();
+            InputStateMachine.Instance.DeselectItems();
             var unitKeys = new HashSet<UnitItem>(_selectedUnits.Keys);
             InputStateMachine.Instance.SelectedItems.AddRange(unitKeys);
             InputStateMachine.Instance.ChangeState(SelectedStates.UnitSelect);
@@ -438,7 +438,7 @@ public class UnitListUIManager : MonoBehaviour
         Debug.Log(_isShiftHold);
         if (!_isShiftHold)
         {
-            InputStateMachine.Instance.SelectedItems.Clear();
+            InputStateMachine.Instance.DeselectItems();
             InputStateMachine.Instance.SelectedItems.Add(unit);
             InputStateMachine.Instance.ChangeState(SelectedStates.UnitSelect);
         }
@@ -467,7 +467,8 @@ public class UnitListUIManager : MonoBehaviour
             .Select(pair => pair.Key)
             .ToHashSet(EqualityComparer<UnitItem>.Default);
 
-        InputStateMachine.Instance.SelectedItems.Clear();
+
+        InputStateMachine.Instance.DeselectItems();
         InputStateMachine.Instance.SelectedItems.AddRange(selectedItems);
 
         InputStateMachine.Instance.ChangeState(

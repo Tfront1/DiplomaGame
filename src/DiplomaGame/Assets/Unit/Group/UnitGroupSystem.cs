@@ -12,7 +12,7 @@ public class UnitGroupSystem
     //Grid with leaders and units without group
     private Dictionary<Guid, Dictionary<Vector2Int, List<UnitItem>>> _optimisedSpatialGrid = new();
 
-    private const float _detectionRadius = 1.5f;
+    public const float _detectionRadius = 1.5f;
 
     public void RegisterUnit(UnitItem unit)
     {
@@ -220,8 +220,25 @@ public class UnitGroupSystem
         if (nearbyUnits.Count == 0 && unit.IsInGroup)
         {
             var group = GroupManager.Instance.GetGroup(unit.GroupId);
-            group.RemoveUnitFromGroup(unit);
+            group?.RemoveUnitFromGroup(unit);
             return;
+        }
+
+        if (unit.IsInGroup)
+        {
+            var group = GroupManager.Instance.GetGroup(unit.GroupId);
+
+            if (group != null)
+            {
+                if (unit.Id != group.UnitLeader.Id)
+                {
+                    var distance = CalculateDistanceFromCenters(group.UnitLeader, unit);
+                    if (distance > _detectionRadius)
+                    {
+                        group.RemoveUnitFromGroup(unit);
+                    }
+                }
+            }
         }
 
         var nearbyLeaders = new List<UnitItem>();
@@ -260,13 +277,16 @@ public class UnitGroupSystem
             if (unit.IsInGroup)
             {
                 var group = GroupManager.Instance.GetGroup(unit.GroupId);
-                if (group != null && group.UnitLeader.Id == unit.Id)
+                if (group != null)
                 {
-                    foreach (var nearby in nearbyUnits)
+                    if (group.UnitLeader.Id == unit.Id)
                     {
-                        if (nearby.Id != unit.Id)
+                        foreach (var nearby in nearbyUnits)
                         {
-                            group.AddUnitToGroup(nearby);
+                            if (nearby.Id != unit.Id)
+                            {
+                                group.AddUnitToGroup(nearby);
+                            }
                         }
                     }
                 }

@@ -78,9 +78,16 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         else
         {
             var group = GroupManager.Instance.GetGroup(GroupId);
-            if (group != null && group.UnitLeader.Id == Id)
+            if (group != null)
             {
-                UnitGroupManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position);
+                if (group.UnitLeader.Id == Id)
+                {
+                    UnitGroupManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position);
+                }
+                else if (Vector2.Distance(group.UnitLeader.Coords, Coords) > UnitGroupSystem._detectionRadius)
+                {
+                    UnitGroupManager.Instance.RequestPositionUpdate(this, UnitGameObject.transform.position);
+                }
             }
         }
     }
