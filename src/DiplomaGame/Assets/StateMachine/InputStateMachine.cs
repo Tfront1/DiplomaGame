@@ -24,6 +24,7 @@ namespace StateMachine
 
         private Dictionary<SelectedStates, IInputState> _states;
         private Canvas canvas = null;
+        public bool IsShiftHold { get; private set; } = false;
 
         public static InputStateMachine Instance
         {
@@ -74,6 +75,9 @@ namespace StateMachine
 
             GameplayInputHandler.Instance.OnMouseRightClick += OnRightClick;
 
+            UIInputHandler.Instance.OnShiftStart += OnShiftStart;
+            UIInputHandler.Instance.OnShiftEnd += OnShiftEnd;
+
             ChangeState(SelectedStates.NothingSelect);
         }
 
@@ -96,6 +100,9 @@ namespace StateMachine
             GameplayInputHandler.Instance.OnMouseLeftHold -= OnLeftHold;
 
             GameplayInputHandler.Instance.OnMouseRightClick -= OnRightClick;
+
+            UIInputHandler.Instance.OnShiftStart -= OnShiftStart;
+            UIInputHandler.Instance.OnShiftEnd -= OnShiftEnd;
         }
 
         private void OnLeftClick(Vector2 position) => _currentState.HandleLeftClick(position);
@@ -127,6 +134,13 @@ namespace StateMachine
             }
             SelectedItems.Clear();
         }
+
+        public void DeselectItem(ISelectable item)
+        {
+            item.OnDeselect();
+            SelectedItems.Remove(item);
+        }
+
 
         public void HighlightSelectedItems(HashSet<ISelectable> items)
         {
@@ -172,6 +186,16 @@ namespace StateMachine
 
             SelectionRectTransform.position = _selectionAreaPosition;
             SelectionRectTransform.sizeDelta = size;
+        }
+
+        private void OnShiftStart()
+        {
+            IsShiftHold = true;
+        }
+
+        private void OnShiftEnd()
+        {
+            IsShiftHold = false;
         }
     }
 

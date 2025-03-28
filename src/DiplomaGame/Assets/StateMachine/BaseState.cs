@@ -63,7 +63,7 @@ namespace StateMachine
             }
         }
 
-        public void HandleLeftHoldEnd(Vector2 position)
+        public virtual void HandleLeftHoldEnd(Vector2 position)
         {
             if (_stateMachine.SelectionAreaVisual != null)
             {

@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using GameUtilities.Utils;
 using Selection;
+using Selection.Interfaces;
 using Unity.VisualScripting;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace StateMachine.States
@@ -244,6 +247,84 @@ namespace StateMachine.States
             else
             {
                 UnitListUIManager.Instance.RemoveDeadUnit(unit);
+            }
+        }
+
+        public override void HandleLeftClick(Vector2 position)
+        {
+            if (!_stateMachine.IsShiftHold)
+            {
+                base.HandleLeftClick(position);
+            }
+            else
+            {
+                var items = _stateMachine.SelectedItems;
+                var selectedItems = SelectorManager.Instance.GetSelectedItem(position);
+
+                if (selectedItems.Item2 != SelectedStates.UnitSelect)
+                {
+                    base.HandleLeftClick(position);
+                }
+                else
+                {
+                    var itemsToAdd = new HashSet<ISelectable>();
+
+                    foreach (var item in selectedItems.Item1)
+                    {
+                        if (items.Contains(item))
+                        {
+                            _stateMachine.DeselectItem(item);
+                        }
+                        else
+                        {
+                            itemsToAdd.Add(item);
+                        }
+                    }
+
+                    _stateMachine.HighlightSelectedItems(itemsToAdd);
+                    _stateMachine.SelectedItems.AddRange(itemsToAdd);
+                    _stateMachine.ChangeState(SelectedStates.UnitSelect);
+                }
+            }
+        }
+
+        public override void HandleLeftHoldEnd(Vector2 position)
+        {
+            if (!_stateMachine.IsShiftHold)
+            {
+                base.HandleLeftHoldEnd(position);
+            }
+            else
+            {
+                if (_stateMachine.SelectionAreaVisual != null)
+                {
+                    _stateMachine.SelectionAreaVisual.SetActive(false);
+                }
+
+                if (UtilsClass.CalculateDistance(position, _stateMachine.StartSelectPosition) > 1)
+                {
+                    var items = _stateMachine.SelectedItems;
+                    var selectedItems = SelectorManager.Instance.GetSelectedArea(_stateMachine.StartSelectPosition,
+                        position, _stateMachine.IsSelectingUnitsOnly);
+
+                    var itemsToAdd = new HashSet<ISelectable>();
+
+                    foreach (var item in selectedItems.Item1)
+                    {
+                        if (items.Contains(item))
+                        {
+                            _stateMachine.DeselectItem(item);
+                        }
+                        else
+                        {
+                            itemsToAdd.Add(item);
+                        }
+                    }
+
+                    _stateMachine.HighlightSelectedItems(itemsToAdd);
+                    _stateMachine.SelectedItems.AddRange(itemsToAdd);
+                    _stateMachine.ChangeState(SelectedStates.UnitSelect);
+                }
             }
         }
     }

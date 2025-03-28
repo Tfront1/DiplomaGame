@@ -429,6 +429,7 @@ public class UnitListUIManager : MonoBehaviour
             InputStateMachine.Instance.DeselectItems();
             var unitKeys = new HashSet<UnitItem>(_selectedUnits.Keys);
             InputStateMachine.Instance.SelectedItems.AddRange(unitKeys);
+            InputStateMachine.Instance.HighlightSelectedItems(InputStateMachine.Instance.SelectedItems);
             InputStateMachine.Instance.ChangeState(SelectedStates.UnitSelect);
         }
     }
@@ -440,6 +441,7 @@ public class UnitListUIManager : MonoBehaviour
         {
             InputStateMachine.Instance.DeselectItems();
             InputStateMachine.Instance.SelectedItems.Add(unit);
+            InputStateMachine.Instance.HighlightSelectedItems(InputStateMachine.Instance.SelectedItems);
             InputStateMachine.Instance.ChangeState(SelectedStates.UnitSelect);
         }
         else
@@ -470,18 +472,11 @@ public class UnitListUIManager : MonoBehaviour
 
         InputStateMachine.Instance.DeselectItems();
         InputStateMachine.Instance.SelectedItems.AddRange(selectedItems);
+        InputStateMachine.Instance.HighlightSelectedItems(InputStateMachine.Instance.SelectedItems);
 
         InputStateMachine.Instance.ChangeState(
             selectedItems.Count > 0 ? SelectedStates.UnitSelect : SelectedStates.NothingSelect
         );
-    }
-
-    public void UpdateUnitSelection(UnitItem unit)
-    {
-        if (_unitUIElements.TryGetValue(unit, out var unitUI))
-        {
-            UpdateUnitItemUI(unitUI, unit);
-        }
     }
 
     public void RemoveDeadUnit(UnitItem deadUnit)

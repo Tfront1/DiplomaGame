@@ -63,7 +63,8 @@ public class GameplayInputHandler : MonoBehaviour
     public event MouseLeftClickHandler OnMouseLeftClick;
     public event MouseLeftClickHandler OnMouseLeftUp;
 
-    private InputAction _mouseLeftClickAction;
+    private float _clickThreshold = 0.1f;
+    private float _leftMousePressTime;
 
     // Left mouse hold
     public delegate void MouseLeftHoldHandler(Vector2 position);
@@ -71,6 +72,7 @@ public class GameplayInputHandler : MonoBehaviour
     public event MouseLeftHoldHandler OnMouseLeftHold;
     public event MouseLeftHoldHandler OnMouseLeftHoldEnd;
 
+    private bool _holdEventTriggered = false;
     public bool _isMouseLeftHold = false;
     private InputAction _mouseLeftHoldAction;
 
@@ -107,7 +109,6 @@ public class GameplayInputHandler : MonoBehaviour
         _holdMiddleClickAction = playerActions.FindAction("CameraMiddleMouseMovement") ?? throw new Exception();
         _scrollWheelAction = playerActions.FindAction("MouseScroll") ?? throw new Exception();
         _mousePositionAction = playerActions.FindAction("MousePosition") ?? throw new Exception();
-        _mouseLeftClickAction = playerActions.FindAction("MouseLeftClick") ?? throw new Exception();
         _mouseLeftHoldAction = playerActions.FindAction("MouseLeftHold") ?? throw new Exception();
         _mouseRightClickAction = playerActions.FindAction("MouseRightClick") ?? throw new Exception();
         _mouseRightHoldAction = playerActions.FindAction("MouseRightHold") ?? throw new Exception();
@@ -118,8 +119,6 @@ public class GameplayInputHandler : MonoBehaviour
         _mousePositionAction.performed += OnMousePositionNearEdge;
         _mousePositionAction.performed += MousePosition;
 
-        _mouseLeftClickAction.performed += MouseLeftDown;
-        _mouseLeftClickAction.canceled += MouseLeftUp;
         _mouseLeftHoldAction.started += MouseLeftHoldStart;
         _mouseLeftHoldAction.canceled += MouseLeftHoldEnd;
         _mousePositionAction.performed += MouseLeftHold;
@@ -133,7 +132,6 @@ public class GameplayInputHandler : MonoBehaviour
         _holdMiddleClickAction.Enable();
         _scrollWheelAction.Enable();
         _mousePositionAction.Enable();
-        _mouseLeftClickAction.Enable();
         _mouseLeftHoldAction.Enable();
         _mouseRightClickAction.Enable();
         _mouseRightHoldAction.Enable();
@@ -149,8 +147,6 @@ public class GameplayInputHandler : MonoBehaviour
         _mousePositionAction.performed -= OnMousePositionNearEdge;
         _mousePositionAction.performed -= MousePosition;
 
-        _mouseLeftClickAction.performed -= MouseLeftDown;
-        _mouseLeftClickAction.canceled -= MouseLeftUp;
         _mouseLeftHoldAction.started -= MouseLeftHoldStart;
         _mouseLeftHoldAction.canceled -= MouseLeftHoldEnd;
         _mousePositionAction.performed -= MouseLeftHold;
@@ -164,7 +160,6 @@ public class GameplayInputHandler : MonoBehaviour
         _holdMiddleClickAction.Disable();
         _scrollWheelAction.Disable();
         _mousePositionAction.Disable();
-        _mouseLeftClickAction.Disable();
         _mouseLeftHoldAction.Disable();
         _mouseRightClickAction.Disable();
         _mouseRightHoldAction.Disable();
@@ -262,32 +257,15 @@ public class GameplayInputHandler : MonoBehaviour
         _isMouseRightHold = false;
     }
 
-#endregion RightMouseButton
+    #endregion RightMouseButton
 
-#region LeftMouseButton
-
-    private void MouseLeftDown(InputAction.CallbackContext context)
-    {
-        if (_isPointerOverUI)
-            return;
-
-        OnMouseLeftClick?.Invoke(_mouseWorldPosition);
-    }
-
-    private void MouseLeftUp(InputAction.CallbackContext context)
-    {
-        if (_isPointerOverUI)
-            return;
-
-        OnMouseLeftUp?.Invoke(_mouseWorldPosition);
-    }
-
+    #region LeftMouseButton
     private void MouseLeftHoldStart(InputAction.CallbackContext context)
     {
         if (_isPointerOverUI)
             return;
 
-        OnMouseLeftHoldStart?.Invoke(_mouseWorldPosition);
+        _leftMousePressTime = Time.time;
         _isMouseLeftHold = true;
     }
 
@@ -295,10 +273,18 @@ public class GameplayInputHandler : MonoBehaviour
     {
         if (_isPointerOverUI)
             return;
-
         if (_isMouseLeftHold)
         {
-            OnMouseLeftHold?.Invoke(_mouseWorldPosition);
+            if (Time.time - _leftMousePressTime >= _clickThreshold)
+            {
+                if (!_holdEventTriggered)
+                {
+                    OnMouseLeftHoldStart?.Invoke(_mouseWorldPosition);
+                    _holdEventTriggered = true;
+                }
+
+                OnMouseLeftHold?.Invoke(_mouseWorldPosition);
+            }
         }
     }
 
@@ -307,11 +293,24 @@ public class GameplayInputHandler : MonoBehaviour
         if (_isPointerOverUI)
             return;
 
-        OnMouseLeftHoldEnd?.Invoke(_mouseWorldPosition);
+        var holdDuration = Time.time - _leftMousePressTime;
+
+        if (holdDuration < _clickThreshold)
+        {
+            OnMouseLeftClick?.Invoke(_mouseWorldPosition);
+        }
+        else if (_holdEventTriggered)
+        {
+            OnMouseLeftHoldEnd?.Invoke(_mouseWorldPosition);
+        }
+
         _isMouseLeftHold = false;
+        _holdEventTriggered = false;
+
+        OnMouseLeftUp?.Invoke(_mouseWorldPosition);
     }
 
-#endregion
+    #endregion
 
     private void Update()
     {

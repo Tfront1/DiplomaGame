@@ -40,21 +40,9 @@
           ]
         },
         {
-          "name": "MouseLeftClick",
-          "type": "Button",
-          "interactions": "",
-          "expectedControlType": "Button",
-          "bindings": [
-            {
-              "path": "<Mouse>/leftButton",
-              "group": "Keyboard&Mouse"
-            }
-          ]
-        },
-        {
           "name": "MouseLeftHold",
           "type": "Button",
-          "interactions": "hold(duration=0.5,pressPoint=1.0)",
+          "interactions": "hold(duration=0.1,pressPoint=1.0)",
           "expectedControlType": "Button",
           "bindings": [
             {
@@ -78,7 +66,7 @@
         {
           "name": "MouseRightHold",
           "type": "Value",
-          "interactions": "hold(duration=0.5,pressPoint=1.0)",
+          "interactions": "hold(duration=0.1,pressPoint=1.0)",
           "expectedControlType": "float",
           "bindings": [
             {
