@@ -181,7 +181,7 @@ public class BuildingMenuManager : MonoBehaviour
         var prefab = new GameObject("BuildingItemPrefab");
         prefab.SetActive(false);
         var rectTransform = prefab.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(0, 130); // Збільшуємо висоту, щоб вмістити нове поле
+        rectTransform.sizeDelta = new Vector2(0, 130);
         var background = prefab.AddComponent<Image>();
         background.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
         var layout = prefab.AddComponent<VerticalLayoutGroup>();

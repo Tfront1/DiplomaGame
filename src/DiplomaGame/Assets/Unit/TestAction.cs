@@ -16,6 +16,8 @@ public class TestAction : MonoBehaviour
     public void Awake()
     {
         _town = new TownItem("Test", Guid.NewGuid());
+        BuildingManager.BuildInstantly(new Vector2Int(5, 5),
+            BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _town);
     }
 
     private void Update()

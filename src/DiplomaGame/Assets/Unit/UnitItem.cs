@@ -34,6 +34,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public event EventHandler<UnitUIToChangeEventArgs> UIToChange;
 
+    private bool _isDestroyed = false;
+
     public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
         var unitItem = unitGameObject.AddComponent<UnitItem>();
@@ -141,16 +143,21 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public void Die()
     {
-        TickRateSystem.Instance.OnTick -= Stats.Update;
-        TickRateSystem.Instance.OnTick -= Skills.Update;
+        if (!_isDestroyed)
+        {
+            TickRateSystem.Instance.OnTick -= Stats.Update;
+            TickRateSystem.Instance.OnTick -= Skills.Update;
 
-        Backpack.BackpackChanged -= OnBackpackChanged;
+            Backpack.BackpackChanged -= OnBackpackChanged;
 
-        UnitGroupManager.Instance.RemoveUnitTracking(this);
+            UnitGroupManager.Instance.RemoveUnitTracking(this);
 
-        OnUnitDied();
+            OnUnitDied();
 
-        Destroy(UnitGameObject);
+            Destroy(UnitGameObject);
+
+            _isDestroyed = true;
+        }
     }
 
     protected virtual void OnUnitDied()

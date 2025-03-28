@@ -4,7 +4,6 @@ using GameUtilities.Utils;
 using Selection;
 using Selection.Interfaces;
 using Unity.VisualScripting;
-using UnityEditorInternal;
 using UnityEngine;
 
 namespace StateMachine.States
@@ -165,7 +164,15 @@ namespace StateMachine.States
                             }
                             else
                             {
-                                if (building.Backpack != null)
+                                if (building.BuildingCraftingSystem != null &&
+                                    building.BuildingCraftingSystem.IsCrafting)
+                                {
+                                    foreach (var unit in unitsToBuild)
+                                    {
+                                        building.BuildingCraftingSystem.AssignUnitToCraft(unit);
+                                    }
+                                }
+                                else if (building.Backpack != null)
                                 {
                                     foreach (var unit in unitsToBuild)
                                     {
@@ -221,6 +228,11 @@ namespace StateMachine.States
 
         private void OnUnitDied(object sender, UnitItem.UnitDiedEventArgs args)
         {
+            if (_unit == null)
+            {
+                Exit();
+                return;
+            }
             var unit = args.Unit;
             _stateMachine.SelectedItems.Remove(unit);
             _units.Remove(unit);

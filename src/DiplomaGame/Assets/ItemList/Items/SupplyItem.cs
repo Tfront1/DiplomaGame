@@ -26,6 +26,8 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public event EventHandler<SupplyUIToChangeEventArgs> UIToChange;
     public event EventHandler<SupplyDestroyedEventArgs> OnDestroyed;
 
+    private bool _isDestroyed = false;
+
 
     public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply,
                                    GameObject supplyGameObject, Backpack backpack)
@@ -110,11 +112,15 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
 
     public void Destroy()
     {
-        Backpack?.Clear();
+        if (!_isDestroyed)
+        {
+            Backpack?.Clear();
 
-        OnDestroyed?.Invoke(this, new SupplyDestroyedEventArgs(this));
+            OnDestroyed?.Invoke(this, new SupplyDestroyedEventArgs(this));
+            Destroy(SupplyGameObject);
 
-        Destroy(SupplyGameObject);
+            _isDestroyed = true;
+        }
     }
 
     public Guid GetId()

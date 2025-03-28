@@ -62,18 +62,6 @@
               "group": "Keyboard&Mouse"
             }
           ]
-        },
-        {
-          "name": "MouseRightHold",
-          "type": "Value",
-          "interactions": "hold(duration=0.1,pressPoint=1.0)",
-          "expectedControlType": "float",
-          "bindings": [
-            {
-              "path": "<Mouse>/rightButton",
-              "group": "Keyboard&Mouse"
-            }
-          ]
         }
       ]
     }

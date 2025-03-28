@@ -436,7 +436,6 @@ public class UnitListUIManager : MonoBehaviour
 
     private void SelectUnit(UnitItem unit)
     {
-        Debug.Log(_isShiftHold);
         if (!_isShiftHold)
         {
             InputStateMachine.Instance.DeselectItems();

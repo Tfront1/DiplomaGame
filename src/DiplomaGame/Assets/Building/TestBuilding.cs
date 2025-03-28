@@ -12,7 +12,7 @@ public class TestBuilding :MonoBehaviour
 
     private void Awake()
     {
-        _townItem = new TownItem("TestBuildingTown", Guid.NewGuid());
+        _townItem = new TownItem("TestBuildingTown", Guid.NewGuid(), false);
     }
     
     private void Update()

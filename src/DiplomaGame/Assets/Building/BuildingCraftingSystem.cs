@@ -58,6 +58,7 @@ public class BuildingCraftingSystem
         CurrentCraftingRecipe = recipe;
         IsCrafting = true;
         CurrentCraftingCount = count;
+        MaxUnitCraftingCount = recipe.MaxUnitToCraftCount;
 
         var totalResourceCount = 0;
 
@@ -127,6 +128,7 @@ public class BuildingCraftingSystem
         CurrentCraftingCount = 0;
         CurrentCraftingRecipe = null;
         CraftingProcessTime = 0f;
+        MaxUnitCraftingCount = 0;
 
         Backpack.Clear();
         AssignedUnits.Clear();
@@ -139,6 +141,7 @@ public class BuildingCraftingSystem
         CraftingProcessTime += deltaTime;
 
         var isCompleted = CraftingProcessTime >= CurrentCraftingRecipe.CraftingTime;
+        Building.UpdateProgress(CraftingProgress);
 
         if (isCompleted)
         {

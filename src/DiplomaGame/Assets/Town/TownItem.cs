@@ -45,8 +45,15 @@ namespace Town
         {
             if (!Buildings.Contains(building) && TownHall != building)
             {
-                Buildings.Add(building);
-
+                if (building.Building.BuildingType == Building.BuildingTypes.TownHall)
+                {
+                    TownHall = building;
+                }
+                else
+                {
+                    Buildings.Add(building);
+                }
+                
                 if (building.Backpack != null)
                 {
                     building.Backpack.BackpackChanged += BuildingBackpackChanged;
@@ -217,6 +224,11 @@ namespace Town
                 }
             }
 
+            if (TownHall != null && TownHall.Backpack != null)
+            {
+                totalCapacity += TownHall.Backpack.MaxCapacity;
+            }
+
             return totalCapacity;
         }
 
@@ -232,6 +244,14 @@ namespace Town
                         result.AddItem(item.Item, item.Quantity);
                     });
                 }
+            }
+
+            if (TownHall != null && TownHall.Backpack != null)
+            {
+                TownHall.Backpack.GetAllItems().ForEach(item =>
+                {
+                    result.AddItem(item.Item, item.Quantity);
+                });
             }
 
             TotalBackpack = result;

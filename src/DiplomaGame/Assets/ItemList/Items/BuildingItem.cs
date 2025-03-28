@@ -5,6 +5,8 @@ using Assets.Items.Crafts;
 using Selection.Interfaces;
 using Town;
 using UnityEngine;
+using UnityEngine.UI;
+using static Items.Resource.BackPack.Backpack;
 
 public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 {
@@ -27,6 +29,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     public event EventHandler<ResourceDeliveredArgs> OnResourcesDelivered;
     public event EventHandler<BuildingCompletedEventArgs> OnBuildingComplete;
     public event EventHandler<BuildingDestroyedEventArgs> OnDestroyed;
+    public event EventHandler<BuildingUIToChangeEventArgs> UIToChange;
 
     public float HP { get; set; }
     public Backpack Backpack { get; set; }
@@ -36,6 +39,11 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public bool IsSelected { get; set; } = false;
     public GameObject SelectionIndicator { get; set; }
+
+    private GameObject _progressBarObject;
+    private Slider _progressSlider;
+
+    private bool _isDestroyed = false;
 
     public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack)
     {
@@ -52,6 +60,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         CreateSelectionIndicator();
         SetupGameplayProperties(building, backpack, townItem);
         LoadCrafts(building);
+        CreateProgressBar();
     }
 
     public void OnSelect()
@@ -99,33 +108,17 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         }
     }
 
-    public bool CanProvideResources(Backpack unitBackpack)
-    {
-        if (_buildingCraft == null)
-        {
-            return false;
-        }
-
-        foreach (var component in _buildingCraft.Components)
-        {
-            var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
-
-            var resourceNeed = component.Quantity - resourceHave;
-
-            if (resourceNeed > 0 && unitBackpack.HasResource(component.BackpackItem))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public bool HasAllRequiredResources()
     {
         if (_buildingCraft == null)
         {
             return false;
+        }
+
+        if (Backpack == null)
+        {
+            UpdateProgress(0);
+            return true;
         }
 
         foreach (var component in _buildingCraft.Components)
@@ -137,12 +130,14 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
                 return false;
             }
         }
+
+        UpdateProgress(0);
         return true;
     }
 
     public bool UpdateBuildingProgress(float deltaTime, UnitItem builder)
     {
-        if (HasAllRequiredResources())
+        if (!IsBuilt && HasAllRequiredResources())
         {
             if (_buildingCraft == null)
             {
@@ -150,9 +145,11 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
             }
 
             BuildingTimePassed += deltaTime;
+            UpdateProgress(BuildingTimePassed / _buildingCraft.CraftingTime);
 
             if (BuildingTimePassed >= _buildingCraft.CraftingTime)
             {
+                IsBuilt = true;
                 CompleteBuildingConstruction();
                 return true;
             }
@@ -164,7 +161,9 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     private void CompleteBuildingConstruction()
     {
         var args = new BuildingCompletedEventArgs(this);
+        var updateUIArgs = new BuildingUIToChangeEventArgs(this);
 
+        UIToChange?.Invoke(this, updateUIArgs);
         OnBuildingComplete?.Invoke(this, args);
 
         Backpack?.Clear();
@@ -173,12 +172,32 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public void Destroy()
     {
-        Backpack?.Clear();
+        if (!_isDestroyed)
+        {
+            Backpack?.Clear();
+            UnsubscribeFromBackpackEvents();
 
-        var args = new BuildingDestroyedEventArgs(this);
-        OnDestroyed?.Invoke(this, args);
+            var args = new BuildingDestroyedEventArgs(this);
+            OnDestroyed?.Invoke(this, args);
 
-        Destroy(BuildingGameObject);
+            Destroy(BuildingGameObject);
+
+            _isDestroyed = true;
+        }
+    }
+
+    public void UpdateProgress(float progress)
+    {
+        if (_progressBarObject != null && _progressSlider != null)
+        {
+            if (!_progressBarObject.activeSelf)
+                _progressBarObject.SetActive(true);
+
+            _progressSlider.value = progress;
+
+            if (progress >= 1f)
+                _progressBarObject.SetActive(false);
+        }
     }
 
     public Guid GetId()
@@ -201,20 +220,21 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         Collider = BuildingGameObject.GetComponent<BoxCollider2D>();
     }
 
-    private void CreateSelectionIndicator()
+    public void CreateSelectionIndicator()
     {
-        if (SelectionIndicator == null)
+        if (SelectionIndicator != null)
         {
-            SelectionIndicator = new GameObject("SelectionIndicator");
-            SelectionIndicator.transform.SetParent(transform);
-            SelectionIndicator.transform.localPosition = Vector3.zero;
-
-            var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
-            indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
-            indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
-            indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
-            SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+            Destroy(SelectionIndicator);
         }
+        SelectionIndicator = new GameObject("SelectionIndicator");
+        SelectionIndicator.transform.SetParent(transform);
+        SelectionIndicator.transform.localPosition = Vector3.zero;
+
+        var indicatorRenderer = SelectionIndicator.AddComponent<SpriteRenderer>();
+        indicatorRenderer.sprite = GetComponent<SpriteRenderer>().sprite;
+        indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
+        indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
+        SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
 
         SelectionIndicator.SetActive(false);
     }
@@ -224,6 +244,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         HP = building.MaxHP;
         Backpack = backpack;
         HomeTown = townItem;
+        SubscribeToBackpackEvents();
     }
 
     private void LoadCrafts(Building building)
@@ -239,6 +260,108 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         {
             BuildingCraftingSystem = new BuildingCraftingSystem(this);
         }
+    }
+
+    private void SubscribeToBackpackEvents()
+    {
+        if (Backpack != null)
+        {
+            Backpack.BackpackChanged += OnBackpackChanged;
+        }
+    }
+
+    private void OnBackpackChanged(object sender, BackpackChangedEventArgs args)
+    {
+        UIToChange?.Invoke(this, new BuildingUIToChangeEventArgs(this));
+    }
+
+    private void UnsubscribeFromBackpackEvents()
+    {
+        if (Backpack != null)
+        {
+            Backpack.BackpackChanged -= OnBackpackChanged;
+        }
+    }
+
+    public void CreateProgressBar()
+    {
+        if (_progressBarObject != null)
+        {
+            Destroy(_progressBarObject);
+        }
+
+        _progressBarObject = new GameObject("ProgressBar");
+        _progressBarObject.transform.SetParent(transform, false);
+
+        var yOffset = 0.5f;
+        var buildingHeight = 0f;
+        var buildingWidth = 0f;
+        var spriteRenderer = BuildingGameObject.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            buildingWidth = spriteRenderer.bounds.size.x;
+            buildingHeight = spriteRenderer.bounds.size.y;
+        }
+
+        _progressBarObject.transform.position = new Vector3(
+            BuildingGameObject.transform.position.x + buildingWidth / 2,
+            BuildingGameObject.transform.position.y + buildingHeight + yOffset,
+            BuildingGameObject.transform.position.z
+        );
+
+        _progressBarObject.layer = LayerMask.NameToLayer("GameplayUI");
+
+        var canvas = _progressBarObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.sortingOrder = 10;
+
+        var canvasScaler = _progressBarObject.AddComponent<CanvasScaler>();
+        canvasScaler.dynamicPixelsPerUnit = 100f;
+
+        var canvasRect = canvas.GetComponent<RectTransform>();
+        canvasRect.sizeDelta = new Vector2(buildingWidth * 0.08f, buildingHeight * 0.01f);
+
+        // Create Background
+        var backgroundObject = new GameObject("Background");
+        backgroundObject.transform.SetParent(_progressBarObject.transform, false);
+        var bgImage = backgroundObject.AddComponent<Image>();
+        bgImage.color = Color.gray;
+        var bgRect = backgroundObject.GetComponent<RectTransform>();
+        bgRect.sizeDelta = canvasRect.sizeDelta;
+
+        // Create Slider
+        var sliderObject = new GameObject("ProgressSlider");
+        sliderObject.transform.SetParent(_progressBarObject.transform, false);
+        _progressSlider = sliderObject.AddComponent<Slider>();
+        _progressSlider.transition = Selectable.Transition.None;
+        _progressSlider.interactable = false;
+        var sliderRect = sliderObject.GetComponent<RectTransform>();
+        sliderRect.anchorMin = Vector2.zero;
+        sliderRect.anchorMax = Vector2.one;
+        sliderRect.offsetMin = Vector2.zero;
+        sliderRect.offsetMax = Vector2.zero;
+
+        // Create Fill Area
+        var fillArea = new GameObject("FillArea");
+        fillArea.transform.SetParent(sliderObject.transform, false);
+        var fillAreaRect = fillArea.AddComponent<RectTransform>();
+        fillAreaRect.anchorMin = new Vector2(0, 0);
+        fillAreaRect.anchorMax = new Vector2(1, 1);
+        fillAreaRect.offsetMin = Vector2.zero;
+        fillAreaRect.offsetMax = Vector2.zero;
+
+        var fill = new GameObject("Fill");
+        fill.transform.SetParent(fillArea.transform, false);
+        var fillImage = fill.AddComponent<Image>();
+        fillImage.color = Color.green;
+        _progressSlider.fillRect = fillImage.GetComponent<RectTransform>();
+        var fillRect = fill.GetComponent<RectTransform>();
+        fillRect.anchorMin = new Vector2(0, 0);
+        fillRect.anchorMax = new Vector2(1, 1);
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+        
+        _progressBarObject.SetActive(false);
     }
 
     public class BuildingDestroyedEventArgs : EventArgs
@@ -270,6 +393,16 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         {
             Unit = unit;
             DeliveredComponents = deliveredComponents;
+        }
+    }
+
+    public class BuildingUIToChangeEventArgs : EventArgs
+    {
+        public BuildingItem Building { get; }
+
+        public BuildingUIToChangeEventArgs(BuildingItem building)
+        {
+            Building = building;
         }
     }
 }

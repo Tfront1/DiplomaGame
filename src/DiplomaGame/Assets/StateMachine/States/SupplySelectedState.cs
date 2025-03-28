@@ -42,9 +42,12 @@ namespace StateMachine.States
 
         private void OnSupplyDestroyed(object sender, SupplyItem.SupplyDestroyedEventArgs args)
         {
-            _stateMachine.SelectedItems.Remove(_supply);
-            _supply.OnDestroyed -= OnSupplyDestroyed;
-            _supply.UIToChange -= SupplyUIManager.Instance.UpdateSupplyInfo;
+            if (_supply != null)
+            {
+                _stateMachine.SelectedItems.Remove(_supply);
+                _supply.OnDestroyed -= OnSupplyDestroyed;
+                _supply.UIToChange -= SupplyUIManager.Instance.UpdateSupplyInfo;
+            }
             Exit();
         }
     }

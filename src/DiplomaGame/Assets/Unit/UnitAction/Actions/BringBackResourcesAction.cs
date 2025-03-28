@@ -86,8 +86,8 @@ public class BringBackResourcesAction : BaseUnitAction
         var result = new List<(BuildingItem Building, List<CraftingComponent> ResourcesToBring)>();
         var unitBackpack = unit.Backpack;
         var unitTown = unit.HomeTown;
-
         var resourcesToBring = new List<CraftingComponent>();
+
         foreach (var resourceType in unitBackpack.GetDetailedItems())
         {
             var quantity = unitBackpack.GetResourceQuantity(resourceType.Key);
@@ -102,7 +102,64 @@ public class BringBackResourcesAction : BaseUnitAction
             return result;
         }
 
+        if (unitTown.TownHall != null && unitTown.TownHall.IsBuilt && unitTown.TownHall.Backpack != null)
+        {
+            var townHall = unitTown.TownHall;
+
+            if (townHall.Backpack.CurrentCapacity + unitBackpack.CurrentCapacity <= townHall.Backpack.MaxCapacity)
+            {
+                result.Add((townHall, new List<CraftingComponent>(resourcesToBring)));
+                return result;
+            }
+
+            var availableSpace = townHall.Backpack.MaxCapacity - townHall.Backpack.CurrentCapacity;
+            if (availableSpace > 0)
+            {
+                var resourcesForTownHall = new List<CraftingComponent>();
+                var remainingResources = new List<CraftingComponent>();
+                var currentAvailableSpace = availableSpace;
+
+                foreach (var resource in resourcesToBring)
+                {
+                    var toStoreQuantity = Math.Min(resource.Quantity, currentAvailableSpace);
+                    if (toStoreQuantity > 0)
+                    {
+                        resourcesForTownHall.Add(new CraftingComponent(resource.BackpackItem, toStoreQuantity));
+                        var remaining = resource.Quantity - toStoreQuantity;
+                        currentAvailableSpace -= toStoreQuantity;
+
+                        if (remaining > 0)
+                        {
+                            remainingResources.Add(new CraftingComponent(resource.BackpackItem, remaining));
+                        }
+
+                        if (currentAvailableSpace <= 0)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        remainingResources.Add(new CraftingComponent(resource.BackpackItem, resource.Quantity));
+                    }
+                }
+
+                if (resourcesForTownHall.Count > 0)
+                {
+                    result.Add((townHall, resourcesForTownHall));
+                }
+
+                if (remainingResources.Count == 0)
+                {
+                    return result;
+                }
+
+                resourcesToBring = remainingResources;
+            }
+        }
+
         var buildingsWithEnoughSpace = unitTown.Buildings
+            .Where(building => building != unitTown.TownHall)
             .Where(building => building.Backpack != null && building.IsBuilt)
             .Where(building => building.Backpack.CurrentCapacity + unitBackpack.CurrentCapacity <= building.Backpack.MaxCapacity)
             .OrderBy(building => Vector2.Distance(new Vector2(unit.X, unit.Y), GridService.GetWorldPosition(building.X, building.Y)))
@@ -114,13 +171,18 @@ public class BringBackResourcesAction : BaseUnitAction
             return result;
         }
 
-        var remainingResources = resourcesToBring.Select(r =>
+        var remainingResources2 = resourcesToBring.Select(r =>
             new CraftingComponent(r.BackpackItem, r.Quantity))
             .ToList();
 
         var visitedBuildings = new HashSet<BuildingItem>();
 
-        while (remainingResources.Count > 0)
+        if (unitTown.TownHall != null && result.Any(r => r.Building == unitTown.TownHall))
+        {
+            visitedBuildings.Add(unitTown.TownHall);
+        }
+
+        while (remainingResources2.Count > 0)
         {
             var bestBuilding = unitTown.Buildings
                 .Where(building => building.Backpack != null && building.IsBuilt && !visitedBuildings.Contains(building))
@@ -133,12 +195,11 @@ public class BringBackResourcesAction : BaseUnitAction
             visitedBuildings.Add(bestBuilding);
             var availableSpace = bestBuilding.Backpack.MaxCapacity - bestBuilding.Backpack.CurrentCapacity;
             var resourcesForThisBuilding = new List<CraftingComponent>();
-
             var currentAvailableSpace = availableSpace;
-            foreach (var resource in remainingResources.ToList())
+
+            foreach (var resource in remainingResources2.ToList())
             {
                 var toStoreQuantity = Math.Min(resource.Quantity, currentAvailableSpace);
-
                 if (toStoreQuantity > 0)
                 {
                     resourcesForThisBuilding.Add(new CraftingComponent(resource.BackpackItem, toStoreQuantity));
@@ -147,7 +208,7 @@ public class BringBackResourcesAction : BaseUnitAction
 
                     if (resource.Quantity <= 0)
                     {
-                        remainingResources.Remove(resource);
+                        remainingResources2.Remove(resource);
                     }
 
                     if (currentAvailableSpace <= 0)
@@ -165,7 +226,6 @@ public class BringBackResourcesAction : BaseUnitAction
 
         return result;
     }
-
     private void OnMovementComplete(IUnitAction action)
     {
         if (action is BaseUnitAction baseAction)

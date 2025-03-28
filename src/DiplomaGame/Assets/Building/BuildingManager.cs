@@ -161,7 +161,17 @@ public class BuildingManager : MonoBehaviour
         SetupBuildingCollider(buildingGameObject, buildingItem.Coords, buildingItem.Building, _buildingTextureConfigCache[buildingItem.Building.Id]);
 
         buildingItem.HP = buildingItem.Building.MaxHP;
-        buildingItem.Backpack.SetMaxCapacity(buildingItem.Building.BackpackCapacity);
+        if (buildingItem.Building.BackpackCapacity > 0)
+        {
+            buildingItem.Backpack.SetMaxCapacity(buildingItem.Building.BackpackCapacity);
+        }
+        else
+        {
+            buildingItem.Backpack = null;
+        }
+
+        buildingItem.CreateSelectionIndicator();
+        //buildingItem.CreateProgressBar();
     }
 
     public static bool RemoveBuilding(Vector2Int gridPosition)
@@ -587,7 +597,11 @@ public class BuildingManager : MonoBehaviour
     /// <param name="buildingTexture">Building's texture</param>
     private static void SetupBuildingCollider(GameObject buildingObject, Vector2Int gridPosition, Building building, BuildingTexture buildingTexture)
     {
-        var collider = buildingObject.AddComponent<BoxCollider2D>();
+        var collider = buildingObject.GetComponent<BoxCollider2D>();
+        if (collider == null)
+        {
+            collider = buildingObject.AddComponent<BoxCollider2D>();
+        }
         var (finalScale, _) = CalculateBuildingScale(building, buildingTexture);
 
         float colliderWidth, colliderHeight;

@@ -65,6 +65,8 @@ public class GameplayInputHandler : MonoBehaviour
 
     private float _clickThreshold = 0.1f;
     private float _leftMousePressTime;
+    private float _maxDistance = 1.0f;
+    private Vector2 _startHold;
 
     // Left mouse hold
     public delegate void MouseLeftHoldHandler(Vector2 position);
@@ -83,14 +85,6 @@ public class GameplayInputHandler : MonoBehaviour
 
     private InputAction _mouseRightClickAction;
 
-    // Right mouse hold
-    public delegate void MouseRightHoldHandler(Vector2 position);
-    public event MouseRightHoldHandler OnMouseRightHoldStart;
-    public event MouseRightHoldHandler OnMouseRightHold;
-    public event MouseRightHoldHandler OnMouseRightHoldEnd;
-
-    public bool _isMouseRightHold = false;
-    private InputAction _mouseRightHoldAction;
 
     private void Awake()
     {
@@ -111,7 +105,6 @@ public class GameplayInputHandler : MonoBehaviour
         _mousePositionAction = playerActions.FindAction("MousePosition") ?? throw new Exception();
         _mouseLeftHoldAction = playerActions.FindAction("MouseLeftHold") ?? throw new Exception();
         _mouseRightClickAction = playerActions.FindAction("MouseRightClick") ?? throw new Exception();
-        _mouseRightHoldAction = playerActions.FindAction("MouseRightHold") ?? throw new Exception();
 
         _holdMiddleClickAction.performed += OnHoldMiddleClick;
         _holdMiddleClickAction.canceled += OnReleaseMiddleClick;
@@ -125,16 +118,12 @@ public class GameplayInputHandler : MonoBehaviour
 
         _mouseRightClickAction.performed += MouseRightDown;
         _mouseRightClickAction.canceled += MouseRightUp;
-        _mouseRightHoldAction.started += MouseRightHoldStart;
-        _mouseRightHoldAction.canceled += MouseRightHoldEnd;
-        _mousePositionAction.performed += MouseRightHold;
 
         _holdMiddleClickAction.Enable();
         _scrollWheelAction.Enable();
         _mousePositionAction.Enable();
         _mouseLeftHoldAction.Enable();
         _mouseRightClickAction.Enable();
-        _mouseRightHoldAction.Enable();
     }
 
     private void OnDisable()
@@ -153,32 +142,22 @@ public class GameplayInputHandler : MonoBehaviour
 
         _mouseRightClickAction.performed -= MouseRightDown;
         _mouseRightClickAction.canceled -= MouseRightUp;
-        _mouseRightHoldAction.started -= MouseRightHoldStart;
-        _mouseRightHoldAction.canceled -= MouseRightHoldEnd;
-        _mousePositionAction.performed -= MouseRightHold;
 
         _holdMiddleClickAction.Disable();
         _scrollWheelAction.Disable();
         _mousePositionAction.Disable();
         _mouseLeftHoldAction.Disable();
         _mouseRightClickAction.Disable();
-        _mouseRightHoldAction.Disable();
     }
 
     private void OnHoldMiddleClick(InputAction.CallbackContext context)
     {
-        if (_isPointerOverUI)
-            return;
-
         _isHoldingMiddleClick = true;
         OnMiddleMouseHold?.Invoke(_isHoldingMiddleClick);
     }
 
     private void OnReleaseMiddleClick(InputAction.CallbackContext context)
     {
-        if (_isPointerOverUI)
-            return;
-
         _isHoldingMiddleClick = false;
         OnMiddleMouseHold?.Invoke(_isHoldingMiddleClick);
     }
@@ -228,38 +207,9 @@ public class GameplayInputHandler : MonoBehaviour
         OnMouseRightUp?.Invoke(_mouseWorldPosition);
     }
 
-    private void MouseRightHoldStart(InputAction.CallbackContext context)
-    {
-        if (_isPointerOverUI)
-            return;
-
-        OnMouseRightHoldStart?.Invoke(_mouseWorldPosition);
-        _isMouseLeftHold = true;
-    }
-
-    private void MouseRightHold(InputAction.CallbackContext context)
-    {
-        if (_isPointerOverUI)
-            return;
-
-        if (_isMouseRightHold)
-        {
-            OnMouseRightHold?.Invoke(_mouseWorldPosition);
-        }
-    }
-
-    private void MouseRightHoldEnd(InputAction.CallbackContext context)
-    {
-        if (_isPointerOverUI)
-            return;
-
-        OnMouseRightHoldEnd?.Invoke(_mouseWorldPosition);
-        _isMouseRightHold = false;
-    }
-
     #endregion RightMouseButton
 
-    #region LeftMouseButton
+#region LeftMouseButton
     private void MouseLeftHoldStart(InputAction.CallbackContext context)
     {
         if (_isPointerOverUI)
@@ -267,6 +217,7 @@ public class GameplayInputHandler : MonoBehaviour
 
         _leftMousePressTime = Time.time;
         _isMouseLeftHold = true;
+        _startHold = _mouseWorldPosition;
     }
 
     private void MouseLeftHold(InputAction.CallbackContext context)
@@ -275,7 +226,7 @@ public class GameplayInputHandler : MonoBehaviour
             return;
         if (_isMouseLeftHold)
         {
-            if (Time.time - _leftMousePressTime >= _clickThreshold)
+            if (Time.time - _leftMousePressTime >= _clickThreshold || _maxDistance < Vector2.Distance(_mouseWorldPosition, _startHold))
             {
                 if (!_holdEventTriggered)
                 {
@@ -295,7 +246,7 @@ public class GameplayInputHandler : MonoBehaviour
 
         var holdDuration = Time.time - _leftMousePressTime;
 
-        if (holdDuration < _clickThreshold)
+        if (holdDuration < _clickThreshold && _maxDistance > Vector2.Distance(_mouseWorldPosition, _startHold))
         {
             OnMouseLeftClick?.Invoke(_mouseWorldPosition);
         }

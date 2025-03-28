@@ -69,7 +69,7 @@ public class CraftAction : BaseUnitAction
         {
             _unit.Skills.SetActiveSkill(typeof(SmithingSkill));
 
-            while (!_crafting.IsCrafting)
+            while (_crafting.IsCrafting)
             {
                 if (IsStopped)
                 {
