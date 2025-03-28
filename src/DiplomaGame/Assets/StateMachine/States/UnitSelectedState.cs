@@ -77,6 +77,43 @@ namespace StateMachine.States
 
         public override void HandleRightClick(Vector2 position)
         {
+            var selectedUnits = _stateMachine.SelectedItems.Count > 0
+                ? SelectorFactory.GetUnitItems(_stateMachine.SelectedItems)
+                : new List<UnitItem>();
+            var isAllUnits = selectedUnits.Count == _stateMachine.SelectedItems.Count;
+            var singleUnit = _stateMachine.SelectedItems.Count == 1
+                ? SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First())
+                : null;
+
+            if (singleUnit != null && singleUnit.IsInGroup)
+            {
+                var group = GroupManager.Instance.GetGroup(singleUnit.GroupId);
+                if (group != null)
+                {
+                    group.RemoveUnitFromGroup(singleUnit);
+                }
+            }
+
+            foreach (var unit in selectedUnits)
+            {
+                if (unit.IsInGroup)
+                {
+                    var group = GroupManager.Instance.GetGroup(unit.GroupId);
+                    if (group != null)
+                    {
+                        var unitsInGroup = group.GroupUnits;
+
+                        var allGroupUnitsSelected = unitsInGroup.All(groupUnit =>
+                            selectedUnits.Any(selectedUnit => selectedUnit.Id == groupUnit.Id));
+
+                        if (!allGroupUnitsSelected)
+                        {
+                            group.RemoveUnitFromGroup(unit);
+                        }
+                    }
+                }
+            }
+
             var target = SelectorManager.Instance.GetSelectedItem(position);
 
             switch (target.Item2)
@@ -85,19 +122,17 @@ namespace StateMachine.States
 
                     if (_stateMachine.SelectedItems.Count == 1)
                     {
-                        var unitToMove = SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First());
-                        if (unitToMove != null)
+                        if (singleUnit != null)
                         {
-                            var moveAction = new MoveUnitAction(unitToMove, position);
+                            var moveAction = new MoveUnitAction(singleUnit, position);
                             UnitActionManager.Instance.ExecuteImmediately(moveAction);
                         }
                     }
                     else
                     {
-                        var unitsToMove = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
-                        if (unitsToMove.Count == _stateMachine.SelectedItems.Count)
+                        if (isAllUnits)
                         {
-                            foreach (var unit in unitsToMove)
+                            foreach (var unit in selectedUnits)
                             {
                                 var moveGroupAction = new MoveGroupUnitAction(unit, position);
                                 UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
@@ -110,26 +145,24 @@ namespace StateMachine.States
 
                 case SelectedStates.UnitSelect:
 
-                    var selectedUnit = SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First());
+                    var selectedUnit = singleUnit;
                     var otherUnit = SelectorFactory.GetUnitItem(target.Item1.First());
 
                     if (selectedUnit.HomeTown.Id == otherUnit.HomeTown.Id)
                     {
                         if (_stateMachine.SelectedItems.Count == 1)
                         {
-                            var unitToFollow = SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First());
-                            if (unitToFollow != null)
+                            if (singleUnit != null)
                             {
-                                var moveAction = new MoveUnitAction(unitToFollow, position);
+                                var moveAction = new MoveUnitAction(singleUnit, position);
                                 UnitActionManager.Instance.ExecuteImmediately(moveAction);
                             }
                         }
                         else
                         {
-                            var unitsToFollow = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
-                            if (unitsToFollow.Count == _stateMachine.SelectedItems.Count)
+                            if (isAllUnits)
                             {
-                                foreach (var unit in unitsToFollow)
+                                foreach (var unit in selectedUnits)
                                 {
                                     var moveGroupAction = new MoveGroupUnitAction(unit, position);
                                     UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
@@ -147,61 +180,62 @@ namespace StateMachine.States
 
                 case SelectedStates.BuildingSelect:
 
-                    var unknownUnit = SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First());
-                    var building = SelectorFactory.GetBuildingItem(target.Item1.First());
-
-                    if (unknownUnit.HomeTown.Id == building.HomeTown.Id)
+                    if (singleUnit != null)
                     {
-                        var unitsToBuild = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
-                        if (unitsToBuild.Count == _stateMachine.SelectedItems.Count)
+                        var building = SelectorFactory.GetBuildingItem(target.Item1.First());
+
+                        if (singleUnit.HomeTown.Id == building.HomeTown.Id)
                         {
-                            if (!building.IsBuilt)
+                            if (isAllUnits)
                             {
-                                foreach (var unit in unitsToBuild)
+                                if (!building.IsBuilt)
                                 {
-                                    unknownUnit.HomeTown.BuildingTownOrder.AssignUnitToOrder(unit, building);
-                                }
-                            }
-                            else
-                            {
-                                if (building.BuildingCraftingSystem != null &&
-                                    building.BuildingCraftingSystem.IsCrafting)
-                                {
-                                    foreach (var unit in unitsToBuild)
+                                    foreach (var unit in selectedUnits)
                                     {
-                                        building.BuildingCraftingSystem.AssignUnitToCraft(unit);
-                                    }
-                                }
-                                else if (building.Backpack != null)
-                                {
-                                    foreach (var unit in unitsToBuild)
-                                    {
-                                        if (unit.Backpack.IsEmpty())
-                                        {
-                                            var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
-                                            UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
-                                        }
-                                        else
-                                        {
-                                            var bringBackResources = new BringBackResourcesAction(unit);
-                                            UnitActionManager.Instance.ExecuteImmediately(bringBackResources);
-                                        }
+                                        singleUnit.HomeTown.BuildingTownOrder.AssignUnitToOrder(unit, building);
                                     }
                                 }
                                 else
                                 {
-                                    foreach (var unit in unitsToBuild)
+                                    if (building.BuildingCraftingSystem != null &&
+                                        building.BuildingCraftingSystem.IsCrafting)
                                     {
-                                        var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
-                                        UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
+                                        foreach (var unit in selectedUnits)
+                                        {
+                                            building.BuildingCraftingSystem.AssignUnitToCraft(unit);
+                                        }
+                                    }
+                                    else if (building.Backpack != null)
+                                    {
+                                        foreach (var unit in selectedUnits)
+                                        {
+                                            if (unit.Backpack.IsEmpty())
+                                            {
+                                                var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
+                                                UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
+                                            }
+                                            else
+                                            {
+                                                var bringBackResources = new BringBackResourcesAction(unit);
+                                                UnitActionManager.Instance.ExecuteImmediately(bringBackResources);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        foreach (var unit in selectedUnits)
+                                        {
+                                            var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
+                                            UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        // Attack enemy building...
+                        else
+                        {
+                            // Attack enemy building...
+                        }
                     }
 
                     Debug.Log("Units interacting with building");
@@ -209,12 +243,11 @@ namespace StateMachine.States
 
                 case SelectedStates.SupplySelect:
 
-                    var unitsToCollectResources = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
                     var supplyToFarm = SelectorFactory.GetSupplyItem(target.Item1.First());
 
-                    if (unitsToCollectResources.Count == _stateMachine.SelectedItems.Count)
+                    if (isAllUnits)
                     {
-                        foreach (var unit in unitsToCollectResources)
+                        foreach (var unit in selectedUnits)
                         {
                             var collectResourcesAction = new CollectSupplyAction(unit, supplyToFarm);
                             UnitActionManager.Instance.ExecuteImmediately(collectResourcesAction);

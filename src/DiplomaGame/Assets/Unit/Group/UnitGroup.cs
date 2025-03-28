@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class UnitGroup
 {
@@ -22,13 +23,15 @@ public class UnitGroup
     {
         if (UnitLeader.Id != unit.Id)
         {
-            GroupUnits.Add(unit);
-            unit.HideUnit();
-            unit.IsInGroup = true;
-            unit.GroupId = Id;
-            unit.SetPosition(UnitLeader.Coords);
-            UpdateGroupCounter();
-            unit.OnMovementStateChanged += CheckMovementStateChange;
+            if (!GroupUnits.Contains(unit))
+            {
+                GroupUnits.Add(unit);
+                unit.HideUnit();
+                unit.IsInGroup = true;
+                unit.GroupId = Id;
+                unit.SetPosition(UnitLeader.Coords);
+                UpdateGroupCounter();
+            }
         }
     }
 
@@ -40,14 +43,11 @@ public class UnitGroup
             {
                 var newLeader = GroupUnits.First();
                 var oldLeader = UnitLeader;
-
                 ChangeGroupLeader(newLeader);
-
                 GroupUnits.Remove(oldLeader);
                 oldLeader.IsInGroup = false;
                 oldLeader.GroupId = Guid.Empty;
                 oldLeader.ShowUnit();
-
                 UpdateGroupCounter();
                 return;
             }
@@ -57,12 +57,10 @@ public class UnitGroup
                 unit.GroupId = Guid.Empty;
                 unit.ShowUnit();
                 HideUnitCounter(unit);
-
                 GroupManager.Instance.RemoveGroup(Id);
                 return;
             }
         }
-
         if (CountGroupUnits == 1 && GroupUnits.Contains(unit))
         {
             unit.IsInGroup = false;
@@ -74,11 +72,9 @@ public class UnitGroup
             UnitLeader.GroupId = Guid.Empty;
             UnitLeader.ShowUnit();
             HideUnitCounter(UnitLeader);
-
             GroupManager.Instance.RemoveGroup(Id);
             return;
         }
-
         if (GroupUnits.Remove(unit))
         {
             unit.IsInGroup = false;
@@ -86,36 +82,6 @@ public class UnitGroup
             unit.ShowUnit();
             HideUnitCounter(unit);
             UpdateGroupCounter();
-        }
-    }
-    
-    private void CheckMovementStateChange(object sender, UnitItem unit)
-    {
-        if (unit.Id == UnitLeader.Id)
-        {
-            RemoveUnitsWithDifferentMovementState(unit.IsMoving);
-        }
-        else if (unit.IsMoving != UnitLeader.IsMoving)
-        {
-            RemoveUnitFromGroup(unit);
-        }
-    }
-
-    public void RemoveUnitsWithDifferentMovementState(bool leaderIsMoving)
-    {
-        var unitsToRemove = new List<UnitItem>();
-
-        foreach (var groupMember in GroupUnits)
-        {
-            if (groupMember.IsMoving != leaderIsMoving)
-            {
-                unitsToRemove.Add(groupMember);
-            }
-        }
-
-        foreach (var unitToRemove in unitsToRemove)
-        {
-            RemoveUnitFromGroup(unitToRemove);
         }
     }
 

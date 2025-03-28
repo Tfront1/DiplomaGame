@@ -27,14 +27,12 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public bool IsInGroup { get; set; } = false;
     public bool CanGroup { get; set; } = false;
     public UnitCounterDisplay DisplayGroupCounter { get; set; }
-    public bool IsMoving { get; private set; } = false;
 
     public bool IsSelected { get; set; } = false;
     public GameObject SelectionIndicator { get; set; }
 
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public event EventHandler<UnitUIToChangeEventArgs> UIToChange;
-    public event EventHandler<UnitItem> OnMovementStateChanged;
 
     private bool _isDestroyed = false;
 
@@ -141,15 +139,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         }
         SpriteRenderer.enabled = true;
         Collider.enabled = true;
-    }
-
-    public void SetMoving(bool isMoving)
-    {
-        if (this.IsMoving != isMoving)
-        {
-            this.IsMoving = isMoving;
-            OnMovementStateChanged?.Invoke(this, this);
-        }
     }
 
     public void Die()
