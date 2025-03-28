@@ -28,6 +28,7 @@ public class UnitGroup
             unit.GroupId = Id;
             unit.SetPosition(UnitLeader.Coords);
             UpdateGroupCounter();
+            unit.OnMovementStateChanged += CheckMovementStateChange;
         }
     }
 
@@ -85,6 +86,36 @@ public class UnitGroup
             unit.ShowUnit();
             HideUnitCounter(unit);
             UpdateGroupCounter();
+        }
+    }
+    
+    private void CheckMovementStateChange(object sender, UnitItem unit)
+    {
+        if (unit.Id == UnitLeader.Id)
+        {
+            RemoveUnitsWithDifferentMovementState(unit.IsMoving);
+        }
+        else if (unit.IsMoving != UnitLeader.IsMoving)
+        {
+            RemoveUnitFromGroup(unit);
+        }
+    }
+
+    public void RemoveUnitsWithDifferentMovementState(bool leaderIsMoving)
+    {
+        var unitsToRemove = new List<UnitItem>();
+
+        foreach (var groupMember in GroupUnits)
+        {
+            if (groupMember.IsMoving != leaderIsMoving)
+            {
+                unitsToRemove.Add(groupMember);
+            }
+        }
+
+        foreach (var unitToRemove in unitsToRemove)
+        {
+            RemoveUnitFromGroup(unitToRemove);
         }
     }
 

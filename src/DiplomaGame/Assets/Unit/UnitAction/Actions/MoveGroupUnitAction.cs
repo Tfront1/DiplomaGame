@@ -57,6 +57,8 @@ public class MoveGroupUnitAction : BaseUnitAction
     {
         if (id != _idAction) return;
 
+        _unit.SetMoving(true);
+
         PathFinderManager.OnPathFound -= OnPathFound;
 
 
@@ -194,6 +196,7 @@ public class MoveGroupUnitAction : BaseUnitAction
 
     protected override void CompleteAction()
     {
+        _unit.SetMoving(false);
         ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
         base.CompleteAction();
     }
