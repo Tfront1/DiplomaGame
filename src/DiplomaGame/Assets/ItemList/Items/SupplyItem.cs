@@ -27,7 +27,7 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public event EventHandler<SupplyDestroyedEventArgs> OnDestroyed;
 
     private bool _isDestroyed = false;
-
+    private readonly object _resourceLock = new();
 
     public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply,
                                    GameObject supplyGameObject, Backpack backpack)
@@ -89,12 +89,15 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
 
     public void CollectResources(UnitItem unit, BackpackItem toCollect)
     {
-        BackpackTransfer.Instance.TransferSpecificResource(Backpack, unit.Backpack, toCollect);
-        UIToChange?.Invoke(this, new SupplyUIToChangeEventArgs(this));
-
-        if (Backpack.IsEmpty())
+        lock (_resourceLock)
         {
-            SupplyManager.RemoveSupply(Coords);
+            BackpackTransfer.Instance.TransferSpecificResource(Backpack, unit.Backpack, toCollect);
+            UIToChange?.Invoke(this, new SupplyUIToChangeEventArgs(this));
+
+            if (Backpack.IsEmpty())
+            {
+                SupplyManager.RemoveSupply(Coords);
+            }
         }
     }
 

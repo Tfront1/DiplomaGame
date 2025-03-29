@@ -26,6 +26,7 @@ public class BuildingCraftingSystem
         CraftingProcessTime / (CurrentCraftingRecipe?.CraftingTime ?? 1f) : 0f;
 
     private int MaxUnitCraftingCount = 5;
+    private readonly object _craftingLock = new();
 
     public BuildingCraftingSystem(BuildingItem building)
     {
@@ -138,17 +139,17 @@ public class BuildingCraftingSystem
 
     public bool UpdateCraftingProgress(float deltaTime)
     {
-        CraftingProcessTime += deltaTime;
-
-        var isCompleted = CraftingProcessTime >= CurrentCraftingRecipe.CraftingTime;
-        Building.UpdateProgress(CraftingProgress);
-
-        if (isCompleted)
+        lock (_craftingLock)
         {
-            CompleteCraft();
+            CraftingProcessTime += deltaTime;
+            var isCompleted = CraftingProcessTime >= CurrentCraftingRecipe.CraftingTime;
+            Building.UpdateProgress(CraftingProgress);
+            if (isCompleted)
+            {
+                CompleteCraft();
+            }
+            return isCompleted;
         }
-
-        return isCompleted;
     }
 
     private void CompleteCraft()
@@ -389,30 +390,41 @@ public class BuildingCraftingSystem
 
     public void AddCraftingMaterials(UnitItem unit)
     {
-        var unitBackpack = unit.Backpack;
-
-        foreach (var component in CurrentCraftingRecipe.Components)
+        lock (_craftingLock)
         {
-            if (unitBackpack.HasResource(component.BackpackItem))
+            if (CurrentCraftingRecipe == null)
             {
-                var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
-                var resourceNeed = component.Quantity - resourceHave;
+                return;
+            }
 
-                if (resourceNeed > 0)
+            var unitBackpack = unit.Backpack;
+            foreach (var component in CurrentCraftingRecipe.Components)
+            {
+                if (unitBackpack.HasResource(component.BackpackItem))
                 {
-                    var unitResourceCount = unitBackpack.GetResourceQuantity(component.BackpackItem);
+                    var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
+                    var resourceNeed = component.Quantity - resourceHave;
+                    if (resourceNeed > 0)
+                    {
+                        var unitResourceCount = unitBackpack.GetResourceQuantity(component.BackpackItem);
+                        var resourceCount = Math.Min(unitResourceCount, resourceNeed);
+                        unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
+                        Backpack.AddItem(component.BackpackItem, resourceCount);
 
-                    var resourceCount = Math.Min(unitResourceCount, resourceNeed);
-
-                    unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
-                    Backpack.AddItem(component.BackpackItem, resourceCount);
+                        var existingComponent = DeliveredResources.FirstOrDefault(c => c.BackpackItem.Id == component.BackpackItem.Id);
+                        if (existingComponent != null)
+                        {
+                            existingComponent.Quantity += resourceCount;
+                        }
+                    }
                 }
             }
-        }
 
-        CheckCompletionDelivery();
+            RecalculateAssignUnits();
+            CheckCompletionDelivery();
+        }
     }
-    
+
     public bool HasAssignedUnit(UnitItem unit)
     {
         return AssignedUnits.Contains(unit);

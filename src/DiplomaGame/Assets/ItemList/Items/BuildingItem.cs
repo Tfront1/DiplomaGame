@@ -44,6 +44,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     private Slider _progressSlider;
 
     private bool _isDestroyed = false;
+    private readonly object _buildingLock = new();
 
     public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack)
     {
@@ -77,31 +78,28 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public void AddBuildingMaterials(UnitItem unit)
     {
-        var unitBackpack = unit.Backpack;
-
-        if (_buildingCraft != null)
+        lock (_buildingLock)
         {
-            foreach (var component in _buildingCraft.Components)
+            var unitBackpack = unit.Backpack;
+            if (_buildingCraft != null)
             {
-                if (unitBackpack.HasResource(component.BackpackItem))
+                foreach (var component in _buildingCraft.Components)
                 {
-                    var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
-                    var resourceNeed = component.Quantity - resourceHave;
-
-                    if (resourceNeed > 0)
+                    if (unitBackpack.HasResource(component.BackpackItem))
                     {
-                        var unitResourceCount = unitBackpack.GetResourceQuantity(component.BackpackItem);
-
-                        var resourceCount = Math.Min(unitResourceCount, resourceNeed);
-
-                        var deliveredResources =
-                            new List<CraftingComponent> { new(component.BackpackItem, resourceCount) };
-
-                        var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
-                        OnResourcesDelivered?.Invoke(this, deliverArgs);
-
-                        unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
-                        Backpack.AddItem(component.BackpackItem, resourceCount);
+                        var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
+                        var resourceNeed = component.Quantity - resourceHave;
+                        if (resourceNeed > 0)
+                        {
+                            var unitResourceCount = unitBackpack.GetResourceQuantity(component.BackpackItem);
+                            var resourceCount = Math.Min(unitResourceCount, resourceNeed);
+                            var deliveredResources =
+                                new List<CraftingComponent> { new(component.BackpackItem, resourceCount) };
+                            var deliverArgs = new ResourceDeliveredArgs(unit, deliveredResources);
+                            OnResourcesDelivered?.Invoke(this, deliverArgs);
+                            unitBackpack.RemoveItem(component.BackpackItem, resourceCount);
+                            Backpack.AddItem(component.BackpackItem, resourceCount);
+                        }
                     }
                 }
             }
@@ -121,13 +119,16 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
             return true;
         }
 
-        foreach (var component in _buildingCraft.Components)
+        lock (_buildingLock)
         {
-            var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
-
-            if (resourceHave < component.Quantity)
+            foreach (var component in _buildingCraft.Components)
             {
-                return false;
+                var resourceHave = Backpack.GetResourceQuantity(component.BackpackItem);
+
+                if (resourceHave < component.Quantity)
+                {
+                    return false;
+                }
             }
         }
 
@@ -137,25 +138,25 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public bool UpdateBuildingProgress(float deltaTime, UnitItem builder)
     {
-        if (!IsBuilt && HasAllRequiredResources())
+        lock (_buildingLock)
         {
-            if (_buildingCraft == null)
+            if (!IsBuilt && HasAllRequiredResources())
             {
-                return false;
+                if (_buildingCraft == null)
+                {
+                    return false;
+                }
+                BuildingTimePassed += deltaTime;
+                UpdateProgress(BuildingTimePassed / _buildingCraft.CraftingTime);
+                if (BuildingTimePassed >= _buildingCraft.CraftingTime)
+                {
+                    IsBuilt = true;
+                    CompleteBuildingConstruction();
+                    return true;
+                }
             }
-
-            BuildingTimePassed += deltaTime;
-            UpdateProgress(BuildingTimePassed / _buildingCraft.CraftingTime);
-
-            if (BuildingTimePassed >= _buildingCraft.CraftingTime)
-            {
-                IsBuilt = true;
-                CompleteBuildingConstruction();
-                return true;
-            }
+            return false;
         }
-
-        return false;
     }
 
     private void CompleteBuildingConstruction()

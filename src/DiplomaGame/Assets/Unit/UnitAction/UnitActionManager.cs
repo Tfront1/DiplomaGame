@@ -211,6 +211,10 @@ public class UnitActionManager
         // Clear any queued actions
         if (_unitActionQueues.ContainsKey(unitGuid))
         {
+            foreach (var unitAction in _unitActionQueues[unitGuid])
+            {
+                unitAction.Cancel();
+            }
             _unitActionQueues[unitGuid].Clear();
         }
 

@@ -85,6 +85,11 @@ namespace StateMachine.States
                 ? SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First())
                 : null;
 
+            if (singleUnit == null && selectedUnits.Count == 0)
+            {
+                return;
+            }
+
             if (singleUnit != null && singleUnit.IsInGroup)
             {
                 var group = GroupManager.Instance.GetGroup(singleUnit.GroupId);
@@ -112,6 +117,11 @@ namespace StateMachine.States
                         }
                     }
                 }
+            }
+
+            if (singleUnit == null && selectedUnits.Count > 1)
+            {
+                singleUnit = selectedUnits.First();
             }
 
             var target = SelectorManager.Instance.GetSelectedItem(position);
@@ -192,7 +202,7 @@ namespace StateMachine.States
                                 {
                                     foreach (var unit in selectedUnits)
                                     {
-                                        singleUnit.HomeTown.BuildingTownOrder.AssignUnitToOrder(unit, building);
+                                        unit.HomeTown.BuildingTownOrder.AssignUnitToOrder(unit, building);
                                     }
                                 }
                                 else

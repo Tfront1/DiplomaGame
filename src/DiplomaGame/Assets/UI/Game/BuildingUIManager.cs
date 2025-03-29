@@ -1,5 +1,8 @@
-﻿using Assets.Items.Crafts;
+﻿using System;
+using Assets.Items.Crafts;
 using Items.Resource.BackPack;
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -26,6 +29,9 @@ public class BuildingUIManager : MonoBehaviour
     private Canvas _mainCanvas;
     private BuildingItem _currentBuilding;
 
+    private GameObject _requiredResourcesPanel;
+    private Transform _requiredResourcesContainer;
+    private GameObject _resourceItemPrefab;
 
     private static BuildingUIManager _instance;
 
@@ -83,6 +89,10 @@ public class BuildingUIManager : MonoBehaviour
         if (_craftingPanel == null)
         {
             CreateCraftingUI();
+        }
+        if (_requiredResourcesPanel == null)
+        {
+            CreateRequiredResourcesUI();
         }
     }
 
@@ -530,6 +540,130 @@ public class BuildingUIManager : MonoBehaviour
         return prefab;
     }
 
+    private void CreateRequiredResourcesUI()
+    {
+        var resourcesObj = new GameObject("RequiredResourcesSection");
+        resourcesObj.transform.SetParent(_buildingInfoPanel.transform, false);
+
+        var resourcesLayout = resourcesObj.AddComponent<VerticalLayoutGroup>();
+        resourcesLayout.spacing = 10;
+
+        var titleObj = new GameObject("ResourcesTitle");
+        titleObj.transform.SetParent(resourcesObj.transform, false);
+        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
+        titleText.text = "REQUIRED RESOURCES";
+        titleText.fontSize = 20;
+        titleText.alignment = TextAlignmentOptions.Right;
+        titleText.color = Color.white;
+
+        var containerObj = new GameObject("ResourcesItemsContainer");
+        containerObj.transform.SetParent(resourcesObj.transform, false);
+
+        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
+        containerLayout.spacing = 5;
+
+        _resourceItemPrefab = CreateResourceItemPrefab();
+
+        var layoutElement = resourcesObj.AddComponent<LayoutElement>();
+        layoutElement.minHeight = 150;
+        layoutElement.preferredHeight = 150;
+        layoutElement.flexibleHeight = 1;
+
+        _requiredResourcesContainer = containerObj.transform;
+        _requiredResourcesPanel = resourcesObj;
+    }
+
+    private GameObject CreateResourceItemPrefab()
+    {
+        var prefab = new GameObject("ResourceItemPrefab");
+        prefab.SetActive(false);
+        prefab.transform.SetParent(_buildingInfoPanel.transform, false);
+
+        var horizontalLayout = prefab.AddComponent<HorizontalLayoutGroup>();
+        horizontalLayout.spacing = 10;
+        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
+
+        var iconObj = new GameObject("ItemIcon");
+        iconObj.transform.SetParent(prefab.transform, false);
+        var icon = iconObj.AddComponent<Image>();
+        icon.color = Color.white;
+
+        var nameObj = new GameObject("ItemName");
+        nameObj.transform.SetParent(prefab.transform, false);
+        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
+        nameText.fontSize = 14;
+        nameText.alignment = TextAlignmentOptions.Left;
+        nameText.color = Color.white;
+
+        var quantityObj = new GameObject("ItemQuantity");
+        quantityObj.transform.SetParent(prefab.transform, false);
+        var quantityText = quantityObj.AddComponent<TextMeshProUGUI>();
+        quantityText.fontSize = 14;
+        quantityText.alignment = TextAlignmentOptions.Right;
+        quantityText.color = Color.white;
+
+        var iconLayout = iconObj.AddComponent<LayoutElement>();
+        iconLayout.minWidth = 30;
+        iconLayout.preferredWidth = 30;
+        iconLayout.minHeight = 30;
+        iconLayout.preferredHeight = 30;
+
+        var nameLayout = nameObj.AddComponent<LayoutElement>();
+        nameLayout.flexibleWidth = 1;
+
+        var quantityLayout = quantityObj.AddComponent<LayoutElement>();
+        quantityLayout.minWidth = 40;
+        quantityLayout.preferredWidth = 40;
+
+        return prefab;
+    }
+
+    private void UpdateRequiredResourcesUI(List<CraftingComponent> requiredResources, bool isVisible)
+    {
+        if (_requiredResourcesPanel != null)
+        {
+            _requiredResourcesPanel.SetActive(isVisible);
+
+            if (!isVisible || requiredResources == null)
+            {
+                return;
+            }
+
+            for (var i = _requiredResourcesContainer.childCount - 1; i >= 0; i--)
+            {
+                var child = _requiredResourcesContainer.GetChild(i);
+                if (!child.IsDestroyed() && child != null)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            if (requiredResources.Count == 0)
+            {
+                var emptyObj = new GameObject("EmptyResources");
+                emptyObj.transform.SetParent(_requiredResourcesContainer, false);
+                var emptyText = emptyObj.AddComponent<TextMeshProUGUI>();
+                emptyText.text = "No resources required";
+                emptyText.fontSize = 16;
+                emptyText.alignment = TextAlignmentOptions.Center;
+                emptyText.color = Color.white;
+                return;
+            }
+
+            foreach (var resource in requiredResources)
+            {
+                var resourceObj = Instantiate(_resourceItemPrefab, _requiredResourcesContainer);
+                resourceObj.SetActive(true);
+
+                var nameText = resourceObj.transform.Find("ItemName").GetComponent<TextMeshProUGUI>();
+                var quantityText = resourceObj.transform.Find("ItemQuantity").GetComponent<TextMeshProUGUI>();
+
+                nameText.text = resource.BackpackItem.Name;
+                quantityText.text = $"x{resource.Quantity}";
+            }
+        }
+    }
+
     public void ShowCraftingPanel()
     {
         if (_currentBuilding == null || _currentBuilding.Crafts == null || _currentBuilding.Crafts.Count == 0)
@@ -660,19 +794,92 @@ public class BuildingUIManager : MonoBehaviour
 
     public void ShowBuildingInfo(BuildingItem building)
     {
-        _currentBuilding = building;
-
         if (building == null)
         {
             HideBuildingInfo();
             return;
         }
 
+        _currentBuilding = building;
+
         _buildingNameText.text = building.Building.Name;
         _homeTownText.text = building.HomeTown != null ? $"Hometown: {building.HomeTown.Name}" : "No hometown";
 
         UpdateBackpackUI(building.Backpack);
         UpdateHealthBar(building.HP, building.Building.MaxHP);
+
+        var showRequiredResources = !building.IsBuilt ||
+                                     (building.BuildingCraftingSystem != null &&
+                                      building.BuildingCraftingSystem.IsCrafting);
+
+        List<CraftingComponent> requiredResources = new();
+        if (showRequiredResources)
+        {
+            var calculatedResources = new List<CraftingComponent>();
+
+            if (!building.IsBuilt && building.HomeTown != null)
+            {
+                var townOrder = building.HomeTown.BuildingTownOrder.GetOrder(building);
+
+                if (townOrder != null)
+                {
+                    var requiredBuildingResources = townOrder.RequiredResources;
+                    var deliveredBuildingResources = townOrder.DeliveredResources;
+
+                    if (requiredBuildingResources != null && requiredBuildingResources.Count > 0)
+                    {
+                        foreach (var required in requiredBuildingResources)
+                        {
+                            var delivered = deliveredBuildingResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
+                            var deliveredQuantity = delivered?.Quantity ?? 0;
+
+                            var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity);
+
+                            if (remainingQuantity > 0)
+                            {
+                                calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
+                            }
+                        }
+                    }
+                }
+
+                requiredResources = calculatedResources;
+            }
+            else if (building.IsBuilt && building.BuildingCraftingSystem != null && building.BuildingCraftingSystem.IsCrafting)
+            {
+                var craftingSystem = building.BuildingCraftingSystem;
+
+                if (craftingSystem.RequiredResources != null && craftingSystem.RequiredResources.Count > 0)
+                {
+                    var craftRequiredResources = craftingSystem.RequiredResources;
+                    var craftDeliveredResources = craftingSystem.DeliveredResources;
+
+                    foreach (var required in craftRequiredResources)
+                    {
+                        var delivered = craftDeliveredResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
+                        var deliveredQuantity = delivered?.Quantity ?? 0;
+
+                        var backpackQuantity = building.Backpack?.GetResourceQuantity(required.BackpackItem) ?? 0;
+
+                        var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity - backpackQuantity);
+
+                        if (remainingQuantity > 0)
+                        {
+                            calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
+                        }
+                    }
+
+                    requiredResources = calculatedResources;
+                }
+            }
+        }
+
+        if (requiredResources.Count == 0)
+        {
+            showRequiredResources = false;
+        }
+
+        UpdateRequiredResourcesUI(requiredResources, showRequiredResources);
 
         var hasCrafts = building.Crafts != null && building.Crafts.Count > 0 && building.IsBuilt;
 
@@ -697,6 +904,29 @@ public class BuildingUIManager : MonoBehaviour
         if (_currentBuilding == building)
         {
             UpdateBackpackUI(building.Backpack);
+
+            var showRequiredResources = !building.IsBuilt ||
+                                        (building.BuildingCraftingSystem != null &&
+                                         building.BuildingCraftingSystem.IsCrafting);
+
+            List<CraftingComponent> requiredResources = new();
+            if (showRequiredResources)
+            {
+                if (!building.IsBuilt && building.HomeTown != null)
+                {
+                    requiredResources = building.HomeTown.BuildingTownOrder.GetOrder(building).RequiredResources;
+                }
+                else if (building.IsBuilt && building.BuildingCraftingSystem != null && building.BuildingCraftingSystem.IsCrafting)
+                {
+                    requiredResources = building.BuildingCraftingSystem.RequiredResources;
+                }
+            }
+
+            if (requiredResources.Count == 0)
+            {
+                showRequiredResources = false;
+            }
+            UpdateRequiredResourcesUI(requiredResources, showRequiredResources);
         }
     }
 
