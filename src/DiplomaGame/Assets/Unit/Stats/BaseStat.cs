@@ -2,9 +2,9 @@
 
 public class BaseStat : IStat
 {
-    private float _currentValue;
-    private float _maxValue;
-    private float _minValue;
+    protected float _currentValue;
+    protected float _maxValue;
+    protected float _minValue;
 
     public string Name { get; private set; }
     public float CurrentValue => _currentValue;

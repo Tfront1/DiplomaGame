@@ -18,7 +18,7 @@ public class BuildResourceCopier
         ".png"
     };
 
-    private const string DestinationFolder = "Output";
+    private const string DestinationFolder = "Assets";
 
     [InitializeOnLoadMethod]
     private static void RegisterBuildProcessor()
@@ -41,11 +41,6 @@ public class BuildResourceCopier
     private static void CopyResources(string buildPath)
     {
         var buildDir = Path.GetDirectoryName(buildPath);
-        if (buildPath.EndsWith(".exe"))
-        {
-            var gameName = Path.GetFileNameWithoutExtension(buildPath);
-            buildDir = Path.Combine(buildDir, gameName + "_Data");
-        }
 
         var destDir = Path.Combine(buildDir, DestinationFolder);
         if (!Directory.Exists(destDir))

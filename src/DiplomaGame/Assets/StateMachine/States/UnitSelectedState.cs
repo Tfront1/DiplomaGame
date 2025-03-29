@@ -244,7 +244,11 @@ namespace StateMachine.States
                         }
                         else
                         {
-                            // Attack enemy building...
+                            foreach (var unit in selectedUnits)
+                            {
+                                var attackAction = new AttackBuildingAction(unit, building, true);
+                                UnitActionManager.Instance.ExecuteImmediately(attackAction);
+                            }
                         }
                     }
 

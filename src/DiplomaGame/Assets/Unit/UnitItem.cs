@@ -34,7 +34,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public event EventHandler<UnitUIToChangeEventArgs> UIToChange;
 
-    private bool _isDestroyed = false;
+    public bool IsDestroyed { get; private set; } = false;
+
+    private object _unitLock = new();
 
     public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
@@ -141,9 +143,24 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         Collider.enabled = true;
     }
 
+    public void ApplyDamage(float damage)
+    {
+        lock (_unitLock)
+        {
+            if (!IsDestroyed)
+            {
+                Stats.Health.Attack(damage);
+                if (Stats.Health.CurrentValue <= Stats.Health.MinValue)
+                {
+                    Die();
+                }
+            }
+        }
+    }
+
     public void Die()
     {
-        if (!_isDestroyed)
+        if (!IsDestroyed)
         {
             TickRateSystem.Instance.OnTick -= Stats.Update;
             TickRateSystem.Instance.OnTick -= Skills.Update;
@@ -156,7 +173,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
             Destroy(UnitGameObject);
 
-            _isDestroyed = true;
+            IsDestroyed = true;
         }
     }
 

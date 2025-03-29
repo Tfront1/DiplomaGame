@@ -16,5 +16,6 @@ public class ConfigPathsDto
     public string ResourceItemsConfig;
     public string CraftingRecipesConfig;
     public string WeaponsConfig;
+    public string ArmorsConfig;
 }
 

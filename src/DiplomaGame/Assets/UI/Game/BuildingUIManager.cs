@@ -903,6 +903,8 @@ public class BuildingUIManager : MonoBehaviour
     {
         if (_currentBuilding == building)
         {
+            UpdateHealthBar(building.HP, building.Building.MaxHP);
+
             UpdateBackpackUI(building.Backpack);
 
             var showRequiredResources = !building.IsBuilt ||
@@ -928,10 +930,5 @@ public class BuildingUIManager : MonoBehaviour
             }
             UpdateRequiredResourcesUI(requiredResources, showRequiredResources);
         }
-    }
-
-    public void UpdateBuildingInfo(object sender, BuildingItem.BuildingUIToChangeEventArgs args)
-    {
-        UpdateBuildingInfo(args.Building);
     }
 }

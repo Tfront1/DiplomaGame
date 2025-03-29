@@ -27,7 +27,6 @@ public class TestBuilding :MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            _townItem = TestAction._town;
             selectedBuilding = BuildingsConfig.Buildings[4];
         }
         else if (Input.GetKeyDown(KeyCode.Alpha5))
@@ -35,15 +34,7 @@ public class TestBuilding :MonoBehaviour
             var clickPosition = UtilsClass.GetMouseWorldPosition();
             var gridPosition = GridService.GetCellGridPosition(clickPosition);
 
-            BuildingManager.BuildInstantly(new Vector2Int(10, 10), BuildingsConfig.Buildings[3], _townItem);
-            BuildingManager.BuildInstantly(new Vector2Int(15, 15), BuildingsConfig.Buildings[3], _townItem);
-
-            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == 1);
-
-            _townItem.Buildings[0].Backpack.AddItem(res, 1000);
-            _townItem.Buildings[1].Backpack.AddItem(res, 500);
-
-            BuildingManager.BuildWithFoundation(gridPosition, selectedBuilding, BuildingsConfig.Buildings.First(), _townItem);
+            BuildingManager.BuildInstantly(gridPosition, selectedBuilding, _townItem);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha6))
         {

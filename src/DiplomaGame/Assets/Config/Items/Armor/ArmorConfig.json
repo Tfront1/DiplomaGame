@@ -1,0 +1,16 @@
+﻿{
+  "Armors": [
+    {
+      "Id": 1,
+      "Name": "No armor",
+      "ArmorResistance": 0,
+      "Durability": 10000.0
+    },
+    {
+      "Id": 2,
+      "Name": "Wood armor",
+      "ArmorResistance": 4,
+      "Durability": 1000.0
+    }
+  ]
+}

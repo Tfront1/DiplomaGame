@@ -15,6 +15,7 @@ public class ConfigManager : MonoBehaviour
 
         ConfigLoader.LoadResourceItemsConfig();
         ConfigLoader.LoadWeaponsConfig();
+        ConfigLoader.LoadArmorsConfig();
 
         ConfigLoader.LoadSuppliesConfig();
         ConfigLoader.LoadBuildingsConfig();

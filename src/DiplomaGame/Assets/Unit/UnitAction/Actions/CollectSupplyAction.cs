@@ -35,6 +35,8 @@ public class CollectSupplyAction : BaseUnitAction
             return;
         }
 
+        _supply.OnDestroyed += OnSupplyDestroyed;
+
         _idAction = Guid.NewGuid();
         CoroutineRunner.Instance.StartCoroutineWithId(_idAction, CollectSupply());
     }
@@ -95,6 +97,7 @@ public class CollectSupplyAction : BaseUnitAction
             }
 
             _unit.Skills.ResetActiveSkill();
+            _supply.OnDestroyed -= OnSupplyDestroyed;
 
             yield return BringBackResources(_unit);
 
@@ -235,5 +238,11 @@ public class CollectSupplyAction : BaseUnitAction
         }
 
         bringAction.OnActionCompleted -= OnResourcesBroughtBack;
+    }
+
+    private void OnSupplyDestroyed(object sender, SupplyItem.SupplyDestroyedEventArgs args)
+    {
+        _supply.OnDestroyed -= OnSupplyDestroyed;
+        Cancel();
     }
 }

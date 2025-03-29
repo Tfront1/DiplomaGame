@@ -1,0 +1,30 @@
+﻿{
+  "Weapons": [
+    {
+      "Id": 1,
+      "Name": "Fists",
+      "Damage": 2,
+      "MissChance": 0.0,
+      "StaminaToAttack": 1.0,
+      "ArmorPenetration": 0.0,
+      "Durability": 10000.0,
+      "AttackDistance": 0.15,
+      "AmmunitionId": 0,
+      "CoolDown": 0.5,
+      "IsMainWeapon": true
+    },
+    {
+      "Id": 2,
+      "Name": "Wood Sword",
+      "Damage": 25.5,
+      "MissChance": 0.15,
+      "StaminaToAttack": 10.0,
+      "ArmorPenetration": 0.1,
+      "Durability": 100.0,
+      "AttackDistance": 0.3,
+      "AmmunitionId": 0,
+      "CoolDown": 1.0,
+      "IsMainWeapon": true
+    }
+  ]
+}

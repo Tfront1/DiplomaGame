@@ -29,7 +29,9 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     public event EventHandler<ResourceDeliveredArgs> OnResourcesDelivered;
     public event EventHandler<BuildingCompletedEventArgs> OnBuildingComplete;
     public event EventHandler<BuildingDestroyedEventArgs> OnDestroyed;
-    public event EventHandler<BuildingUIToChangeEventArgs> UIToChange;
+
+    public delegate void UIToChangeHandler(BuildingItem buildingItem);
+    public event UIToChangeHandler UIToChange;
 
     public float HP { get; set; }
     public Backpack Backpack { get; set; }
@@ -43,7 +45,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     private GameObject _progressBarObject;
     private Slider _progressSlider;
 
-    private bool _isDestroyed = false;
+    public bool IsDestroyed { get; private set; } = false;
     private readonly object _buildingLock = new();
 
     public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack)
@@ -162,18 +164,34 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     private void CompleteBuildingConstruction()
     {
         var args = new BuildingCompletedEventArgs(this);
-        var updateUIArgs = new BuildingUIToChangeEventArgs(this);
 
-        UIToChange?.Invoke(this, updateUIArgs);
+        UIToChange?.Invoke(this);
         OnBuildingComplete?.Invoke(this, args);
 
         Backpack?.Clear();
         IsBuilt = true;
     }
 
+    public void ApplyDamage(float damage)
+    {
+        lock (_buildingLock)
+        {
+            if (!IsDestroyed)
+            {
+                HP -= damage;
+                UIToChange?.Invoke(this);
+
+                if (HP <= 0)
+                {
+                    Destroy();
+                }
+            }
+        }
+    }
+
     public void Destroy()
     {
-        if (!_isDestroyed)
+        if (!IsDestroyed)
         {
             Backpack?.Clear();
             UnsubscribeFromBackpackEvents();
@@ -183,7 +201,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
             Destroy(BuildingGameObject);
 
-            _isDestroyed = true;
+            IsDestroyed = true;
         }
     }
 
@@ -273,7 +291,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     private void OnBackpackChanged(object sender, BackpackChangedEventArgs args)
     {
-        UIToChange?.Invoke(this, new BuildingUIToChangeEventArgs(this));
+        UIToChange?.Invoke(this);
     }
 
     private void UnsubscribeFromBackpackEvents()
@@ -394,16 +412,6 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         {
             Unit = unit;
             DeliveredComponents = deliveredComponents;
-        }
-    }
-
-    public class BuildingUIToChangeEventArgs : EventArgs
-    {
-        public BuildingItem Building { get; }
-
-        public BuildingUIToChangeEventArgs(BuildingItem building)
-        {
-            Building = building;
         }
     }
 }
