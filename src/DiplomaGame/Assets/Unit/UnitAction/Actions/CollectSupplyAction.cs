@@ -86,9 +86,16 @@ public class CollectSupplyAction : BaseUnitAction
                     yield break;
                 }
 
-                while (IsPaused)
+                if (IsPaused)
                 {
-                    yield return null;
+                    _unit.Skills.ResetActiveSkill();
+
+                    while (IsPaused)
+                    {
+                        yield return null;
+                    }
+
+                    _unit.Skills.SetActiveSkill(typeof(FarmingSkill));
                 }
 
                 _supply.CollectResources(_unit, resource);
@@ -186,6 +193,12 @@ public class CollectSupplyAction : BaseUnitAction
         moveAction.OnActionCompleted -= OnMovementComplete;
     }
 
+    protected override void CompleteAction()
+    {
+        _supply.OnDestroyed -= OnSupplyDestroyed;
+        base.CompleteAction();
+    }
+
     private void OnResourcesBroughtBack(IUnitAction action)
     {
         if (action is BaseUnitAction baseAction)
@@ -242,7 +255,6 @@ public class CollectSupplyAction : BaseUnitAction
 
     private void OnSupplyDestroyed(object sender, SupplyItem.SupplyDestroyedEventArgs args)
     {
-        _supply.OnDestroyed -= OnSupplyDestroyed;
         Cancel();
     }
 }

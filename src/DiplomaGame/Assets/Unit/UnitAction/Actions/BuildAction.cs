@@ -29,6 +29,8 @@ public class BuildAction : BaseUnitAction
             return;
         }
 
+        _targetBuilding.OnDestroyed += OnBuildingDestroyed;
+
         _idAction = Guid.NewGuid();
         CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Build());
     }
@@ -94,9 +96,16 @@ public class BuildAction : BaseUnitAction
                     yield break;
                 }
 
-                while (IsPaused)
+                if (IsPaused)
                 {
-                    yield return null;
+                    _unit.Skills.ResetActiveSkill();
+
+                    while (IsPaused)
+                    {
+                        yield return null;
+                    }
+
+                    _unit.Skills.SetActiveSkill(typeof(BuildingSkill));
                 }
 
                 yield return new WaitForSeconds(0.5f);
@@ -121,6 +130,8 @@ public class BuildAction : BaseUnitAction
 
     protected override void CompleteAction()
     {
+        _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
+
         if (!InterruptedByOrder)
         {
             UnassignUnit();
@@ -199,5 +210,10 @@ public class BuildAction : BaseUnitAction
             _movementSuccess = baseAction.IsSuccess;
         }
         _movementCompleted = true;
+    }
+
+    private void OnBuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs args)
+    {
+        Cancel();
     }
 }

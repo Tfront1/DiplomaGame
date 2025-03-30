@@ -126,6 +126,12 @@ public class AttackBuildingAction : BaseUnitAction
         CompleteAction();
     }
 
+    protected override void CompleteAction()
+    {
+        _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
+        base.CompleteAction();
+    }
+
     private IEnumerator MoveToPoint(Vector2 targetPosition, bool considerWeaponRange = false)
     {
         targetPosition.x += MapConfig.CellSize / 2;
@@ -212,10 +218,9 @@ public class AttackBuildingAction : BaseUnitAction
         }
         _movementCompleted = true;
     }
-    
+
     private void OnBuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs args)
     {
-        _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
         Cancel();
     }
 }

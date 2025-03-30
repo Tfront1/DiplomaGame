@@ -34,6 +34,8 @@ public class TransportResourcesForBuildingAction : BaseUnitAction
             return;
         }
 
+        _targetBuilding.OnDestroyed += OnBuildingDestroyed;
+
         _idAction = Guid.NewGuid();
         CoroutineRunner.Instance.StartCoroutineWithId(_idAction, MoveResourcesForBuilding());
     }
@@ -212,6 +214,7 @@ public class TransportResourcesForBuildingAction : BaseUnitAction
 
     protected override void CompleteAction()
     {
+        _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
         if (!IsSuccess)
         {
             UnassignUnit();
@@ -235,5 +238,10 @@ public class TransportResourcesForBuildingAction : BaseUnitAction
                 _targetBuilding.BuildingCraftingSystem.UnassignUnitFromCraft(_unit, false);
             }
         }
+    }
+
+    private void OnBuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs args)
+    {
+        Cancel();
     }
 }

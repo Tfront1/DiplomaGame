@@ -78,9 +78,16 @@ public class CraftAction : BaseUnitAction
                     yield break;
                 }
 
-                while (IsPaused)
+                if (IsPaused)
                 {
-                    yield return null;
+                    _unit.Skills.ResetActiveSkill();
+
+                    while (IsPaused)
+                    {
+                        yield return null;
+                    }
+
+                    _unit.Skills.SetActiveSkill(typeof(SmithingSkill));
                 }
 
                 _crafting.UpdateCraftingProgress(_fixedDeltaTime);

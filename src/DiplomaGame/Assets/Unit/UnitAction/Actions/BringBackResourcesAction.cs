@@ -53,6 +53,11 @@ public class BringBackResourcesAction : BaseUnitAction
 
         foreach (var item in _buildingsToGo)
         {
+            if (item.Building.IsDestroyed)
+            {
+                continue;
+            }
+
             yield return MoveToPoint(GridService.GetWorldPosition(item.Building.X, item.Building.Y));
 
             if (IsStopped)
@@ -226,6 +231,7 @@ public class BringBackResourcesAction : BaseUnitAction
 
         return result;
     }
+
     private void OnMovementComplete(IUnitAction action)
     {
         if (action is BaseUnitAction baseAction)
