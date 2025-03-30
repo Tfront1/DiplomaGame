@@ -223,7 +223,14 @@ public class GameplayInputHandler : MonoBehaviour
     private void MouseLeftHold(InputAction.CallbackContext context)
     {
         if (_isPointerOverUI)
+        {
+            if (_isMouseLeftHold)
+            {
+                MouseLeftHoldEnd(new InputAction.CallbackContext());
+            }
             return;
+        }
+
         if (_isMouseLeftHold)
         {
             if (Time.time - _leftMousePressTime >= _clickThreshold || _maxDistance < Vector2.Distance(_mouseWorldPosition, _startHold))
@@ -242,7 +249,12 @@ public class GameplayInputHandler : MonoBehaviour
     private void MouseLeftHoldEnd(InputAction.CallbackContext context)
     {
         if (_isPointerOverUI)
-            return;
+        {
+            if (!_isMouseLeftHold)
+            {
+                return;
+            }
+        }
 
         var holdDuration = Time.time - _leftMousePressTime;
 
