@@ -33,7 +33,7 @@ public static class PathFinderManager
     {
         ClearExpiredCacheEntries();
 
-        List<Vector2> result;
+        List<Vector2> result = null;
         var isExistsPath = false;
         List<Vector2> foundRes = null;
 
@@ -96,9 +96,13 @@ public static class PathFinderManager
             {
                 result = PathFinder.Instance.FindNearestAccessiblePath(request.Start, request.End);
             }
-            else
+            else if(request.Action == PathAction.Move)
             {
                 result = PathFinder.Instance.FindPath(request.Start, request.End);
+            }
+            else if (request.Action == PathAction.MoveAnyway)
+            {
+                result = PathFinder.Instance.FindPartialPath(request.Start, request.End);
             }
 
             if (result != null)
@@ -136,7 +140,8 @@ public static class PathFinderManager
     {
         MoveClose,
         Move,
-        Refind
+        MoveAnyway
+
     }
 
     private struct PathRequest

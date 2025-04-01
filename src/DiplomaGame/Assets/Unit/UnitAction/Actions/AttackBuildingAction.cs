@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using Assets.Items.Weapon;
 using UnityEngine;
 
@@ -64,7 +65,7 @@ public class AttackBuildingAction : BaseUnitAction
             yield return null;
         }
 
-        yield return MoveToPoint(GridService.GetWorldPosition(_targetBuilding.X, _targetBuilding.Y), true);
+        yield return MoveToPoint(GridService.GetWorldPosition(_targetBuilding.CenterCoords.x, _targetBuilding.CenterCoords.y), true);
 
         if (IsStopped)
         {
@@ -100,9 +101,23 @@ public class AttackBuildingAction : BaseUnitAction
                     yield break;
                 }
 
-                while (IsPaused)
+                if (IsPaused)
                 {
-                    yield return null;
+                    _unit.Skills.ResetActiveSkill();
+
+                    while (IsPaused)
+                    {
+                        yield return null;
+                    }
+
+                    if (_isMeleeWeapon)
+                    {
+                        _unit.Skills.SetActiveSkill<SwordsmanshipSkill>();
+                    }
+                    else
+                    {
+                        _unit.Skills.SetActiveSkill<ArcherySkill>();
+                    }
                 }
 
                 if (Time.time >= lastAttackTime + attackCooldown)
@@ -134,9 +149,6 @@ public class AttackBuildingAction : BaseUnitAction
 
     private IEnumerator MoveToPoint(Vector2 targetPosition, bool considerWeaponRange = false)
     {
-        targetPosition.x += MapConfig.CellSize / 2;
-        targetPosition.y += MapConfig.CellSize / 2;
-
         if (considerWeaponRange && _unit != null && _targetBuilding != null)
         {
             var weapon = _attackWithMainWeapon
@@ -145,69 +157,98 @@ public class AttackBuildingAction : BaseUnitAction
 
             if (weapon != null)
             {
-                var unitPosition = new Vector2(_unit.transform.position.x, _unit.transform.position.y);
+                var attackRange = MapConfig.CellSize * weapon.AttackDistance * 0.9f;
 
-                var directionToTarget = (targetPosition - unitPosition).normalized;
+                var buildingWidth = _targetBuilding.Building.WidthCell * MapConfig.CellSize;
+                var buildingHeight = _targetBuilding.Building.HeightCell * MapConfig.CellSize;
 
-                var safeDistance = MapConfig.CellSize * weapon.AttackDistance * 0.9f;
+                var path = PathFinder.Instance.FindPartialPath(_unit.Coords, targetPosition);
 
-                safeDistance = Mathf.Max(safeDistance, 0f);
-
-                targetPosition -= directionToTarget * safeDistance;
-
-                var currentDistance = Vector2.Distance(unitPosition, targetPosition);
-                if (currentDistance <= safeDistance)
+                if (path == null || !IsInAttackRange(path.Last(), targetPosition, buildingHeight, buildingWidth, attackRange))
                 {
-                    _movementCompleted = true;
-                    _movementSuccess = true;
+                    Cancel();
                     yield break;
                 }
-            }
-        }
 
-        _movementCompleted = false;
-        _movementSuccess = false;
+                var moveAction = new MoveUnitAction(_unit, targetPosition, false, true);
+                moveAction.OnActionCompleted += OnMovementComplete;
+                moveAction.Execute();
 
-        if (IsStopped)
-        {
-            yield break;
-        }
+                var wasPaused = false;
 
-        var moveAction = new MoveUnitAction(_unit, targetPosition, true);
-        moveAction.OnActionCompleted += OnMovementComplete;
-        moveAction.Execute();
+                var timerToCalculateDistance = 1f;
+                var time = Time.time;
 
-        var wasPaused = false;
-        while (!_movementCompleted)
-        {
-            if (IsStopped)
-            {
-                moveAction.Cancel();
-                moveAction.OnActionCompleted -= OnMovementComplete;
-                yield break;
-            }
-
-            if (IsPaused)
-            {
-                if (!wasPaused)
+                while (!_movementCompleted)
                 {
-                    moveAction.Pause();
-                    wasPaused = true;
+                    if (IsStopped)
+                    {
+                        moveAction.Cancel();
+                        moveAction.OnActionCompleted -= OnMovementComplete;
+                        yield break;
+                    }
+
+                    if (IsPaused)
+                    {
+                        if (!wasPaused)
+                        {
+                            moveAction.Pause();
+                            wasPaused = true;
+                        }
+                        yield return null;
+                    }
+                    else
+                    {
+                        if (wasPaused)
+                        {
+                            moveAction.Resume();
+                            wasPaused = false;
+                        }
+                    }
+
+                    if (Time.time - time > timerToCalculateDistance)
+                    {
+                        time = Time.time;
+                        if (IsInAttackRange(_unit.Coords, targetPosition, buildingHeight, buildingWidth, attackRange))
+                        {
+                            moveAction.Cancel();
+                            _movementSuccess = true;
+                            moveAction.OnActionCompleted -= OnMovementComplete;
+                            yield break;
+                        }
+                    }
+
+                    yield return null;
                 }
-                yield return null;
+
+                moveAction.OnActionCompleted -= OnMovementComplete;
             }
             else
             {
-                if (wasPaused)
-                {
-                    moveAction.Resume();
-                    wasPaused = false;
-                }
-                yield return null;
+                _movementCompleted = false;
+                _movementSuccess = false;
             }
         }
+        else
+        {
+            _movementCompleted = false;
+            _movementSuccess = false;
+        }
+    }
 
-        moveAction.OnActionCompleted -= OnMovementComplete;
+    private bool IsInAttackRange(Vector2 unitPosition, Vector2 buildingCenter, float buildingHeight, float buildingWidth, float attackRange)
+    {
+        var halfWidth = buildingWidth / 2;
+        var halfHeight = buildingHeight / 2;
+
+        var closestX = Math.Max(buildingCenter.x - halfWidth, Math.Min(unitPosition.x, buildingCenter.x + halfWidth));
+        var closestY = Math.Max(buildingCenter.y - halfHeight, Math.Min(unitPosition.y, buildingCenter.y + halfHeight));
+
+        var closestPoint = new Vector2(closestX, closestY);
+
+        var distance = Vector2.Distance(unitPosition, closestPoint);
+
+        return distance <= attackRange;
     }
 
     private void OnMovementComplete(IUnitAction action)

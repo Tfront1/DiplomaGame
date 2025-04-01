@@ -49,7 +49,7 @@
       "Name": "Blacksmith",
       "WidthCell": 2,
       "HeightCell": 2,
-      "HasMargin": true,
+      "HasMargin": false,
       "MaxHP": 500,
       "BuildingType": "Blacksmith",
       "BackpackCapacity": 0,

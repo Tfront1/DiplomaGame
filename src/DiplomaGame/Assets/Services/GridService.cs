@@ -149,6 +149,17 @@ public static class GridService
     }
 
     /// <summary>
+    /// Converts grid coordinates to world position.
+    /// </summary>
+    /// <param name="x">X coordinate in the grid.</param>
+    /// <param name="y">Y coordinate in the grid.</param>
+    /// <returns>World position vector corresponding to the grid cell center.</returns>
+    public static Vector3 GetWorldPosition(float x, float y)
+    {
+        return new Vector3(x, y) * MapConfig.CellSize + new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+    }
+
+    /// <summary>
     /// Converts world position to grid coordinates.
     /// </summary>
     /// <param name="worldPosition">Position in world space.</param>

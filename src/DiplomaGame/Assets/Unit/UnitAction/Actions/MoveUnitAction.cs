@@ -11,12 +11,14 @@ public class MoveUnitAction : BaseUnitAction
     private float _moveSpeed;
     private bool _toRecalculatePath = false;
     private bool _moveCloseToObject;
+    private bool _partialPath = false;
 
-    public MoveUnitAction(UnitItem unit, Vector2 targetPosition, bool moveCloseToObject = false) : base(unit)
+    public MoveUnitAction(UnitItem unit, Vector2 targetPosition, bool moveCloseToObject = false, bool partialPath = false) : base(unit)
     {
         _targetPosition = targetPosition;
         _moveSpeed = _unit.Unit.Speed;
         _moveCloseToObject = moveCloseToObject;
+        _partialPath = partialPath;
     }
 
     public override bool CanExecute()
@@ -43,6 +45,11 @@ public class MoveUnitAction : BaseUnitAction
             action = PathFinderManager.PathAction.MoveClose;
         }
 
+        if (_partialPath)
+        {
+            action = PathFinderManager.PathAction.MoveAnyway;
+        }
+
         if (_unit.IsInGroup)
         {
             var group = GroupManager.Instance.GetGroup(_unit.GroupId);
@@ -64,7 +71,6 @@ public class MoveUnitAction : BaseUnitAction
         if (id != _idAction) return;
 
         PathFinderManager.OnPathFound -= OnPathFound;
-
 
         if (movePath != null && movePath.Count > 0)
         {
@@ -114,7 +120,9 @@ public class MoveUnitAction : BaseUnitAction
 
             if (_toRecalculatePath)
             {
-                Vector2 currentPosition = _unit.UnitGameObject.transform.position;
+                _toRecalculatePath = false;
+
+                Vector2 currentPosition = _unit.Coords;
                 var destination = pathCopy.Last();
 
                 List<Vector2> remainingPath = null;
@@ -123,16 +131,15 @@ public class MoveUnitAction : BaseUnitAction
                     remainingPath = path.GetRange(currentPathIndex, path.Count - currentPathIndex);
                 }
 
-                path = PathFinder.Instance.RefindPath(remainingPath, currentPosition, destination);
+                path = PathFinder.Instance.RefindPath(remainingPath, currentPosition, destination, _moveCloseToObject, _partialPath);
 
-                _toRecalculatePath = false;
                 pathCopy = new List<Vector2>(path.Count);
                 pathCopy.AddRange(path.Select(point => new Vector2(point.x, point.y)));
-                currentPathIndex = 0;
+                currentPathIndex = 1;
 
                 if (pathCopy.Count <= 1)
                 {
-                    Debug.Log($"Unit {_unit.Unit.Name} cannot find path to {_targetPosition}");
+                    Debug.Log($"[{_unit.Unit.Name}] Cannot find a path to {_targetPosition}");
                     CompleteAction();
                     yield break;
                 }
@@ -141,7 +148,7 @@ public class MoveUnitAction : BaseUnitAction
 
             var nextPoint = pathCopy[currentPathIndex];
             var targetPosition = new Vector3(nextPoint.x, nextPoint.y, 0);
-            var startPosition = _unit.UnitGameObject.transform.position;
+            var startPosition = _unit.Coords;
             var journeyLength = Vector3.Distance(startPosition, targetPosition);
 
             if (journeyLength < 0.1f)
@@ -153,7 +160,7 @@ public class MoveUnitAction : BaseUnitAction
             var startTime = Time.time;
             var pausedTime = 0f;
 
-            while (Vector3.Distance(_unit.UnitGameObject.transform.position, targetPosition) > 0.01f)
+            while (true)
             {
                 if (IsPaused)
                 {
@@ -187,12 +194,10 @@ public class MoveUnitAction : BaseUnitAction
                 yield return null;
             }
 
-            if (_toRecalculatePath)
+            if (!_toRecalculatePath)
             {
-                continue;
+                currentPathIndex++;
             }
-
-            currentPathIndex++;
         }
         _isSuccessAction = true;
         CompleteAction();

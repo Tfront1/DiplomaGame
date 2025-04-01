@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -34,16 +35,36 @@ public class PathFinder
     /// <param name="controlPoints">List of path points</param>
     /// <param name="currentPoint">Current point, where is unit</param>
     /// <param name="endPoint">End point of path</param>
+    /// <param name="moveCloseToObject">To move close to object</param>
+    /// <param name="partialPath">To find not completed path</param>
     /// <returns></returns>
-    public List<Vector2> RefindPath(List<Vector2> controlPoints, Vector2 currentPoint, Vector2 endPoint)
+    public List<Vector2> RefindPath(List<Vector2> controlPoints, Vector2 currentPoint, Vector2 endPoint, bool moveCloseToObject, bool partialPath)
     {
         if (controlPoints == null)
         {
+            if (moveCloseToObject)
+            {
+                return FindNearestAccessiblePath(currentPoint, endPoint);
+            }
+            if (partialPath)
+            {
+                return FindPartialPath(currentPoint, endPoint);
+            }
+
             return FindPath(currentPoint, endPoint);
         }
 
         if(controlPoints.Count == 0)
         {
+            if (moveCloseToObject)
+            {
+                return FindNearestAccessiblePath(currentPoint, endPoint);
+            }
+            if (partialPath)
+            {
+                return FindPartialPath(currentPoint, endPoint);
+            }
+
             return FindPath(currentPoint, endPoint);
         }
 
@@ -56,6 +77,15 @@ public class PathFinder
         if (!hasObstacles)
         {
             return controlPoints;
+        }
+
+        if (moveCloseToObject)
+        {
+            return FindNearestAccessiblePath(currentPoint, endPoint);
+        }
+        if (partialPath)
+        {
+            return FindPartialPath(currentPoint, endPoint);
         }
 
         return FindPath(currentPoint, endPoint);
@@ -95,7 +125,13 @@ public class PathFinder
         return hasObstacles;
     }
 
+    public bool IsPositionOccupied(Vector2 position)
+    {
+        var colliders = Physics2D.OverlapCircleAll(position, 0.1f, _obstacleMask);
+        return colliders.Length > 0;
+    }
 
+    
     public List<Vector2> FindPath(Vector2 start, Vector2 end)
     {
         if (Physics2D.OverlapPoint(start, _obstacleMask))
@@ -141,7 +177,7 @@ public class PathFinder
         {
             if (openSet.Count > 10000)
                 return null;
-
+            
             var current = openSet[0].Position;
             openSet.RemoveAt(0);
             openSetContents.Remove(current);
@@ -183,8 +219,112 @@ public class PathFinder
                 }
             }
         }
-
+        
         return null;
+    }
+
+    public List<Vector2> FindPartialPath(Vector2 start, Vector2 end, float maxIterations = 10000)
+    {
+        if (Physics2D.OverlapPoint(start, _obstacleMask))
+        {
+            Debug.LogWarning("Start point inside of a collision");
+            return null;
+        }
+
+        var path = new List<Vector2> { start };
+        if (!Physics2D.Raycast(start, end - start, Vector2.Distance(start, end), _obstacleMask))
+        {
+            path.Add(end);
+            return path;
+        }
+
+        var visited = new HashSet<Vector2>();
+        var cameFrom = new Dictionary<Vector2, Vector2>();
+        var openSet = new List<NodeWithPriority>();
+        var openSetContents = new HashSet<Vector2>();
+        var gScore = new Dictionary<Vector2, float> { { start, 0 } };
+        var fScore = new Dictionary<Vector2, float> { { start, Vector2.Distance(start, end) } };
+        var bestEstimatedTotalLength = float.MaxValue;
+
+        openSet.Add(new NodeWithPriority(start, 0, Vector2.Distance(start, end)));
+        openSetContents.Add(start);
+
+        var bestPosition = start;
+        var bestDistance = Vector2.Distance(start, end);
+        float iterations = 0;
+
+        while (openSet.Count > 0 && iterations < maxIterations)
+        {
+            iterations++;
+
+            var current = openSet[0].Position;
+            openSet.RemoveAt(0);
+            openSetContents.Remove(current);
+
+            var distanceToEnd = Vector2.Distance(current, end);
+            if (!Physics2D.Raycast(current, end - current, distanceToEnd, _obstacleMask))
+            {
+                var finalPath = ReconstructPath(cameFrom, current);
+                finalPath.Add(end);
+                return finalPath;
+            }
+
+            var currentPathLength = gScore[current];
+            var currentEstimatedTotalLength = currentPathLength + distanceToEnd;
+
+            if (bestPosition == start && current != start)
+            {
+                bestPosition = current;
+                bestDistance = distanceToEnd;
+                bestEstimatedTotalLength = currentEstimatedTotalLength;
+            }
+            else if (distanceToEnd < bestDistance * 0.7f)
+            {
+                bestPosition = current;
+                bestDistance = distanceToEnd;
+                bestEstimatedTotalLength = currentEstimatedTotalLength;
+            }
+            else if (currentEstimatedTotalLength < bestEstimatedTotalLength * 0.9f)
+            {
+                bestPosition = current;
+                bestDistance = distanceToEnd;
+                bestEstimatedTotalLength = currentEstimatedTotalLength;
+            }
+            else if (Math.Abs(currentEstimatedTotalLength - bestEstimatedTotalLength) / bestEstimatedTotalLength < 0.1f &&
+                     distanceToEnd < bestDistance * 0.9f)
+            {
+                bestPosition = current;
+                bestDistance = distanceToEnd;
+                bestEstimatedTotalLength = currentEstimatedTotalLength;
+            }
+
+            visited.Add(current);
+
+            var neighbors = FindNeighborsAlongEdges(current, end, visited);
+
+            foreach (var neighbor in neighbors)
+            {
+                if (visited.Contains(neighbor))
+                    continue;
+
+                var tentativeGScore = gScore[current] + Vector2.Distance(current, neighbor);
+
+                if (!gScore.ContainsKey(neighbor) || tentativeGScore < gScore[neighbor])
+                {
+                    cameFrom[neighbor] = current;
+                    gScore[neighbor] = tentativeGScore;
+                    fScore[neighbor] = tentativeGScore + Vector2.Distance(neighbor, end);
+
+                    if (!openSetContents.Contains(neighbor))
+                    {
+                        InsertOrdered(openSet, new NodeWithPriority(neighbor, gScore[neighbor], fScore[neighbor]));
+                        openSetContents.Add(neighbor);
+                    }
+                }
+            }
+        }
+
+        return ReconstructPath(cameFrom, bestPosition);
     }
 
     public List<Vector2> FindNearestAccessiblePath(Vector2 characterPosition, Vector2 targetPoint, int pointsPerEdge = 2)
@@ -284,6 +424,7 @@ public class PathFinder
 
         return null;
     }
+
     private static void InsertOrdered(List<NodeWithPriority> list, NodeWithPriority node)
     {
         var i = 0;
@@ -325,39 +466,39 @@ public class PathFinder
                 var currentObstacle = collidersToExplore.Dequeue();
                 var currentBounds = currentObstacle.bounds;
 
-                var edgePoints = new List<Vector2>
-            {
-                new(currentBounds.min.x - _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
-                new(currentBounds.max.x + _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
-                new(currentBounds.min.x - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset),
-                new(currentBounds.max.x + _avoidanceOffset, currentBounds.max.y + _avoidanceOffset)
-            };
+                var edgePoints = new HashSet<Vector2>
+                {
+                    new(currentBounds.min.x - _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                    new(currentBounds.max.x + _avoidanceOffset, currentBounds.min.y - _avoidanceOffset),
+                    new(currentBounds.min.x - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset),
+                    new(currentBounds.max.x + _avoidanceOffset, currentBounds.max.y + _avoidanceOffset)
+                };
 
                 var numPointsPerEdge = 3;
 
                 // Bottom edge
-                for (var i = 1; i < numPointsPerEdge; i++)
+                for (var i = 1; i <= numPointsPerEdge; i++)
                 {
                     var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
                     edgePoints.Add(new Vector2(x, currentBounds.min.y - _avoidanceOffset));
                 }
 
                 // Top edge
-                for (var i = 1; i < numPointsPerEdge; i++)
+                for (var i = 1; i <= numPointsPerEdge; i++)
                 {
                     var x = Mathf.Lerp(currentBounds.min.x - _avoidanceOffset, currentBounds.max.x + _avoidanceOffset, i / (float)numPointsPerEdge);
                     edgePoints.Add(new Vector2(x, currentBounds.max.y + _avoidanceOffset));
                 }
 
                 // Left edge
-                for (var i = 1; i < numPointsPerEdge; i++)
+                for (var i = 1; i <= numPointsPerEdge; i++)
                 {
                     var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
                     edgePoints.Add(new Vector2(currentBounds.min.x - _avoidanceOffset, y));
                 }
 
                 // Right edge
-                for (var i = 1; i < numPointsPerEdge; i++)
+                for (var i = 1; i <= numPointsPerEdge; i++)
                 {
                     var y = Mathf.Lerp(currentBounds.min.y - _avoidanceOffset, currentBounds.max.y + _avoidanceOffset, i / (float)numPointsPerEdge);
                     edgePoints.Add(new Vector2(currentBounds.max.x + _avoidanceOffset, y));

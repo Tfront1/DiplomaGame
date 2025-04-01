@@ -14,6 +14,7 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     public int X { get; set; }
     public int Y { get; set; }
     public Vector2Int Coords => new(X, Y);
+    public Vector2 CenterCoords => new(X + Building.WidthCell / 2.0f, Y + Building.HeightCell / 2.0f);
     public Building Building { get; set; }
     public GameObject BuildingGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }

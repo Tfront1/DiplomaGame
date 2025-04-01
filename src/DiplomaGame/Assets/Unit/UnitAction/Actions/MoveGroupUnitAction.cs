@@ -108,6 +108,8 @@ public class MoveGroupUnitAction : BaseUnitAction
 
             if (_toRecalculatePath)
             {
+                _toRecalculatePath = false;
+
                 Vector2 currentPosition = _unit.UnitGameObject.transform.position;
                 var destination = pathCopy.Last();
 
@@ -117,12 +119,11 @@ public class MoveGroupUnitAction : BaseUnitAction
                     remainingPath = path.GetRange(currentPathIndex, path.Count - currentPathIndex);
                 }
 
-                path = PathFinder.Instance.RefindPath(remainingPath, currentPosition, destination);
+                path = PathFinder.Instance.RefindPath(remainingPath, currentPosition, destination, _moveCloseToObject, false);
 
-                _toRecalculatePath = false;
                 pathCopy = new List<Vector2>(path.Count);
                 pathCopy.AddRange(path.Select(point => new Vector2(point.x, point.y)));
-                currentPathIndex = 0;
+                currentPathIndex = 1;
 
                 if (pathCopy.Count <= 1)
                 {
@@ -147,7 +148,7 @@ public class MoveGroupUnitAction : BaseUnitAction
             var startTime = Time.time;
             var pausedTime = 0f;
 
-            while (Vector3.Distance(_unit.UnitGameObject.transform.position, targetPosition) > 0.01f)
+            while (true)
             {
                 if (IsPaused)
                 {
@@ -181,14 +182,12 @@ public class MoveGroupUnitAction : BaseUnitAction
                 yield return null;
             }
 
-            if (_toRecalculatePath)
+            if (!_toRecalculatePath)
             {
-                continue;
+                currentPathIndex++;
             }
-
-            currentPathIndex++;
         }
-
+        _isSuccessAction = true;
         CompleteAction();
     }
 
