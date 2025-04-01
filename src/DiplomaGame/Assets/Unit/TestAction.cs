@@ -12,12 +12,18 @@ public class TestAction : MonoBehaviour
     public Vector2 _end;
 
     public static TownItem _town;
+    public static TownItem _enemyTown;
 
     public void Awake()
     {
-        _town = new TownItem("Test", Guid.NewGuid());
+        _town = new TownItem("Town", Guid.NewGuid());
         BuildingManager.BuildInstantly(new Vector2Int(5, 5),
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _town);
+
+        _enemyTown = new TownItem("Enemy town",Guid.NewGuid(), false);
+
+        BuildingManager.BuildInstantly(new Vector2Int(10, 10),
+            BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _enemyTown);
     }
 
     private void Update()
@@ -25,7 +31,11 @@ public class TestAction : MonoBehaviour
         //Spawn unit
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            _town.Units.AddRange(SpawnUnit());
+            SpawnUnit(_town);
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            SpawnUnit(_enemyTown);
         }
 
         /*
@@ -145,7 +155,7 @@ public class TestAction : MonoBehaviour
         */
     }
 
-    private List<UnitItem> SpawnUnit()
+    private List<UnitItem> SpawnUnit(TownItem town)
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
 
@@ -169,7 +179,7 @@ public class TestAction : MonoBehaviour
                 Vector2.zero
             );
 
-            var unit = new Unit { Name = UtilsClass.GetRandomName(),Speed = 15f };
+            var unit = new Unit { Name = UtilsClass.GetRandomName(), Speed = 15f };
             renderer.sprite = newBuildingSprite;
             unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
 
@@ -179,9 +189,9 @@ public class TestAction : MonoBehaviour
             randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
 
-            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, _town);
+            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, town);
 
-            _town.AddUnit(unitItem);
+            town.AddUnit(unitItem);
 
             var res = ResourcesConfig.ResourceElements.Find(x => x.Id == 1);
 

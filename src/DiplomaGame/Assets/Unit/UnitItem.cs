@@ -12,6 +12,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public float Y => UnitGameObject.transform.position.y;
     public float Z => UnitGameObject.transform.position.z;
     public Vector3 Coords => new(X, Y, Z);
+    public Vector2 CenterCoords =>
+        new(X + (SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit).x / 2.0f,
+            Y + (SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit).y / 2.0f);
     public GameObject UnitGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
     public BoxCollider2D Collider { get; set; }
@@ -33,6 +36,10 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public event EventHandler<UnitDiedEventArgs> OnDied;
     public event EventHandler<UnitUIToChangeEventArgs> UIToChange;
+
+    public event EventHandler<UnitPositionChangedArgs> OnPositionChanged;
+    private float _lastTimePositionEventInvoked = 0f;
+    private float _timeToInvokePositionEvent = 0.5f;
 
     public bool IsDestroyed { get; private set; } = false;
 
@@ -64,6 +71,12 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public void SetPosition(Vector2 position)
     {
+        if (Time.time - _lastTimePositionEventInvoked > _timeToInvokePositionEvent)
+        {
+            _lastTimePositionEventInvoked = Time.time;
+            OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
+        }
+
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
 
@@ -72,6 +85,12 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public void SetPositionWithGroup(Vector2 position)
     {
+        if (Time.time - _lastTimePositionEventInvoked > _timeToInvokePositionEvent)
+        {
+            _lastTimePositionEventInvoked = Time.time;
+            OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
+        }
+
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
 
@@ -279,6 +298,19 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         public UnitUIToChangeEventArgs(UnitItem unit)
         {
             Unit = unit;
+        }
+    }
+
+    public class UnitPositionChangedArgs : EventArgs
+    {
+        public UnitItem Unit { get; }
+        public Vector2 OldPosition { get; }
+        public Vector2 NewPosition { get; }
+        public UnitPositionChangedArgs(UnitItem unit, Vector2 oldPosition, Vector2 newPosition)
+        {
+            Unit = unit;
+            OldPosition = oldPosition;
+            NewPosition = newPosition;
         }
     }
 }

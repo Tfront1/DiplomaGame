@@ -182,7 +182,17 @@ namespace StateMachine.States
                     }
                     else
                     {
-                        // Attack other unit
+                        var targetUnits = SelectorFactory.GetUnitItems(target.Item1).ToList();
+                        var randomSelectedUnits = selectedUnits.OrderBy(x => Random.value).ToList();
+
+                        foreach (var unit in randomSelectedUnits)
+                        {
+                            if (targetUnits.Count == 0) break;
+
+                            var randomTarget = targetUnits[Random.Range(0, targetUnits.Count)];
+                            var attackUnitAction = new AttackUnitAction(unit, randomTarget, true);
+                            UnitActionManager.Instance.ExecuteImmediately(attackUnitAction);
+                        }
                     }
 
                     Debug.Log("Units interacting with other unit");

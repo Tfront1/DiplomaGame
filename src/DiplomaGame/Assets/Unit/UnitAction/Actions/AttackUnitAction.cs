@@ -1,26 +1,21 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Assets.Items.Weapon;
 using UnityEngine;
 
-public class AttackBuildingAction : BaseUnitAction
+public class AttackUnitAction : BaseUnitAction
 {
-    private BuildingItem _targetBuilding;
+    private UnitItem _targetUnit;
 
     private bool _movementCompleted = false;
     private bool _movementSuccess = false;
     private WeaponElement weapon;
     private bool _attackWithMainWeapon = false;
     private bool _isMeleeWeapon = false;
-    private Guid _pathGuid;
-    private List<Vector2> _path = null;
-    private bool _pathFound = false;
 
-    public AttackBuildingAction(UnitItem unit, BuildingItem targetBuilding, bool attackWithMainWeapon = true) : base(unit)
+    public AttackUnitAction(UnitItem unit, UnitItem targetUnit, bool attackWithMainWeapon = true) : base(unit)
     {
-        _targetBuilding = targetBuilding;
+        _targetUnit = targetUnit;
 
         if (attackWithMainWeapon)
         {
@@ -46,11 +41,11 @@ public class AttackBuildingAction : BaseUnitAction
     {
         if (!CanExecute())
         {
-            Debug.Log("Can`t execute attack building action.");
+            Debug.Log("Can`t execute attack unit action.");
             return;
         }
 
-        _targetBuilding.OnDestroyed += OnBuildingDestroyed;
+        _targetUnit.OnDied += OnUnitDied;
 
         _idAction = Guid.NewGuid();
         CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Attack());
@@ -68,8 +63,8 @@ public class AttackBuildingAction : BaseUnitAction
         {
             yield return null;
         }
-
-        yield return MoveToPoint(GridService.GetWorldPosition(_targetBuilding.CenterCoords.x, _targetBuilding.CenterCoords.y), true);
+        
+        yield return MoveToPoint(true);
 
         if (IsStopped)
         {
@@ -86,6 +81,7 @@ public class AttackBuildingAction : BaseUnitAction
         {
             var attackCooldown = weapon.CoolDown;
             var lastAttackTime = 0f;
+            var attackDistance = MapConfig.CellSize * weapon.AttackDistance * 0.9f;
 
             if (_isMeleeWeapon)
             {
@@ -96,7 +92,7 @@ public class AttackBuildingAction : BaseUnitAction
                 _unit.Skills.SetActiveSkill<ArcherySkill>();
             }
 
-            while (!_targetBuilding.IsDestroyed)
+            while (!_targetUnit.IsDestroyed)
             {
                 if (IsStopped)
                 {
@@ -124,9 +120,29 @@ public class AttackBuildingAction : BaseUnitAction
                     }
                 }
 
+                if (!IsInAttackRange(_unit.CenterCoords, _targetUnit.CenterCoords, attackDistance))
+                {
+                    _unit.Skills.ResetActiveSkill();
+                    yield return MoveToPoint(true);
+                    if (!_movementSuccess || IsStopped)
+                    {
+                        CompleteAction();
+                        yield break;
+                    }
+
+                    if (_isMeleeWeapon)
+                    {
+                        _unit.Skills.SetActiveSkill<SwordsmanshipSkill>();
+                    }
+                    else
+                    {
+                        _unit.Skills.SetActiveSkill<ArcherySkill>();
+                    }
+                }
+
                 if (Time.time >= lastAttackTime + attackCooldown)
                 {
-                    _unit.AttackBuilding(_targetBuilding, _attackWithMainWeapon);
+                    _unit.AttackUnit(_targetUnit, _attackWithMainWeapon);
 
                     lastAttackTime = Time.time;
                 }
@@ -147,13 +163,13 @@ public class AttackBuildingAction : BaseUnitAction
 
     protected override void CompleteAction()
     {
-        _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
+        _targetUnit.OnDied -= OnUnitDied;
         base.CompleteAction();
     }
 
-    private IEnumerator MoveToPoint(Vector2 targetPosition, bool considerWeaponRange = false)
+    private IEnumerator MoveToPoint(bool considerWeaponRange = false)
     {
-        if (considerWeaponRange && _unit != null && _targetBuilding != null)
+        if (considerWeaponRange && _unit != null && _targetUnit != null)
         {
             var weapon = _attackWithMainWeapon
                 ? _unit.UnitEquipment.MainWeapon
@@ -161,42 +177,21 @@ public class AttackBuildingAction : BaseUnitAction
 
             if (weapon != null)
             {
-                _pathGuid = Guid.NewGuid();
-                PathFinderManager.OnPathFound += OnPathFound;
+                _movementCompleted = false;
+                _movementSuccess = false;
 
-                PathFinderManager.RequestPath(_unit.Coords, targetPosition, _pathGuid, PathFinderManager.PathAction.MoveAnyway);
-
-                while (!_pathFound)
-                {
-                    yield return null;
-                }
-
-                var attackRange = MapConfig.CellSize * weapon.AttackDistance * 0.9f;
-
-                var buildingWidth = _targetBuilding.Building.WidthCell * MapConfig.CellSize;
-                var buildingHeight = _targetBuilding.Building.HeightCell * MapConfig.CellSize;
-
-                if (_path == null || !IsInAttackRange(_path.Last(), targetPosition, buildingHeight, buildingWidth, attackRange))
-                {
-                    Cancel();
-                    yield break;
-                }
-
-                var moveAction = new MoveUnitAction(_unit, targetPosition, false, true);
-                moveAction.OnActionCompleted += OnMovementComplete;
-                moveAction.Execute();
+                var followAction = new FollowEnemyAction(_unit, _targetUnit, _attackWithMainWeapon);
+                followAction.OnActionCompleted += OnMovementComplete;
+                followAction.Execute();
 
                 var wasPaused = false;
-
-                var timerToCalculateDistance = 1f;
-                var time = Time.time;
 
                 while (!_movementCompleted)
                 {
                     if (IsStopped)
                     {
-                        moveAction.Cancel();
-                        moveAction.OnActionCompleted -= OnMovementComplete;
+                        followAction.Cancel();
+                        followAction.OnActionCompleted -= OnMovementComplete;
                         yield break;
                     }
 
@@ -204,7 +199,7 @@ public class AttackBuildingAction : BaseUnitAction
                     {
                         if (!wasPaused)
                         {
-                            moveAction.Pause();
+                            followAction.Pause();
                             wasPaused = true;
                         }
                         yield return null;
@@ -213,27 +208,15 @@ public class AttackBuildingAction : BaseUnitAction
                     {
                         if (wasPaused)
                         {
-                            moveAction.Resume();
+                            followAction.Resume();
                             wasPaused = false;
-                        }
-                    }
-
-                    if (Time.time - time > timerToCalculateDistance)
-                    {
-                        time = Time.time;
-                        if (IsInAttackRange(_unit.Coords, targetPosition, buildingHeight, buildingWidth, attackRange))
-                        {
-                            moveAction.Cancel();
-                            _movementSuccess = true;
-                            moveAction.OnActionCompleted -= OnMovementComplete;
-                            yield break;
                         }
                     }
 
                     yield return null;
                 }
 
-                moveAction.OnActionCompleted -= OnMovementComplete;
+                followAction.OnActionCompleted -= OnMovementComplete;
             }
             else
             {
@@ -248,13 +231,12 @@ public class AttackBuildingAction : BaseUnitAction
         }
     }
 
-    private bool IsInAttackRange(Vector2 unitPosition, Vector2 buildingCenter, float buildingHeight, float buildingWidth, float attackRange)
+    private bool IsInAttackRange(Vector2 unitPosition, Vector2 targetUnitPosition, float attackRange)
     {
-        var halfWidth = buildingWidth / 2;
-        var halfHeight = buildingHeight / 2;
+        var unitSize = _targetUnit.SpriteRenderer.sprite.rect.size / _targetUnit.SpriteRenderer.sprite.pixelsPerUnit;
 
-        var closestX = Math.Max(buildingCenter.x - halfWidth, Math.Min(unitPosition.x, buildingCenter.x + halfWidth));
-        var closestY = Math.Max(buildingCenter.y - halfHeight, Math.Min(unitPosition.y, buildingCenter.y + halfHeight));
+        var closestX = Math.Max(targetUnitPosition.x, Math.Min(unitPosition.x, targetUnitPosition.x + unitSize.x));
+        var closestY = Math.Max(targetUnitPosition.y, Math.Min(unitPosition.y, targetUnitPosition.y + unitSize.y));
 
         var closestPoint = new Vector2(closestX, closestY);
 
@@ -272,16 +254,7 @@ public class AttackBuildingAction : BaseUnitAction
         _movementCompleted = true;
     }
 
-    private void OnPathFound(Guid id, List<Vector2> path)
-    {
-        if (id != _pathGuid) return;
-
-        PathFinderManager.OnPathFound -= OnPathFound;
-        _pathFound = true;
-        _path = path;
-    }
-
-    private void OnBuildingDestroyed(object sender, BuildingItem.BuildingDestroyedEventArgs args)
+    private void OnUnitDied(object sender, UnitItem.UnitDiedEventArgs args)
     {
         Cancel();
     }

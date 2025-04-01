@@ -12,6 +12,7 @@ public class TestBuilding :MonoBehaviour
     private void Awake()
     {
         _townItem = new TownItem("TestBuildingTown", Guid.NewGuid(), false);
+        _townItem = TestAction._enemyTown;
     }
     
     private void Update()

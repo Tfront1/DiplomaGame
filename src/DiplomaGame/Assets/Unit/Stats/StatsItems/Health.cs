@@ -4,6 +4,6 @@
 
     public void Attack(float damage)
     {
-        _currentValue = -damage;
+        _currentValue -= damage;
     }
 }

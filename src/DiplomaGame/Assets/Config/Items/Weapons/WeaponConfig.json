@@ -8,7 +8,7 @@
       "StaminaToAttack": 1.0,
       "ArmorPenetration": 0.0,
       "Durability": 10000.0,
-      "AttackDistance": 0.15,
+      "AttackDistance": 0.25,
       "AmmunitionId": 0,
       "CoolDown": 0.5,
       "IsMainWeapon": true

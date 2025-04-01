@@ -50,12 +50,6 @@ public class MoveUnitAction : BaseUnitAction
             action = PathFinderManager.PathAction.MoveAnyway;
         }
 
-        if (_unit.IsInGroup)
-        {
-            var group = GroupManager.Instance.GetGroup(_unit.GroupId);
-            group.RemoveUnitFromGroup(_unit);
-        }
-
         _unit.CanGroup = true;
 
         PathFinderManager.RequestPath(
