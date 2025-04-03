@@ -6,195 +6,92 @@ using Town;
 
 public class TownUIManager : MonoBehaviour
 {
+    public GameObject _townUIPrefab;
+    public GameObject _resourceItemPrefab;
+
+    private TextMeshProUGUI _townNameText;
+
+    private TextMeshProUGUI _townBuildingsCountText;
+    private Image _townBuildingsImage;
+
+    private TextMeshProUGUI _townUnitsCountText;
+    private Image _townUnitsImage;
+
+    private TextMeshProUGUI _townDiedUnitsCountText;
+    private Image _townDiedUnitsImage;
+
+    private Transform _scrollView;
+    private TextMeshProUGUI _townResourcesCountText;
+    private Transform _resourcesPanel;
+
+    private Image _resourcesImage;
+
     private TextMeshProUGUI playerTownNameText;
     private TextMeshProUGUI playerUnitsCountText;
     private TextMeshProUGUI playerBuildingsCountText;
     private TextMeshProUGUI playerDeadUnitsText;
     private Transform playerResourcesPanel;
-    private GameObject resourcePrefab;
-
-    private Dictionary<string, TextMeshProUGUI> playerResourceTexts = new();
+    private TextMeshProUGUI playerResourcesCountText;
+    private Dictionary<int, GameObject> playerResourceItems = new();
     private TownItem currentPlayerTown;
     private Canvas mainCanvas;
 
     private void Awake()
     {
+        if (_townUIPrefab == null)
+            _townUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/TownUIPrefab");
+
+        if (_resourceItemPrefab == null)
+            _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/TownResourceUIPrefab"); 
+
         CreateUI();
     }
 
     private void CreateUI()
     {
-        CreateMainCanvas();
-        var playerTownPanel = CreatePlayerTownPanel();
-        CreatePlayerTownInfoTexts(playerTownPanel);
-        playerResourcesPanel = CreateResourcesPanel();
-        resourcePrefab = CreateResourcePrefab();
-    }
+        var townUI = Instantiate(_townUIPrefab, transform);
 
-    private void CreateMainCanvas()
-    {
-        mainCanvas = MainCanvasUI.MainCanvas;
-    }
+        mainCanvas = townUI.GetComponentInChildren<Canvas>();
 
-    private RectTransform CreatePlayerTownPanel()
-    {
-        var panelObj = new GameObject("PlayerTownPanel");
-        panelObj.transform.SetParent(mainCanvas.transform, false);
+        var background = mainCanvas.transform.Find("Background").GetComponent<Image>();
 
-        var rectTransform = panelObj.AddComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0, 1);
-        rectTransform.anchorMax = new Vector2(0, 1);
-        rectTransform.pivot = new Vector2(0, 1);
-        rectTransform.anchoredPosition = new Vector2(20, -20);
-        rectTransform.sizeDelta = new Vector2(300, 200);
+        _townNameText = background.transform.Find("TownName").GetComponent<TextMeshProUGUI>();
 
-        var image = panelObj.AddComponent<Image>();
-        image.color = new Color(0, 0, 0, 0.5f);
+        _townBuildingsImage = background.transform.Find("BuildingsCountImage").GetComponent<Image>();
+        _townBuildingsCountText = _townBuildingsImage.transform.Find("BuildingsCount").GetComponent<TextMeshProUGUI>();
 
-        return rectTransform;
-    }
+        _townUnitsImage = background.transform.Find("UnitsCountImage").GetComponent<Image>();
+        _townUnitsCountText = _townUnitsImage.transform.Find("UnitsCount").GetComponent<TextMeshProUGUI>();
 
-    private void CreatePlayerTownInfoTexts(RectTransform parentPanel)
-    {
-        var headerObj = new GameObject("PlayerTownHeader");
-        headerObj.transform.SetParent(parentPanel, false);
+        _townDiedUnitsImage = background.transform.Find("DiedUnitsCountImage").GetComponent<Image>();
+        _townDiedUnitsCountText = _townDiedUnitsImage.transform.Find("DiedUnitsCount").GetComponent<TextMeshProUGUI>();
 
-        var headerRect = headerObj.AddComponent<RectTransform>();
-        headerRect.anchorMin = new Vector2(0, 1);
-        headerRect.anchorMax = new Vector2(1, 1);
-        headerRect.pivot = new Vector2(0.5f, 1);
-        headerRect.anchoredPosition = new Vector2(0, -5);
-        headerRect.sizeDelta = new Vector2(-20, 30);
+        _resourcesImage = background.transform.Find("ResourcesImage").GetComponent<Image>();
 
-        var headerText = headerObj.AddComponent<TextMeshProUGUI>();
-        headerText.text = "YOUR TOWN";
-        headerText.fontSize = 24;
-        headerText.color = new Color(1f, 0.8f, 0.2f);
-        headerText.alignment = TextAlignmentOptions.Center;
-        headerText.fontStyle = FontStyles.Bold;
+        _scrollView = mainCanvas.transform.Find("ScrollView");
 
-        playerTownNameText = CreateTextElement("TownNameText", parentPanel, 1);
-        playerTownNameText.fontSize = 20;
-        playerTownNameText.fontStyle = FontStyles.Bold;
+        _resourcesPanel = _scrollView.transform.Find("Viewport/Panel");
 
-        playerUnitsCountText = CreateTextElement("UnitsCountText", parentPanel, 2);
-        playerBuildingsCountText = CreateTextElement("BuildingsCountText", parentPanel, 3);
-        playerDeadUnitsText = CreateTextElement("DeadUnitsText", parentPanel, 4);
-    }
+        var layoutElement = _resourcesPanel.GetComponent<LayoutElement>();
+        if (layoutElement != null)
+        {
+            var viewportRect = _scrollView.GetComponent<RectTransform>();
+            if (viewportRect != null)
+            {
+                layoutElement.minHeight = viewportRect.rect.height;
+            }
+        }
 
-    private TextMeshProUGUI CreateTextElement(string gameObjectName, RectTransform parent, int order)
-    {
-        var textObj = new GameObject(gameObjectName);
-        textObj.transform.SetParent(parent, false);
+        _townResourcesCountText = _resourcesPanel.transform.Find("BackpackCapacityText").GetComponent<TextMeshProUGUI>();
 
-        var rectTransform = textObj.AddComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0, 1);
-        rectTransform.anchorMax = new Vector2(1, 1);
-        rectTransform.pivot = new Vector2(0, 1);
-        rectTransform.anchoredPosition = new Vector2(10, -30 - (order * 30));
-        rectTransform.sizeDelta = new Vector2(-20, 25);
+        playerTownNameText = _townNameText;
+        playerUnitsCountText = _townUnitsCountText;
+        playerBuildingsCountText = _townBuildingsCountText;
+        playerDeadUnitsText = _townDiedUnitsCountText;
+        playerResourcesPanel = _resourcesPanel;
+        playerResourcesCountText = _townResourcesCountText;
 
-        var text = textObj.AddComponent<TextMeshProUGUI>();
-        text.alignment = TextAlignmentOptions.Left;
-        text.fontSize = 18;
-        text.color = Color.white;
-
-        return text;
-    }
-
-    private RectTransform CreateResourcesPanel()
-    {
-        var panelObj = new GameObject("ResourcesPanel");
-        panelObj.transform.SetParent(mainCanvas.transform, false);
-
-        var rectTransform = panelObj.AddComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0, 1);
-        rectTransform.anchorMax = new Vector2(0, 1);
-        rectTransform.pivot = new Vector2(0, 1);
-        rectTransform.anchoredPosition = new Vector2(20, -240);
-        rectTransform.sizeDelta = new Vector2(300, 200);
-
-        var image = panelObj.AddComponent<Image>();
-        image.color = new Color(0, 0, 0, 0.5f);
-
-        var headerObj = new GameObject("ResourcesHeader");
-        headerObj.transform.SetParent(panelObj.transform, false);
-
-        var headerRect = headerObj.AddComponent<RectTransform>();
-        headerRect.anchorMin = new Vector2(0, 1);
-        headerRect.anchorMax = new Vector2(1, 1);
-        headerRect.pivot = new Vector2(0.5f, 1);
-        headerRect.anchoredPosition = new Vector2(0, -5);
-        headerRect.sizeDelta = new Vector2(-20, 30);
-
-        var headerText = headerObj.AddComponent<TextMeshProUGUI>();
-        headerText.text = "RESOURCES";
-        headerText.fontSize = 20;
-        headerText.color = new Color(1f, 0.8f, 0.2f);
-        headerText.alignment = TextAlignmentOptions.Center;
-        headerText.fontStyle = FontStyles.Bold;
-
-        var contentObj = new GameObject("ResourcesContent");
-        contentObj.transform.SetParent(panelObj.transform, false);
-
-        var contentRect = contentObj.AddComponent<RectTransform>();
-        contentRect.anchorMin = new Vector2(0, 0);
-        contentRect.anchorMax = new Vector2(1, 1);
-        contentRect.pivot = new Vector2(0.5f, 0.5f);
-        contentRect.anchoredPosition = new Vector2(0, -15);
-        contentRect.sizeDelta = new Vector2(-20, -40);
-
-        var layout = contentObj.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(10, 10, 35, 10);
-        layout.spacing = 5;
-        layout.childAlignment = TextAnchor.UpperLeft;
-        layout.childControlWidth = true;
-        layout.childControlHeight = false;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = false;
-
-        return contentRect;
-    }
-
-    private GameObject CreateResourcePrefab()
-    {
-        var prefab = new GameObject("ResourceItemPrefab");
-        prefab.SetActive(false);
-
-        var rectTransform = prefab.AddComponent<RectTransform>();
-        rectTransform.sizeDelta = new Vector2(0, 25);
-
-        var layout = prefab.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 5;
-        layout.childAlignment = TextAnchor.MiddleLeft;
-        layout.childControlWidth = false;
-        layout.childForceExpandWidth = false;
-
-        var nameObj = new GameObject("ResourceName");
-        nameObj.transform.SetParent(prefab.transform, false);
-
-        var nameRect = nameObj.AddComponent<RectTransform>();
-        nameRect.sizeDelta = new Vector2(150, 25);
-
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 16;
-        nameText.color = Color.white;
-        nameText.alignment = TextAlignmentOptions.Left;
-
-        var valueObj = new GameObject("ResourceValue");
-        valueObj.transform.SetParent(prefab.transform, false);
-
-        var valueRect = valueObj.AddComponent<RectTransform>();
-        valueRect.sizeDelta = new Vector2(80, 25);
-
-        var valueText = valueObj.AddComponent<TextMeshProUGUI>();
-        valueText.fontSize = 16;
-        valueText.color = Color.white;
-        valueText.alignment = TextAlignmentOptions.Right;
-
-        DontDestroyOnLoad(prefab);
-
-        return prefab;
+        _resourcesImage.GetComponent<Button>().onClick.AddListener(() => { ToggleResourcesPanel(_scrollView); });
     }
 
     public void SetPlayerTown(TownItem town)
@@ -212,87 +109,115 @@ public class TownUIManager : MonoBehaviour
             UpdateUI(currentPlayerTown);
         }
     }
-    private void InitializeResourceDisplay()
-    {
-        if (currentPlayerTown != null && currentPlayerTown.TotalBackpack != null)
-        {
-            foreach (Transform child in playerResourcesPanel)
-            {
-                if (child.gameObject != resourcePrefab)
-                    Destroy(child.gameObject);
-            }
-
-            playerResourceTexts.Clear();
-
-            foreach (var resourceItem in currentPlayerTown.TotalBackpack.GetAllItems())
-            {
-                var resourceObj = Instantiate(resourcePrefab, playerResourcesPanel);
-                resourceObj.SetActive(true);
-
-                var resourceNameText = resourceObj.transform.Find("ResourceName").GetComponent<TextMeshProUGUI>();
-                var resourceValueText = resourceObj.transform.Find("ResourceValue").GetComponent<TextMeshProUGUI>();
-
-                resourceNameText.text = resourceItem.Item.Name + ":";
-                resourceValueText.text = resourceItem.Quantity.ToString();
-
-                playerResourceTexts.Add(resourceItem.Item.Name, resourceValueText);
-            }
-        }
-    }
 
     public void UpdateUI(TownItem town)
     {
-        if (town != null)
+        if (town == null)
+            return;
+
+        playerTownNameText.text = town.Name;
+        playerBuildingsCountText.text = town.TownHall != null ? $" : {town.Buildings.Count + 1}" : $" : {town.Buildings.Count}";
+        playerUnitsCountText.text = $" : {town.Units.Count}";
+        playerDeadUnitsText.text = $" : {town.DiedUnits}";
+
+        if (town.TotalBackpack == null)
         {
-            currentPlayerTown = town;
+            playerResourcesCountText.text = "0 / 0";
         }
-
-        if (currentPlayerTown != null)
+        else
         {
-            playerTownNameText.text = currentPlayerTown.Name;
-            playerUnitsCountText.text = "Units: " + currentPlayerTown.Units.Count.ToString();
-            playerBuildingsCountText.text = "Buildings: " + currentPlayerTown.Buildings.Count.ToString();
-            playerDeadUnitsText.text = "Died Units: " + currentPlayerTown.DiedUnits.ToString();
+            playerResourcesCountText.text = $"{town.TotalBackpack.CurrentCapacity} / {town.TotalBackpack.MaxCapacity}";
 
-            UpdateResourceDisplay();
-        }
-    }
+            var resourcesToRemove = new HashSet<int>(playerResourceItems.Keys);
 
-    private void UpdateResourceDisplay()
-    {
-        if (currentPlayerTown != null && currentPlayerTown.TotalBackpack != null)
-        {
-            var needReinitialize = false;
-
-            var resources = currentPlayerTown.TotalBackpack.GetAllItems();
-            if (resources.Count != playerResourceTexts.Count)
+            foreach (var resource in town.TotalBackpack.GetDetailedItems())
             {
-                needReinitialize = true;
-            }
-            else
-            {
-                foreach (var resource in resources)
+                var resourceId = resource.Key.Id;
+                var quantity = resource.Value;
+
+                resourcesToRemove.Remove(resourceId);
+
+                if (quantity <= 0)
                 {
-                    if (!playerResourceTexts.ContainsKey(resource.Item.Name))
-                    {
-                        needReinitialize = true;
-                        break;
-                    }
+                    RemoveResourceFromPanel(resourceId);
+                }
+                else if (playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                {
+                    var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+                    resourceText.text = quantity.ToString();
+                }
+                else
+                {
+                    AddResourceToPanel(resourceId, quantity);
                 }
             }
 
-            if (needReinitialize)
+            foreach (var resourceId in resourcesToRemove)
             {
-                InitializeResourceDisplay();
+                RemoveResourceFromPanel(resourceId);
             }
-            else
+        }
+    }
+
+    private void AddResourceToPanel(int resourceId, int quantity)
+    {
+        if (quantity <= 0)
+            return;
+
+        var resource = _resourceItemPrefab.transform.Find("Panel").gameObject;
+
+        var resourceItem = Instantiate(resource, playerResourcesPanel);
+
+        var rectTransform = resourceItem.GetComponent<RectTransform>();
+
+        if (rectTransform != null)
+        {
+            rectTransform.sizeDelta = new Vector2(0, 30);
+            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
+        }
+
+        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceItem.GetComponentInChildren<Image>();
+        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
+
+        playerResourceItems[resourceId] = resourceItem;
+        resourceText.text = quantity.ToString();
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(playerResourcesPanel as RectTransform);
+    }
+
+    private void RemoveResourceFromPanel(int resourceId)
+    {
+        if (playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        {
+            Destroy(resourceItem);
+            playerResourceItems.Remove(resourceId);
+        }
+    }
+
+    private void InitializeResourceDisplay()
+    {
+        foreach (var resourceItem in playerResourceItems.Values)
+        {
+            Destroy(resourceItem);
+        }
+        playerResourceItems.Clear();
+
+        foreach (Transform child in playerResourcesPanel)
+        {
+            if (child.GetComponent<TextMeshProUGUI>() != playerResourcesCountText)
             {
-                foreach (var resource in resources)
+                Destroy(child.gameObject);
+            }
+        }
+
+        if (currentPlayerTown.TotalBackpack != null && currentPlayerTown.TotalBackpack.CurrentCapacity > 0)
+        {
+            foreach (var resource in currentPlayerTown.TotalBackpack.GetDetailedItems())
+            {
+                if (resource.Value > 0)
                 {
-                    if (playerResourceTexts.TryGetValue(resource.Item.Name, out var valueText))
-                    {
-                        valueText.text = resource.Quantity.ToString();
-                    }
+                    AddResourceToPanel(resource.Key.Id, resource.Value);
                 }
             }
         }
@@ -300,6 +225,11 @@ public class TownUIManager : MonoBehaviour
 
     public void RefreshUI(TownItem town = null)
     {
-        UpdateUI(town);
+        UpdateUI(town ?? currentPlayerTown);
+    }
+
+    private void ToggleResourcesPanel(Transform panel)
+    {
+        panel.gameObject.SetActive(!panel.gameObject.activeSelf);
     }
 }

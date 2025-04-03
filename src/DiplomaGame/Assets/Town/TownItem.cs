@@ -76,7 +76,20 @@ namespace Town
 
         public void RemoveBuilding(BuildingItem building)
         {
-            if (Buildings.Contains(building))
+            if (TownHall == building)
+            {
+                TownHall = null;
+                if (building.Backpack != null)
+                {
+                    building.Backpack.BackpackChanged -= BuildingBackpackChanged;
+                    building.OnDestroyed -= BuildingDestroyed;
+
+                    RecalculateTotalResources();
+                }
+
+                this.NotifyUIChanged();
+            }
+            else if (Buildings.Contains(building))
             {
                 Buildings.Remove(building);
                 BuildingTownOrder.RemoveOrdersForBuilding(building);

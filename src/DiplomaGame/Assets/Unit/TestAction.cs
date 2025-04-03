@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using Town;
+using Random = UnityEngine.Random;
 
 public class TestAction : MonoBehaviour
 {
@@ -193,9 +194,10 @@ public class TestAction : MonoBehaviour
 
             town.AddUnit(unitItem);
 
-            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == 1);
+            var rand = Random.Range(1, 5);
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
 
-            //unitItem.Backpack.FillWithSingleItem(res);
+            unitItem.Backpack.FillWithSingleItem(res);
         }
 
         return units;
