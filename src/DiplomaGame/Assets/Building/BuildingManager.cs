@@ -22,8 +22,13 @@ public class BuildingManager : MonoBehaviour
     /// <summary>
     /// Cache for building texture configurations to avoid repeated searches
     /// </summary>
-    private static Dictionary<int, BuildingTexture> _buildingTextureConfigCache;
+    public static Dictionary<int, BuildingTexture> _buildingTextureConfigCache;
 
+    /// <summary>
+    /// Cache for building sprite to avoid repeated searches
+    /// </summary>
+    public static Dictionary<int, Sprite> _buildingSpriteCache = new();
+    
     /// <summary>
     /// Reference to parent GameObject that organizes all Building objects in hierarchy
     /// </summary>
@@ -56,6 +61,20 @@ public class BuildingManager : MonoBehaviour
         );
 
         _buildingTextureConfigCache = BuildingTexturesConfig.BuildingTexture.ToDictionary(t => t.BuildingId);
+
+        foreach (var (buildingId, texture) in _buildingTextureConfigCache)
+        {
+            if (texture.Texture != null)
+            {
+                var buildingSprite = Sprite.Create(
+                    texture.Texture,
+                    new Rect(0.0f, 0.0f, texture.Texture.width, texture.Texture.height),
+                    Vector2.zero
+                );
+
+                _buildingSpriteCache[buildingId] = buildingSprite;
+            }
+        }
 
         _isInitializedCaches = true; 
     }
@@ -410,12 +429,21 @@ public class BuildingManager : MonoBehaviour
             renderer = buildingObject.GetComponent<SpriteRenderer>();
         }
 
-        var newBuildingSprite = Sprite.Create(
-            buildingTexture.Texture,
-            new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
-            Vector2.zero
-        );
-        renderer.sprite = newBuildingSprite;
+        if (_buildingSpriteCache.TryGetValue(building.Id, out var sprite))
+        {
+            renderer.sprite = sprite;
+        }
+        else
+        {
+            Sprite newSprite = Sprite.Create(
+                buildingTexture.Texture,
+                new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
+                Vector2.zero
+            );
+
+            _buildingSpriteCache[buildingTexture.BuildingId] = newSprite;
+            renderer.sprite = newSprite;
+        }
 
         var (finalScale, _) = CalculateBuildingScale(building, buildingTexture);
         buildingObject.transform.localScale = new Vector3(finalScale, finalScale, 1);

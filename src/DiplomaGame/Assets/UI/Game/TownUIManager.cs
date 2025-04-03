@@ -1,8 +1,8 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using Town;
+using UnityEngine;
 
 public class TownUIManager : MonoBehaviour
 {
@@ -26,15 +26,16 @@ public class TownUIManager : MonoBehaviour
 
     private Image _resourcesImage;
 
-    private TextMeshProUGUI playerTownNameText;
-    private TextMeshProUGUI playerUnitsCountText;
-    private TextMeshProUGUI playerBuildingsCountText;
-    private TextMeshProUGUI playerDeadUnitsText;
-    private Transform playerResourcesPanel;
-    private TextMeshProUGUI playerResourcesCountText;
-    private Dictionary<int, GameObject> playerResourceItems = new();
-    private TownItem currentPlayerTown;
-    private Canvas mainCanvas;
+    private TextMeshProUGUI _playerTownNameText;
+    private TextMeshProUGUI _playerUnitsCountText;
+    private TextMeshProUGUI _playerBuildingsCountText;
+    private TextMeshProUGUI _playerDeadUnitsText;
+    private Transform _playerResourcesPanel;
+    private TextMeshProUGUI _playerResourcesCountText;
+    private Dictionary<int, GameObject> _playerResourceItems = new();
+    private TownItem _currentPlayerTown;
+
+    private Canvas _mainCanvas;
 
     private void Awake()
     {
@@ -49,64 +50,74 @@ public class TownUIManager : MonoBehaviour
 
     private void CreateUI()
     {
-        var townUI = Instantiate(_townUIPrefab, transform);
+        _mainCanvas = MainCanvasUI.MainCanvas;
 
-        mainCanvas = townUI.GetComponentInChildren<Canvas>();
+        var topBarPrefab = _townUIPrefab.transform.Find("Canvas/Background");
+        var scrollViewPrefab = _townUIPrefab.transform.Find("Canvas/ScrollView");
 
-        var background = mainCanvas.transform.Find("Background").GetComponent<Image>();
+        var topBar = Instantiate(topBarPrefab, _mainCanvas.transform);
+        topBar.name = "TownTopBar";
+
+        _scrollView = Instantiate(scrollViewPrefab, _mainCanvas.transform);
+        _scrollView.name = "TownResourcesScrollView";
+        _scrollView.gameObject.SetActive(false);
+
+        var background = topBar.GetComponent<Image>();
 
         _townNameText = background.transform.Find("TownName").GetComponent<TextMeshProUGUI>();
-
         _townBuildingsImage = background.transform.Find("BuildingsCountImage").GetComponent<Image>();
+
         _townBuildingsCountText = _townBuildingsImage.transform.Find("BuildingsCount").GetComponent<TextMeshProUGUI>();
-
         _townUnitsImage = background.transform.Find("UnitsCountImage").GetComponent<Image>();
-        _townUnitsCountText = _townUnitsImage.transform.Find("UnitsCount").GetComponent<TextMeshProUGUI>();
 
+        _townUnitsCountText = _townUnitsImage.transform.Find("UnitsCount").GetComponent<TextMeshProUGUI>();
         _townDiedUnitsImage = background.transform.Find("DiedUnitsCountImage").GetComponent<Image>();
+
         _townDiedUnitsCountText = _townDiedUnitsImage.transform.Find("DiedUnitsCount").GetComponent<TextMeshProUGUI>();
 
         _resourcesImage = background.transform.Find("ResourcesImage").GetComponent<Image>();
-
-        _scrollView = mainCanvas.transform.Find("ScrollView");
 
         _resourcesPanel = _scrollView.transform.Find("Viewport/Panel");
 
         var layoutElement = _resourcesPanel.GetComponent<LayoutElement>();
         if (layoutElement != null)
         {
-            var viewportRect = _scrollView.GetComponent<RectTransform>();
-            if (viewportRect != null)
+            var viewport = _scrollView.transform.Find("Viewport");
+            if (viewport != null)
             {
-                layoutElement.minHeight = viewportRect.rect.height;
+                var viewportRect = viewport.GetComponent<RectTransform>();
+                if (viewportRect != null)
+                {
+                    layoutElement.minHeight = viewportRect.rect.height;
+                }
             }
         }
 
         _townResourcesCountText = _resourcesPanel.transform.Find("BackpackCapacityText").GetComponent<TextMeshProUGUI>();
 
-        playerTownNameText = _townNameText;
-        playerUnitsCountText = _townUnitsCountText;
-        playerBuildingsCountText = _townBuildingsCountText;
-        playerDeadUnitsText = _townDiedUnitsCountText;
-        playerResourcesPanel = _resourcesPanel;
-        playerResourcesCountText = _townResourcesCountText;
+        _playerTownNameText = _townNameText;
+        _playerUnitsCountText = _townUnitsCountText;
+        _playerBuildingsCountText = _townBuildingsCountText;
+        _playerDeadUnitsText = _townDiedUnitsCountText;
+        _playerResourcesPanel = _resourcesPanel;
+        _playerResourcesCountText = _townResourcesCountText;
 
         _resourcesImage.GetComponent<Button>().onClick.AddListener(() => { ToggleResourcesPanel(_scrollView); });
     }
 
     public void SetPlayerTown(TownItem town)
     {
-        currentPlayerTown = town;
+        _currentPlayerTown = town;
         InitializePlayerTownUI();
     }
 
     private void InitializePlayerTownUI()
     {
-        if (currentPlayerTown != null)
+        if (_currentPlayerTown != null)
         {
-            playerTownNameText.text = currentPlayerTown.Name;
+            _playerTownNameText.text = _currentPlayerTown.Name;
             InitializeResourceDisplay();
-            UpdateUI(currentPlayerTown);
+            UpdateUI(_currentPlayerTown);
         }
     }
 
@@ -115,20 +126,20 @@ public class TownUIManager : MonoBehaviour
         if (town == null)
             return;
 
-        playerTownNameText.text = town.Name;
-        playerBuildingsCountText.text = town.TownHall != null ? $" : {town.Buildings.Count + 1}" : $" : {town.Buildings.Count}";
-        playerUnitsCountText.text = $" : {town.Units.Count}";
-        playerDeadUnitsText.text = $" : {town.DiedUnits}";
+        _playerTownNameText.text = town.Name;
+        _playerBuildingsCountText.text = town.TownHall != null ? $" : {town.Buildings.Count + 1}" : $" : {town.Buildings.Count}";
+        _playerUnitsCountText.text = $" : {town.Units.Count}";
+        _playerDeadUnitsText.text = $" : {town.DiedUnits}";
 
         if (town.TotalBackpack == null)
         {
-            playerResourcesCountText.text = "0 / 0";
+            _playerResourcesCountText.text = "0 / 0";
         }
         else
         {
-            playerResourcesCountText.text = $"{town.TotalBackpack.CurrentCapacity} / {town.TotalBackpack.MaxCapacity}";
+            _playerResourcesCountText.text = $"{town.TotalBackpack.CurrentCapacity} / {town.TotalBackpack.MaxCapacity}";
 
-            var resourcesToRemove = new HashSet<int>(playerResourceItems.Keys);
+            var resourcesToRemove = new HashSet<int>(_playerResourceItems.Keys);
 
             foreach (var resource in town.TotalBackpack.GetDetailedItems())
             {
@@ -141,7 +152,7 @@ public class TownUIManager : MonoBehaviour
                 {
                     RemoveResourceFromPanel(resourceId);
                 }
-                else if (playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                else if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
                 {
                     var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
@@ -166,7 +177,7 @@ public class TownUIManager : MonoBehaviour
 
         var resource = _resourceItemPrefab.transform.Find("Panel").gameObject;
 
-        var resourceItem = Instantiate(resource, playerResourcesPanel);
+        var resourceItem = Instantiate(resource, _playerResourcesPanel);
 
         var rectTransform = resourceItem.GetComponent<RectTransform>();
 
@@ -180,40 +191,40 @@ public class TownUIManager : MonoBehaviour
         var resourceImage = resourceItem.GetComponentInChildren<Image>();
         //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
 
-        playerResourceItems[resourceId] = resourceItem;
+        _playerResourceItems[resourceId] = resourceItem;
         resourceText.text = quantity.ToString();
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(playerResourcesPanel as RectTransform);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_playerResourcesPanel as RectTransform);
     }
 
     private void RemoveResourceFromPanel(int resourceId)
     {
-        if (playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
         {
             Destroy(resourceItem);
-            playerResourceItems.Remove(resourceId);
+            _playerResourceItems.Remove(resourceId);
         }
     }
 
     private void InitializeResourceDisplay()
     {
-        foreach (var resourceItem in playerResourceItems.Values)
+        foreach (var resourceItem in _playerResourceItems.Values)
         {
             Destroy(resourceItem);
         }
-        playerResourceItems.Clear();
+        _playerResourceItems.Clear();
 
-        foreach (Transform child in playerResourcesPanel)
+        foreach (Transform child in _playerResourcesPanel)
         {
-            if (child.GetComponent<TextMeshProUGUI>() != playerResourcesCountText)
+            if (child.GetComponent<TextMeshProUGUI>() != _playerResourcesCountText)
             {
                 Destroy(child.gameObject);
             }
         }
 
-        if (currentPlayerTown.TotalBackpack != null && currentPlayerTown.TotalBackpack.CurrentCapacity > 0)
+        if (_currentPlayerTown.TotalBackpack != null && _currentPlayerTown.TotalBackpack.CurrentCapacity > 0)
         {
-            foreach (var resource in currentPlayerTown.TotalBackpack.GetDetailedItems())
+            foreach (var resource in _currentPlayerTown.TotalBackpack.GetDetailedItems())
             {
                 if (resource.Value > 0)
                 {
@@ -225,7 +236,7 @@ public class TownUIManager : MonoBehaviour
 
     public void RefreshUI(TownItem town = null)
     {
-        UpdateUI(town ?? currentPlayerTown);
+        UpdateUI(town ?? _currentPlayerTown);
     }
 
     private void ToggleResourcesPanel(Transform panel)
