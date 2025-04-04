@@ -1,30 +1,29 @@
-﻿using Items.Resource.BackPack;
+﻿using System;
+using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UnitUIManager : MonoBehaviour
 {
+    private GameObject _unitPrefab;
+    private GameObject _unitSkillPrefab;
+    private GameObject _unitStatPrefab;
+    private GameObject _resourcePrefab;
+
     private GameObject _unitInfoPanel;
     private TextMeshProUGUI _unitNameText;
-    private TextMeshProUGUI _homeTownText;
+    private TextMeshProUGUI _unitTownText;
 
-    private Slider _healthSlider;
-    private TextMeshProUGUI _healthText;
-    private Slider _armorSlider;
-    private TextMeshProUGUI _armorText;
-    private Slider _staminaSlider;
-    private TextMeshProUGUI _staminaText;
-    private Slider _hungerSlider;
-    private TextMeshProUGUI _hungerText;
+    private TextMeshProUGUI _unitBackpackCount;
+    private Transform _resourcePanel;
 
-    private Transform _skillsContainer;
-    private GameObject _skillPrefab;
+    private Transform _unitStatsPanel;
+    private Transform _unitSkillsPanel;
 
-    private TextMeshProUGUI _backpackCapacityText;
-    private Transform _backpackItemsContainer;
-    private GameObject _backpackItemPrefab;
+    private Dictionary<Type, UnitSkillObj> _skillsDictionary = new();
+    private Dictionary<Type, UnitStatObj> _statsDictionary = new();
+    private Dictionary<int, GameObject> _playerResourceItems = new();
 
     private Canvas _mainCanvas;
     private UnitItem _currentUnit;
@@ -58,6 +57,19 @@ public class UnitUIManager : MonoBehaviour
         {
             _instance = this;
             DontDestroyOnLoad(gameObject);
+
+            if (_unitPrefab == null)
+                _unitPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitUIPrefab");
+
+            if (_unitSkillPrefab == null)
+                _unitSkillPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitSkillPrefab");
+
+            if (_unitStatPrefab == null)
+                _unitStatPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitStatPrefab");
+
+            if (_resourcePrefab == null)
+                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab");
+
             InitializeUI();
             HideUnitInfo();
         }
@@ -67,347 +79,175 @@ public class UnitUIManager : MonoBehaviour
     {
         _mainCanvas = MainCanvasUI.MainCanvas;
 
-        if (_unitInfoPanel == null)
+        InitializeUnitUI();
+    }
+
+    private void InitializeUnitUI()
+    {
+        var unitInfoPanel = _unitPrefab.transform.Find("Canvas/Panel");
+        _unitInfoPanel = Instantiate(unitInfoPanel.gameObject, _mainCanvas.transform);
+        _unitInfoPanel.name = "UnitInfoPanel";
+
+        _unitNameText = _unitInfoPanel.transform.Find("UnitName").GetComponent<TextMeshProUGUI>();
+        _unitTownText = _unitInfoPanel.transform.Find("UnitTown").GetComponent<TextMeshProUGUI>();
+
+        _unitBackpackCount = _unitInfoPanel.transform.Find("BackpackCount").GetComponent<TextMeshProUGUI>();
+
+        _unitStatsPanel = _unitInfoPanel.transform.Find("SkillsStatsPanel/StatsPanel");
+        _unitSkillsPanel = _unitInfoPanel.transform.Find("SkillsStatsPanel/SkillsPanel");
+
+        _resourcePanel = _unitInfoPanel.transform.Find("ScrollView/Viewport/Content");
+
+        var layoutElement = _resourcePanel.GetComponent<LayoutElement>();
+        if (layoutElement != null)
         {
-            CreateUnitInfoUI();
+            var viewport = _resourcePanel.transform.Find("ScrollView/Viewport");
+            if (viewport != null)
+            {
+                var viewportRect = viewport.GetComponent<RectTransform>();
+                if (viewportRect != null)
+                {
+                    layoutElement.minHeight = viewportRect.rect.height;
+                }
+            }
         }
     }
 
-    private void CreateUnitInfoUI()
+    private void CreateStatUI(BaseStat stat)
     {
-        _unitInfoPanel = new GameObject("UnitInfoPanel");
-        _unitInfoPanel.transform.SetParent(_mainCanvas.transform, false);
+        if (!_statsDictionary.ContainsKey(stat.GetType()))
+        {
+            var statPrefab = _unitStatPrefab.transform.Find("Panel");
+            var statObj = Instantiate(statPrefab, _unitStatsPanel);
+            var statUI = new UnitStatObj(statObj.transform);
+            _statsDictionary[stat.GetType()] = statUI;
 
-        var panelRect = _unitInfoPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.75f, 0);
-        panelRect.anchorMax = new Vector2(1, 1);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-
-        var panelImage = _unitInfoPanel.AddComponent<Image>();
-        panelImage.color = new Color(0.3f, 0.3f, 0.3f, 0.8f);
-
-        var verticalLayout = _unitInfoPanel.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(10, 10, 10, 10);
-        verticalLayout.spacing = 10;
-        verticalLayout.childAlignment = TextAnchor.UpperCenter;
-        verticalLayout.childControlWidth = true;
-        verticalLayout.childControlHeight = false;
-        verticalLayout.childForceExpandWidth = true;
-        verticalLayout.childForceExpandHeight = false;
-
-        CreateHeaderUI();
-        CreateStatsUI();
-        CreateSkillsUI();
-        CreateBackpackUI();
+            //statUI.Image.sprite = stat.Image;
+            statUI.Slider.maxValue = stat.MaxValue;
+            statUI.Slider.value = stat.CurrentValue;
+            statUI.StatText.text = $"{stat.CurrentValue:F0}/{stat.MaxValue:F0}";
+        }
     }
 
-    private void CreateHeaderUI()
+    private void UpdateStatUI(BaseStat stat)
     {
-        var headerObj = new GameObject("HeaderSection");
-        headerObj.transform.SetParent(_unitInfoPanel.transform, false);
-
-        var headerLayout = headerObj.AddComponent<VerticalLayoutGroup>();
-        headerLayout.spacing = 5;
-
-        var nameObj = new GameObject("UnitName");
-        nameObj.transform.SetParent(headerObj.transform, false);
-        _unitNameText = nameObj.AddComponent<TextMeshProUGUI>();
-        _unitNameText.fontSize = 24;
-        _unitNameText.alignment = TextAlignmentOptions.Center;
-        _unitNameText.color = Color.white;
-
-        var townObj = new GameObject("HomeTown");
-        townObj.transform.SetParent(headerObj.transform, false);
-        _homeTownText = townObj.AddComponent<TextMeshProUGUI>();
-        _homeTownText.fontSize = 18;
-        _homeTownText.alignment = TextAlignmentOptions.Center;
-        _homeTownText.color = Color.white;
-
-        var layoutElement = headerObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 80;
-        layoutElement.preferredHeight = 80;
+        if (_statsDictionary.TryGetValue(stat.GetType(), out var statObj))
+        {
+            //statObj.Image.sprite = stat.Image;
+            statObj.Slider.maxValue = stat.MaxValue;
+            statObj.Slider.value = stat.CurrentValue;
+            statObj.StatText.text = $"{stat.CurrentValue:F0}/{stat.MaxValue:F0}";
+        }
+        else
+        {
+            CreateStatUI(stat);
+        }
     }
 
-    private void CreateStatsUI()
+    private void CreateSkillUI(BaseSkill skill)
     {
-        var statsObj = new GameObject("StatsSection");
-        statsObj.transform.SetParent(_unitInfoPanel.transform, false);
+        var skillPrefab = _unitSkillPrefab.transform.Find("Panel");
+        var skillObj = Instantiate(skillPrefab, _unitSkillsPanel);
+        var skillUI = new UnitSkillObj(skillObj.transform);
+        _skillsDictionary[skill.GetType()] = skillUI;
 
-        var statsLayout = statsObj.AddComponent<VerticalLayoutGroup>();
-        statsLayout.spacing = 10;
-
-        var titleObj = new GameObject("StatsTitle");
-        titleObj.transform.SetParent(statsObj.transform, false);
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "STATS";
-        titleText.fontSize = 20;
-        titleText.alignment = TextAlignmentOptions.Center;
-        titleText.color = Color.white;
-
-        CreateStatBar(statsObj.transform, "Health", out _healthSlider, out _healthText, Color.green);
-        CreateStatBar(statsObj.transform, "Armor", out _armorSlider, out _armorText, Color.blue);
-        CreateStatBar(statsObj.transform, "Stamina", out _staminaSlider, out _staminaText, Color.yellow);
-        CreateStatBar(statsObj.transform, "Hunger", out _hungerSlider, out _hungerText, Color.red);
-
-        var layoutElement = statsObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 200;
-        layoutElement.preferredHeight = 200;
+        //skillUI.Image.sprite = skill.Icon;
+        skillUI.Slider.maxValue = skill.ExperienceToNextLevel;
+        skillUI.Slider.value = skill.Experience;
+        skillUI.SkillText.text = $"Lvl.{skill.CurrentLevel}";
     }
 
-    private void CreateStatBar(Transform parent, string statName, out Slider slider, out TextMeshProUGUI valueText, Color fillColor)
+    private void UpdateSkillUI(BaseSkill skill)
     {
-        var statObj = new GameObject(statName);
-        statObj.transform.SetParent(parent, false);
+        if (_skillsDictionary.TryGetValue(skill.GetType(), out var skillObj))
+        {
+            //skillObj.Image.sprite = stat.Image;
+            skillObj.Slider.maxValue = skill.ExperienceToNextLevel;
+            skillObj.Slider.value = skill.Experience;
+            skillObj.SkillText.text = $"Lvl. {skill.CurrentLevel}";
+        }
+        else
+        {
 
-        var horizontalLayout = statObj.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = 10;
-        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
-        horizontalLayout.childControlWidth = true;
-        horizontalLayout.childForceExpandWidth = true;
-
-        var labelObj = new GameObject("Label");
-        labelObj.transform.SetParent(statObj.transform, false);
-        var labelText = labelObj.AddComponent<TextMeshProUGUI>();
-        labelText.text = statName + ":";
-        labelText.fontSize = 16;
-        labelText.alignment = TextAlignmentOptions.Left;
-        labelText.color = Color.white;
-
-        var sliderObj = new GameObject("Slider");
-        sliderObj.transform.SetParent(statObj.transform, false);
-        slider = sliderObj.AddComponent<Slider>();
-
-        var sliderRect = sliderObj.GetComponent<RectTransform>();
-
-        var backgroundObj = new GameObject("Background");
-        backgroundObj.transform.SetParent(sliderObj.transform, false);
-        var background = backgroundObj.AddComponent<Image>();
-        background.color = new Color(0.2f, 0.2f, 0.2f);
-
-        var backgroundRect = backgroundObj.GetComponent<RectTransform>();
-        backgroundRect.anchorMin = Vector2.zero;
-        backgroundRect.anchorMax = Vector2.one;
-        backgroundRect.offsetMin = Vector2.zero;
-        backgroundRect.offsetMax = Vector2.zero;
-
-        var fillAreaObj = new GameObject("Fill Area");
-        fillAreaObj.transform.SetParent(sliderObj.transform, false);
-
-        var fillAreaRect = fillAreaObj.AddComponent<RectTransform>();
-        fillAreaRect.anchorMin = new Vector2(0, 0.25f);
-        fillAreaRect.anchorMax = new Vector2(1, 0.75f);
-        fillAreaRect.offsetMin = new Vector2(5, 0);
-        fillAreaRect.offsetMax = new Vector2(-5, 0);
-
-        var fillObj = new GameObject("Fill");
-        fillObj.transform.SetParent(fillAreaObj.transform, false);
-        var fill = fillObj.AddComponent<Image>();
-        fill.color = fillColor;
-
-        var fillRect = fillObj.GetComponent<RectTransform>();
-        fillRect.anchorMin = Vector2.zero;
-        fillRect.anchorMax = Vector2.one;
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
-
-        slider.fillRect = fillRect;
-        slider.targetGraphic = background;
-        slider.minValue = 0;
-        slider.maxValue = 100;
-        slider.value = 50;
-        slider.interactable = false;
-
-        var valueObj = new GameObject("Value");
-        valueObj.transform.SetParent(statObj.transform, false);
-        valueText = valueObj.AddComponent<TextMeshProUGUI>();
-        valueText.fontSize = 16;
-        valueText.alignment = TextAlignmentOptions.Right;
-        valueText.color = Color.white;
-
-        var labelLayout = labelObj.AddComponent<LayoutElement>();
-        labelLayout.minWidth = 80;
-        labelLayout.preferredWidth = 80;
-
-        var sliderLayout = sliderObj.AddComponent<LayoutElement>();
-        sliderLayout.flexibleWidth = 1;
-
-        var valueLayout = valueObj.AddComponent<LayoutElement>();
-        valueLayout.minWidth = 80;
-        valueLayout.preferredWidth = 80;
+            CreateSkillUI(skill);
+        }
     }
 
-    private void CreateSkillsUI()
+    private void UpdateBackpackUI(UnitItem unit)
     {
-        var skillsObj = new GameObject("SkillsSection");
-        skillsObj.transform.SetParent(_unitInfoPanel.transform, false);
+        if (unit.Backpack == null)
+        {
+            _unitBackpackCount.text = "0 / 0";
+        }
+        else
+        {
+            _unitBackpackCount.text = $"{unit.Backpack.CurrentCapacity} / {unit.Backpack.MaxCapacity}";
 
-        var skillsLayout = skillsObj.AddComponent<VerticalLayoutGroup>();
-        skillsLayout.spacing = 10;
+            var resourcesToRemove = new HashSet<int>(_playerResourceItems.Keys);
 
-        var titleObj = new GameObject("SkillsTitle");
-        titleObj.transform.SetParent(skillsObj.transform, false);
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "SKILLS";
-        titleText.fontSize = 20;
-        titleText.alignment = TextAlignmentOptions.Center;
-        titleText.color = Color.white;
+            foreach (var resource in unit.Backpack.GetDetailedItems())
+            {
+                var resourceId = resource.Key.Id;
+                var quantity = resource.Value;
 
-        var containerObj = new GameObject("SkillsContainer");
-        containerObj.transform.SetParent(skillsObj.transform, false);
+                resourcesToRemove.Remove(resourceId);
 
-        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
-        containerLayout.spacing = 5;
+                if (quantity <= 0)
+                {
+                    RemoveResourceFromPanel(resourceId);
+                }
+                else if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                {
+                    var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+                    resourceText.text = quantity.ToString();
+                }
+                else
+                {
+                    AddResourceToPanel(resourceId, quantity);
+                }
+            }
 
-        _skillPrefab = CreateSkillPrefab();
-
-        var layoutElement = skillsObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 200;
-        layoutElement.preferredHeight = 200;
-        layoutElement.flexibleHeight = 1;
-
-        _skillsContainer = containerObj.transform;
+            foreach (var resourceId in resourcesToRemove)
+            {
+                RemoveResourceFromPanel(resourceId);
+            }
+        }
     }
 
-    private GameObject CreateSkillPrefab()
+    private void AddResourceToPanel(int resourceId, int quantity)
     {
-        var prefab = new GameObject("SkillPrefab");
-        prefab.SetActive(false);
-        prefab.transform.SetParent(_unitInfoPanel.transform, false);
+        if (quantity <= 0)
+            return;
 
-        var horizontalLayout = prefab.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = 10;
-        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
-        horizontalLayout.childControlWidth = true;
-        horizontalLayout.childForceExpandWidth = true;
+        var resource = _resourcePrefab.transform.Find("Panel").gameObject;
 
-        var nameObj = new GameObject("SkillName");
-        nameObj.transform.SetParent(prefab.transform, false);
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 16;
-        nameText.alignment = TextAlignmentOptions.Left;
-        nameText.color = Color.white;
+        var resourceItem = Instantiate(resource, _resourcePanel);
 
-        var levelObj = new GameObject("SkillLevel");
-        levelObj.transform.SetParent(prefab.transform, false);
-        var levelText = levelObj.AddComponent<TextMeshProUGUI>();
-        levelText.fontSize = 16;
-        levelText.alignment = TextAlignmentOptions.Right;
-        levelText.color = Color.white;
+        var rectTransform = resourceItem.GetComponent<RectTransform>();
 
-        var progressObj = new GameObject("ProgressBar");
-        progressObj.transform.SetParent(prefab.transform, false);
+        if (rectTransform != null)
+        {
+            rectTransform.sizeDelta = new Vector2(0, 30);
+            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
+        }
 
-        var progressImage = progressObj.AddComponent<Image>();
-        progressImage.color = new Color(0.2f, 0.2f, 0.2f);
+        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceItem.GetComponentInChildren<Image>();
+        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
 
-        var fillObj = new GameObject("Fill");
-        fillObj.transform.SetParent(progressObj.transform, false);
-        var fill = fillObj.AddComponent<Image>();
-        fill.color = new Color(0, 0.7f, 1);
+        _playerResourceItems[resourceId] = resourceItem;
+        resourceText.text = quantity.ToString();
 
-        var fillRect = fillObj.GetComponent<RectTransform>();
-        fillRect.anchorMin = new Vector2(0, 0);
-        fillRect.anchorMax = new Vector2(0.5f, 1);
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
-
-        var nameLayout = nameObj.AddComponent<LayoutElement>();
-        nameLayout.minWidth = 100;
-        nameLayout.preferredWidth = 100;
-
-        var levelLayout = levelObj.AddComponent<LayoutElement>();
-        levelLayout.minWidth = 50;
-        levelLayout.preferredWidth = 50;
-
-        var progressLayout = progressObj.AddComponent<LayoutElement>();
-        progressLayout.flexibleWidth = 1;
-
-        return prefab;
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
     }
 
-    private void CreateBackpackUI()
+    private void RemoveResourceFromPanel(int resourceId)
     {
-        var backpackObj = new GameObject("BackpackSection");
-        backpackObj.transform.SetParent(_unitInfoPanel.transform, false);
-
-        var backpackLayout = backpackObj.AddComponent<VerticalLayoutGroup>();
-        backpackLayout.spacing = 10;
-
-        var titleObj = new GameObject("BackpackTitle");
-        titleObj.transform.SetParent(backpackObj.transform, false);
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "BACKPACK";
-        titleText.fontSize = 20;
-        titleText.alignment = TextAlignmentOptions.Center;
-        titleText.color = Color.white;
-
-        var capacityObj = new GameObject("BackpackCapacity");
-        capacityObj.transform.SetParent(backpackObj.transform, false);
-        _backpackCapacityText = capacityObj.AddComponent<TextMeshProUGUI>();
-        _backpackCapacityText.fontSize = 16;
-        _backpackCapacityText.alignment = TextAlignmentOptions.Center;
-        _backpackCapacityText.color = Color.white;
-
-        var containerObj = new GameObject("BackpackItemsContainer");
-        containerObj.transform.SetParent(backpackObj.transform, false);
-
-        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
-        containerLayout.spacing = 5;
-
-        _backpackItemPrefab = CreateBackpackItemPrefab();
-
-        var layoutElement = backpackObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 150;
-        layoutElement.preferredHeight = 150;
-        layoutElement.flexibleHeight = 1;
-
-        _backpackItemsContainer = containerObj.transform;
-    }
-
-    private GameObject CreateBackpackItemPrefab()
-    {
-        var prefab = new GameObject("UnitBackpackItemPrefab");
-        prefab.SetActive(false);
-        prefab.transform.SetParent(_unitInfoPanel.transform, false);
-
-        var horizontalLayout = prefab.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = 10;
-        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
-
-        var iconObj = new GameObject("ItemIcon");
-        iconObj.transform.SetParent(prefab.transform, false);
-        var icon = iconObj.AddComponent<Image>();
-        icon.color = Color.white;
-
-        var nameObj = new GameObject("ItemName");
-        nameObj.transform.SetParent(prefab.transform, false);
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 14;
-        nameText.alignment = TextAlignmentOptions.Left;
-        nameText.color = Color.white;
-
-        var quantityObj = new GameObject("ItemQuantity");
-        quantityObj.transform.SetParent(prefab.transform, false);
-        var quantityText = quantityObj.AddComponent<TextMeshProUGUI>();
-        quantityText.fontSize = 14;
-        quantityText.alignment = TextAlignmentOptions.Right;
-        quantityText.color = Color.white;
-
-        var iconLayout = iconObj.AddComponent<LayoutElement>();
-        iconLayout.minWidth = 30;
-        iconLayout.preferredWidth = 30;
-        iconLayout.minHeight = 30;
-        iconLayout.preferredHeight = 30;
-
-        var nameLayout = nameObj.AddComponent<LayoutElement>();
-        nameLayout.flexibleWidth = 1;
-
-        var quantityLayout = quantityObj.AddComponent<LayoutElement>();
-        quantityLayout.minWidth = 40;
-        quantityLayout.preferredWidth = 40;
-
-        return prefab;
+        if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        {
+            Destroy(resourceItem);
+            _playerResourceItems.Remove(resourceId);
+        }
     }
 
     public void ShowUnitInfo(UnitItem unit)
@@ -421,11 +261,11 @@ public class UnitUIManager : MonoBehaviour
         }
 
         _unitNameText.text = unit.Unit.Name;
-        _homeTownText.text = unit.HomeTown != null ? $"Hometown: {unit.HomeTown.Name}" : "No hometown";
+        _unitTownText.text = unit.HomeTown != null ? $"{unit.HomeTown.Name}" : "No hometown";
 
         UpdateStatsUI(unit.Stats);
         UpdateSkillsUI(unit.Skills);
-        UpdateBackpackUI(unit.Backpack);
+        UpdateBackpackUI(unit);
 
         _unitInfoPanel.SetActive(true);
     }
@@ -436,113 +276,21 @@ public class UnitUIManager : MonoBehaviour
         _currentUnit = null;
     }
 
-    private void UpdateStatsUI(UnitStats stats)
+    public void UpdateStatsUI(UnitStats stats)
     {
         if (stats == null) return;
 
-        // Health
-        _healthSlider.maxValue = stats.Health.MaxValue;
-        _healthSlider.value = stats.Health.CurrentValue;
-        _healthText.text = $"{stats.Health.CurrentValue:F0}/{stats.Health.MaxValue:F0}";
-
-        // Armor
-        _armorSlider.maxValue = stats.Armor.MaxValue;
-        _armorSlider.value = stats.Armor.CurrentValue;
-        _armorText.text = $"{stats.Armor.CurrentValue:F0}/{stats.Armor.MaxValue:F0}";
-
-        // Stamina
-        _staminaSlider.maxValue = stats.Stamina.MaxValue;
-        _staminaSlider.value = stats.Stamina.CurrentValue;
-        _staminaText.text = $"{stats.Stamina.CurrentValue:F0}/{stats.Stamina.MaxValue:F0}";
-
-        // Hunger
-        _hungerSlider.maxValue = stats.Hunger.MaxValue;
-        _hungerSlider.value = stats.Hunger.CurrentValue;
-        _hungerText.text = $"{stats.Hunger.CurrentValue:F0}/{stats.Hunger.MaxValue:F0}";
+        UpdateStatUI(stats.Health);
+        UpdateStatUI(stats.Armor); 
+        UpdateStatUI(stats.Hunger); 
+        UpdateStatUI(stats.Stamina);
     }
 
-    private void UpdateSkillsUI(UnitSkills skills)
+    public void UpdateSkillsUI(UnitSkills skills)
     {
-        for (var i = _skillsContainer.childCount - 1; i >= 0; i--)
-        {
-            var child = _skillsContainer.GetChild(i);
-            if (!child.IsDestroyed() && child != null)
-            {
-                Destroy(child.gameObject);
-            }
-            
-        }
-
-        if (skills == null || skills.Skills.Count == 0)
-        {
-            var noSkillsObj = new GameObject("NoSkills");
-            noSkillsObj.transform.SetParent(_skillsContainer, false);
-            var noSkillsText = noSkillsObj.AddComponent<TextMeshProUGUI>();
-            noSkillsText.text = "No skills";
-            noSkillsText.fontSize = 16;
-            noSkillsText.alignment = TextAlignmentOptions.Center;
-            noSkillsText.color = Color.white;
-            return;
-        }
-
         foreach (var skill in skills.Skills)
         {
-            var skillObj = Instantiate(_skillPrefab, _skillsContainer);
-            skillObj.SetActive(true);
-
-            var nameText = skillObj.transform.Find("SkillName").GetComponent<TextMeshProUGUI>();
-            var levelText = skillObj.transform.Find("SkillLevel").GetComponent<TextMeshProUGUI>();
-            var progressFill = skillObj.transform.Find("ProgressBar/Fill").GetComponent<RectTransform>();
-
-            nameText.text = skill.Name;
-            levelText.text = $"Lvl {skill.CurrentLevel}";
-
-            var progressPercent = skill.GetProgressPercentage();
-            progressFill.anchorMax = new Vector2(progressPercent / 100f, 1);
-        }
-    }
-
-    private void UpdateBackpackUI(Backpack backpack)
-    {
-        for (var i = _backpackItemsContainer.childCount - 1; i >= 0; i--)
-        {
-            var child = _backpackItemsContainer.GetChild(i);
-            if (!child.IsDestroyed() && child != null)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-
-        if (backpack == null)
-        {
-            _backpackCapacityText.text = "No backpack";
-            return;
-        }
-
-        _backpackCapacityText.text = $"Capacity: {backpack.CurrentCapacity}/{backpack.MaxCapacity}";
-
-        if (backpack.GetAllItems() == null || backpack.GetAllItems().Count == 0)
-        {
-            var emptyObj = new GameObject("EmptyBackpack");
-            emptyObj.transform.SetParent(_backpackItemsContainer, false);
-            var emptyText = emptyObj.AddComponent<TextMeshProUGUI>();
-            emptyText.text = "Empty";
-            emptyText.fontSize = 16;
-            emptyText.alignment = TextAlignmentOptions.Center;
-            emptyText.color = Color.white;
-            return;
-        }
-
-        foreach (var itemStack in backpack.GetAllItems())
-        {
-            var itemObj = Instantiate(_backpackItemPrefab, _backpackItemsContainer);
-            itemObj.SetActive(true);
-
-            var nameText = itemObj.transform.Find("ItemName").GetComponent<TextMeshProUGUI>();
-            var quantityText = itemObj.transform.Find("ItemQuantity").GetComponent<TextMeshProUGUI>();
-
-            nameText.text = itemStack.Item.Name;
-            quantityText.text = $"x{itemStack.Quantity}";
+            UpdateSkillUI(skill);
         }
     }
 
@@ -550,12 +298,48 @@ public class UnitUIManager : MonoBehaviour
     {
         if (_currentUnit == unit)
         {
-            UpdateBackpackUI(unit.Backpack);
+            UpdateStatsUI(unit.Stats);
+            UpdateSkillsUI(unit.Skills);
+            UpdateBackpackUI(unit);
         }
     }
 
     public void UpdateUnitInfo(object sender, UnitItem.UnitUIToChangeEventArgs args)
     {
         UpdateUnitInfo(args.Unit);
+    }
+
+    private class UnitStatObj
+    {
+        private Transform Panel { get; }
+        public Image Image { get; }
+        public Slider Slider { get; }
+        public TextMeshProUGUI StatText { get; }
+
+        public UnitStatObj(Transform panel)
+        {
+            Panel = panel;
+
+            Image = Panel.Find("StatImage").GetComponent<Image>();
+            Slider = Panel.Find("Slider").GetComponent<Slider>();
+            StatText = Panel.Find("StatText").GetComponent<TextMeshProUGUI>();
+        }
+    }
+
+    private class UnitSkillObj
+    {
+        private Transform Panel { get; }
+        public Image Image { get; }
+        public Slider Slider { get; }
+        public TextMeshProUGUI SkillText { get; }
+
+        public UnitSkillObj(Transform panel)
+        {
+            Panel = panel;
+
+            Image = Panel.Find("SkillImage").GetComponent<Image>();
+            Slider = Panel.Find("Slider").GetComponent<Slider>();
+            SkillText = Panel.Find("SkillText").GetComponent<TextMeshProUGUI>();
+        }
     }
 }
