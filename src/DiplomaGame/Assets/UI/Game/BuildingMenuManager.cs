@@ -17,6 +17,8 @@ public class BuildingMenuManager : MonoBehaviour
 
     private Transform _buildingMenu;
     private Transform _buildingContentMenu;
+    private Button _closeBuildingMenuButton;
+    private Image _closeBuildingMenuImage;
 
     private bool _isBuildingMenuOpen;
 
@@ -94,6 +96,10 @@ public class BuildingMenuManager : MonoBehaviour
         _buildingMenu.name = "BuildingMenu";
         _buildingMenu.gameObject.SetActive(false);
 
+        _closeBuildingMenuImage = _buildingMenu.transform.Find("CloseButton").GetComponent<Image>();
+        _closeBuildingMenuButton = _buildingMenu.transform.Find("CloseButton").GetComponent<Button>();
+        _closeBuildingMenuButton.onClick.AddListener(ToggleBuildingMenu);
+
         _isBuildingMenuOpen = false;
     }
 
@@ -101,10 +107,17 @@ public class BuildingMenuManager : MonoBehaviour
     {
         _isBuildingMenuOpen = !_isBuildingMenuOpen;
         _buildingMenu.gameObject.SetActive(_isBuildingMenuOpen);
+        _buildingButtonTransform.gameObject.SetActive(!_isBuildingMenuOpen);
 
         if (_isBuildingMenuOpen && _currentTown != null)
         {
+            GameplayInputHandler.Instance.OnMouseRightClick += OnRightMouseClick;
+
             PopulateBuildingMenu();
+        }
+        else
+        {
+            GameplayInputHandler.Instance.OnMouseRightClick -= OnRightMouseClick;
         }
     }
 
@@ -175,6 +188,11 @@ public class BuildingMenuManager : MonoBehaviour
 
             _currentTown.NotifyUIChanged();
         }
+    }
+
+    private void OnRightMouseClick(Vector2 position)
+    {
+        ToggleBuildingMenu();
     }
 
     public void SetCurrentTown(TownItem town)

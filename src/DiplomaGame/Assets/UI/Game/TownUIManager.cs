@@ -6,8 +6,8 @@ using UnityEngine;
 
 public class TownUIManager : MonoBehaviour
 {
-    public GameObject _townUIPrefab;
-    public GameObject _resourceItemPrefab;
+    private GameObject _townUIPrefab;
+    private GameObject _resourceItemPrefab;
 
     private TextMeshProUGUI _townNameText;
 
@@ -43,7 +43,7 @@ public class TownUIManager : MonoBehaviour
             _townUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/TownUIPrefab");
 
         if (_resourceItemPrefab == null)
-            _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/TownResourceUIPrefab"); 
+            _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab"); 
 
         CreateUI();
     }
