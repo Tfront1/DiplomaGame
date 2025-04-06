@@ -4,34 +4,33 @@ using Items.Resource.BackPack;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class BuildingUIManager : MonoBehaviour
 {
+    private GameObject _buildingPrefab;
+    private GameObject _resourcePrefab;
+
     private GameObject _buildingInfoPanel;
     private TextMeshProUGUI _buildingNameText;
-    private TextMeshProUGUI _homeTownText;
+    private TextMeshProUGUI _buildingTownText;
 
-    private RectTransform _healthFill;
-    private TextMeshProUGUI _healthText;
+    private TextMeshProUGUI _buildingHP;
 
-    private TextMeshProUGUI _backpackCapacityText;
-    private Transform _backpackItemsContainer;
-    private GameObject _backpackItemPrefab;
+    private TextMeshProUGUI _buildingBackpackCount;
 
-    private Button _craftsButton;
-    private GameObject _craftingPanel;
-    private Transform _craftingRecipesContainer;
-    private GameObject _craftingRecipePrefab;
+    private Transform _resourcePanel;
+    private Dictionary<int, GameObject> _buildingResourceItems = new();
 
     private Canvas _mainCanvas;
     private BuildingItem _currentBuilding;
 
-    private GameObject _requiredResourcesPanel;
-    private Transform _requiredResourcesContainer;
-    private GameObject _resourceItemPrefab;
+    private TextMeshProUGUI _actionText;
+    private Button _action1Button;
+    private Button _action2Button;
+    private Image _action1Image;
+    private Image _action2Image;
 
     private static BuildingUIManager _instance;
 
@@ -62,19 +61,23 @@ public class BuildingUIManager : MonoBehaviour
         {
             _instance = this;
             DontDestroyOnLoad(gameObject);
+
+            if (_buildingPrefab == null)
+                _buildingPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/BuildingUIPrefab");
+
+            if (_resourcePrefab == null)
+                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab");
+
             InitializeUI();
             HideBuildingInfo();
-            HideCraftingPanel();
         }
     }
 
     public void UpdateHealthBar(float currentHealth, float maxHealth)
     {
-        if (_healthFill != null && _healthText != null)
+        if (_buildingHP != null)
         {
-            var healthPercentage = Mathf.Clamp01(currentHealth / maxHealth);
-            _healthFill.anchorMax = new Vector2(healthPercentage, 1);
-            _healthText.text = $"{Mathf.RoundToInt(currentHealth)}/{Mathf.RoundToInt(maxHealth)}";
+            _buildingHP.text = $"HP : {Mathf.RoundToInt(currentHealth)} / {Mathf.RoundToInt(maxHealth)}";
         }
     }
 
@@ -82,713 +85,115 @@ public class BuildingUIManager : MonoBehaviour
     {
         _mainCanvas = MainCanvasUI.MainCanvas;
 
-        if (_buildingInfoPanel == null)
+        var buildingInfoPanel = _buildingPrefab.transform.Find("Canvas/Panel");
+        _buildingInfoPanel = Instantiate(buildingInfoPanel.gameObject, _mainCanvas.transform);
+        _buildingInfoPanel.name = "BuildingInfoPanel";
+
+        _buildingNameText = _buildingInfoPanel.transform.Find("BuildingName").GetComponent<TextMeshProUGUI>();
+        _buildingTownText = _buildingInfoPanel.transform.Find("BuildingTown").GetComponent<TextMeshProUGUI>();
+
+        _buildingHP = _buildingInfoPanel.transform.Find("HP").GetComponent<TextMeshProUGUI>();
+
+        _buildingBackpackCount = _buildingInfoPanel.transform.Find("BackpackCount").GetComponent<TextMeshProUGUI>();
+
+        _actionText = _buildingInfoPanel.transform.Find("BuildingActionText").GetComponent<TextMeshProUGUI>();
+
+        _action1Button = _buildingInfoPanel.transform.Find("ActionButton1").GetComponent<Button>();
+        _action1Image = _buildingInfoPanel.transform.Find("ActionButton1").GetComponent<Image>();
+
+        _action2Button = _buildingInfoPanel.transform.Find("ActionButton2").GetComponent<Button>();
+        _action2Image = _buildingInfoPanel.transform.Find("ActionButton2").GetComponent<Image>();
+
+        _resourcePanel = _buildingInfoPanel.transform.Find("ScrollView/Viewport/Content");
+
+        var layoutElement = _resourcePanel.GetComponent<LayoutElement>();
+        if (layoutElement != null)
         {
-            CreateBuildingUI();
-        }
-        if (_craftingPanel == null)
-        {
-            CreateCraftingUI();
-        }
-        if (_requiredResourcesPanel == null)
-        {
-            CreateRequiredResourcesUI();
-        }
-    }
-
-    private void CreateBuildingUI()
-    {
-        _buildingInfoPanel = new GameObject("BuildingInfoPanel");
-        _buildingInfoPanel.transform.SetParent(_mainCanvas.transform, false);
-
-        var panelRect = _buildingInfoPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.75f, 0.5f);
-        panelRect.anchorMax = new Vector2(1.0f, 0.9f);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-
-        var panelImage = _buildingInfoPanel.AddComponent<Image>();
-        panelImage.color = new Color(0.4f, 0.4f, 0.6f, 0.8f);
-
-        var verticalLayout = _buildingInfoPanel.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(10, 10, 10, 10);
-        verticalLayout.spacing = 5;
-        verticalLayout.childAlignment = TextAnchor.UpperCenter;
-        verticalLayout.childControlWidth = true;
-        verticalLayout.childControlHeight = false;
-        verticalLayout.childForceExpandWidth = true;
-        verticalLayout.childForceExpandHeight = false;
-
-        CreateHeaderUI();
-        CreateHealthBar();
-        CreateBackpackUI();
-    }
-
-    private void CreateHeaderUI()
-    {
-        var headerObj = new GameObject("HeaderSection");
-        headerObj.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var headerLayout = headerObj.AddComponent<VerticalLayoutGroup>();
-        headerLayout.spacing = 5;
-
-        var nameObj = new GameObject("UnitName");
-        nameObj.transform.SetParent(headerObj.transform, false);
-        _buildingNameText = nameObj.AddComponent<TextMeshProUGUI>();
-        _buildingNameText.fontSize = 24;
-        _buildingNameText.alignment = TextAlignmentOptions.Right;
-        _buildingNameText.color = Color.white;
-
-        var townObj = new GameObject("HomeTown");
-        townObj.transform.SetParent(headerObj.transform, false);
-        _homeTownText = townObj.AddComponent<TextMeshProUGUI>();
-        _homeTownText.fontSize = 18;
-        _homeTownText.alignment = TextAlignmentOptions.Right;
-        _homeTownText.color = Color.white;
-
-        var layoutElement = headerObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 120;
-        layoutElement.preferredHeight = 120;
-    }
-
-    private void CreateBackpackUI()
-    {
-        var backpackObj = new GameObject("BackpackSection");
-        backpackObj.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var backpackLayout = backpackObj.AddComponent<VerticalLayoutGroup>();
-        backpackLayout.spacing = 10;
-
-        var titleObj = new GameObject("BackpackTitle");
-        titleObj.transform.SetParent(backpackObj.transform, false);
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "BACKPACK";
-        titleText.fontSize = 20;
-        titleText.alignment = TextAlignmentOptions.Right;
-        titleText.color = Color.white;
-
-        var capacityObj = new GameObject("BackpackCapacity");
-        capacityObj.transform.SetParent(backpackObj.transform, false);
-        _backpackCapacityText = capacityObj.AddComponent<TextMeshProUGUI>();
-        _backpackCapacityText.fontSize = 16;
-        _backpackCapacityText.alignment = TextAlignmentOptions.Right;
-        _backpackCapacityText.color = Color.white;
-
-        var containerObj = new GameObject("BackpackItemsContainer");
-        containerObj.transform.SetParent(backpackObj.transform, false);
-
-        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
-        containerLayout.spacing = 5;
-
-        _backpackItemPrefab = CreateBackpackItemPrefab();
-
-        var layoutElement = backpackObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 150;
-        layoutElement.preferredHeight = 150;
-        layoutElement.flexibleHeight = 1;
-
-        _backpackItemsContainer = containerObj.transform;
-    }
-
-    private void CreateHealthBar()
-    {
-        var healthBarObj = new GameObject("HealthBar");
-        healthBarObj.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var healthBarRect = healthBarObj.AddComponent<RectTransform>();
-        healthBarRect.anchorMin = new Vector2(0, 1);
-        healthBarRect.anchorMax = new Vector2(1, 1);
-        healthBarRect.pivot = new Vector2(0.5f, 1);
-        healthBarRect.anchoredPosition = new Vector2(0, -10);
-        healthBarRect.sizeDelta = new Vector2(0, 25);
-
-        var containerObj = new GameObject("HealthBarContainer");
-        containerObj.transform.SetParent(healthBarObj.transform, false);
-
-        var layout = containerObj.AddComponent<HorizontalLayoutGroup>();
-        layout.childAlignment = TextAnchor.MiddleLeft;
-        layout.padding = new RectOffset(5, 5, 0, 0);
-        layout.spacing = 10;
-
-        var containerRect = containerObj.GetComponent<RectTransform>();
-        containerRect.anchorMin = Vector2.zero;
-        containerRect.anchorMax = Vector2.one;
-        containerRect.offsetMin = Vector2.zero;
-        containerRect.offsetMax = Vector2.zero;
-
-        var labelObj = new GameObject("HealthLabel");
-        labelObj.transform.SetParent(containerObj.transform, false);
-
-        var labelText = labelObj.AddComponent<TextMeshProUGUI>();
-        labelText.text = "Health:";
-        labelText.color = Color.white;
-        labelText.fontSize = 16;
-        labelText.alignment = TextAlignmentOptions.Left;
-
-        var labelLayout = labelObj.AddComponent<LayoutElement>();
-        labelLayout.minWidth = 70;
-        labelLayout.preferredWidth = 70;
-
-        var backgroundObj = new GameObject("HealthBarBackground");
-        backgroundObj.transform.SetParent(containerObj.transform, false);
-
-        var backgroundImage = backgroundObj.AddComponent<Image>();
-        backgroundImage.color = new Color(0.2f, 0.2f, 0.2f);
-
-        var backgroundLayout = backgroundObj.AddComponent<LayoutElement>();
-        backgroundLayout.flexibleWidth = 1;
-        backgroundLayout.minHeight = 20;
-
-        var fillObj = new GameObject("HealthBarFill");
-        fillObj.transform.SetParent(backgroundObj.transform, false);
-
-        var fillImage = fillObj.AddComponent<Image>();
-        fillImage.color = Color.red;
-
-        var fillRect = fillObj.GetComponent<RectTransform>();
-        fillRect.anchorMin = Vector2.zero;
-        fillRect.anchorMax = new Vector2(0.75f, 1);
-        fillRect.offsetMin = new Vector2(2, 2);
-        fillRect.offsetMax = new Vector2(-2, -2);
-
-        var valueObj = new GameObject("HealthValue");
-        valueObj.transform.SetParent(containerObj.transform, false);
-
-        var valueText = valueObj.AddComponent<TextMeshProUGUI>();
-        valueText.text = "75/100";
-        valueText.color = Color.white;
-        valueText.fontSize = 16;
-        valueText.alignment = TextAlignmentOptions.Right;
-
-        var valueLayout = valueObj.AddComponent<LayoutElement>();
-        valueLayout.minWidth = 70;
-        valueLayout.preferredWidth = 70;
-
-        _healthFill = fillRect;
-        _healthText = valueText;
-    }
-
-    private GameObject CreateBackpackItemPrefab()
-    {
-        var prefab = new GameObject("UnitBackpackItemPrefab");
-        prefab.SetActive(false);
-        prefab.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var horizontalLayout = prefab.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = 10;
-        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
-
-        var iconObj = new GameObject("ItemIcon");
-        iconObj.transform.SetParent(prefab.transform, false);
-        var icon = iconObj.AddComponent<Image>();
-        icon.color = Color.white;
-
-        var nameObj = new GameObject("ItemName");
-        nameObj.transform.SetParent(prefab.transform, false);
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 14;
-        nameText.alignment = TextAlignmentOptions.Left;
-        nameText.color = Color.white;
-
-        var quantityObj = new GameObject("ItemQuantity");
-        quantityObj.transform.SetParent(prefab.transform, false);
-        var quantityText = quantityObj.AddComponent<TextMeshProUGUI>();
-        quantityText.fontSize = 14;
-        quantityText.alignment = TextAlignmentOptions.Right;
-        quantityText.color = Color.white;
-
-        var iconLayout = iconObj.AddComponent<LayoutElement>();
-        iconLayout.minWidth = 30;
-        iconLayout.preferredWidth = 30;
-        iconLayout.minHeight = 30;
-        iconLayout.preferredHeight = 30;
-
-        var nameLayout = nameObj.AddComponent<LayoutElement>();
-        nameLayout.flexibleWidth = 1;
-
-        var quantityLayout = quantityObj.AddComponent<LayoutElement>();
-        quantityLayout.minWidth = 40;
-        quantityLayout.preferredWidth = 40;
-
-        return prefab;
-    }
-
-    private void CreateCraftingUI()
-    {
-        _craftingPanel = new GameObject("CraftingPanel");
-        _craftingPanel.transform.SetParent(_mainCanvas.transform, false);
-
-        var panelRect = _craftingPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.25f, 0.1f);
-        panelRect.anchorMax = new Vector2(0.75f, 0.9f);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-
-        var panelImage = _craftingPanel.AddComponent<Image>();
-        panelImage.color = new Color(0.2f, 0.2f, 0.3f, 0.9f);
-
-        var headerObj = new GameObject("CraftingHeader");
-        headerObj.transform.SetParent(_craftingPanel.transform, false);
-
-        var headerRect = headerObj.AddComponent<RectTransform>();
-        headerRect.anchorMin = new Vector2(0, 1);
-        headerRect.anchorMax = new Vector2(1, 1);
-        headerRect.pivot = new Vector2(0.5f, 1);
-        headerRect.sizeDelta = new Vector2(0, 50);
-
-        var headerImage = headerObj.AddComponent<Image>();
-        headerImage.color = new Color(0.3f, 0.3f, 0.4f, 1f);
-
-        var titleObj = new GameObject("Title");
-        titleObj.transform.SetParent(headerObj.transform, false);
-
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "AVAILABLE CRAFTING RECIPES";
-        titleText.fontSize = 24;
-        titleText.alignment = TextAlignmentOptions.Center;
-        titleText.color = Color.white;
-
-        var titleRect = titleText.GetComponent<RectTransform>();
-        titleRect.anchorMin = Vector2.zero;
-        titleRect.anchorMax = Vector2.one;
-        titleRect.offsetMin = Vector2.zero;
-        titleRect.offsetMax = Vector2.zero;
-
-        var closeButtonObj = new GameObject("CloseButton");
-        closeButtonObj.transform.SetParent(headerObj.transform, false);
-
-        var closeButtonRect = closeButtonObj.AddComponent<RectTransform>();
-        closeButtonRect.anchorMin = new Vector2(1, 0.5f);
-        closeButtonRect.anchorMax = new Vector2(1, 0.5f);
-        closeButtonRect.pivot = new Vector2(1, 0.5f);
-        closeButtonRect.anchoredPosition = new Vector2(-15, 0);
-        closeButtonRect.sizeDelta = new Vector2(30, 30);
-
-        var closeButtonImage = closeButtonObj.AddComponent<Image>();
-        closeButtonImage.color = new Color(0.8f, 0.2f, 0.2f);
-
-        var closeButton = closeButtonObj.AddComponent<Button>();
-        closeButton.onClick.AddListener(HideCraftingPanel);
-
-        var closeTextObj = new GameObject("CloseText");
-        closeTextObj.transform.SetParent(closeButtonObj.transform, false);
-
-        var closeText = closeTextObj.AddComponent<TextMeshProUGUI>();
-        closeText.text = "X";
-        closeText.fontSize = 20;
-        closeText.alignment = TextAlignmentOptions.Center;
-        closeText.color = Color.white;
-
-        var closeTextRect = closeText.GetComponent<RectTransform>();
-        closeTextRect.anchorMin = Vector2.zero;
-        closeTextRect.anchorMax = Vector2.one;
-        closeTextRect.offsetMin = Vector2.zero;
-        closeTextRect.offsetMax = Vector2.zero;
-
-        var recipesContainerObj = new GameObject("RecipesContainer");
-        recipesContainerObj.transform.SetParent(_craftingPanel.transform, false);
-
-        var recipesContainerRect = recipesContainerObj.AddComponent<RectTransform>();
-        recipesContainerRect.anchorMin = new Vector2(0, 0);
-        recipesContainerRect.anchorMax = new Vector2(1, 1);
-        recipesContainerRect.offsetMin = new Vector2(10, 10);
-        recipesContainerRect.offsetMax = new Vector2(-10, -60);
-
-        var scrollRect = recipesContainerObj.AddComponent<ScrollRect>();
-
-        var contentObj = new GameObject("Content");
-        contentObj.transform.SetParent(recipesContainerObj.transform, false);
-
-        var contentRect = contentObj.AddComponent<RectTransform>();
-        contentRect.anchorMin = new Vector2(0, 1);
-        contentRect.anchorMax = new Vector2(1, 1);
-        contentRect.pivot = new Vector2(0.5f, 1);
-        contentRect.sizeDelta = new Vector2(0, 0);
-
-        var verticalLayout = contentObj.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(10, 10, 10, 10);
-        verticalLayout.spacing = 10;
-        verticalLayout.childAlignment = TextAnchor.UpperCenter;
-        verticalLayout.childControlWidth = true;
-        verticalLayout.childControlHeight = false;
-
-        var contentSizeFitter = contentObj.AddComponent<ContentSizeFitter>();
-        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scrollRect.content = contentRect;
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
-
-        _craftingRecipePrefab = CreateCraftingRecipePrefab();
-        _craftingRecipesContainer = contentObj.transform;
-    }
-
-    private void AddCraftsButton()
-    {
-        var craftsButtonObj = new GameObject("CraftsButton");
-        craftsButtonObj.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var buttonRect = craftsButtonObj.AddComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(0, 0);
-        buttonRect.anchorMax = new Vector2(1, 0);
-        buttonRect.pivot = new Vector2(0.5f, 0);
-        buttonRect.sizeDelta = new Vector2(0, 40);
-        buttonRect.anchoredPosition = new Vector2(0, 10);
-
-        var buttonImage = craftsButtonObj.AddComponent<Image>();
-        buttonImage.color = new Color(0.3f, 0.6f, 0.3f);
-
-        _craftsButton = craftsButtonObj.AddComponent<Button>();
-        _craftsButton.onClick.AddListener(ShowCraftingPanel);
-
-        var buttonText = new GameObject("ButtonText").AddComponent<TextMeshProUGUI>();
-        buttonText.transform.SetParent(craftsButtonObj.transform, false);
-        buttonText.text = "CRAFTS";
-        buttonText.fontSize = 20;
-        buttonText.alignment = TextAlignmentOptions.Center;
-        buttonText.color = Color.white;
-
-        var textRect = buttonText.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
-    }
-
-    private GameObject CreateCraftingRecipePrefab()
-    {
-        var prefab = new GameObject("CraftingRecipePrefab");
-        prefab.transform.SetParent(_buildingInfoPanel.transform, false);
-        prefab.SetActive(false);
-
-        var recipeRect = prefab.AddComponent<RectTransform>();
-        recipeRect.sizeDelta = new Vector2(0, 120);
-
-        var recipeBackground = prefab.AddComponent<Image>();
-        recipeBackground.color = new Color(0.25f, 0.25f, 0.35f, 1f);
-
-        var titleObj = new GameObject("RecipeTitle");
-        titleObj.transform.SetParent(prefab.transform, false);
-
-        var titleRect = titleObj.AddComponent<RectTransform>();
-        titleRect.anchorMin = new Vector2(0, 1);
-        titleRect.anchorMax = new Vector2(1, 1);
-        titleRect.pivot = new Vector2(0.5f, 1);
-        titleRect.sizeDelta = new Vector2(0, 30);
-
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.fontSize = 18;
-        titleText.alignment = TextAlignmentOptions.Center;
-        titleText.color = Color.white;
-
-        var componentsObj = new GameObject("Components");
-        componentsObj.transform.SetParent(prefab.transform, false);
-
-        var componentsRect = componentsObj.AddComponent<RectTransform>();
-        componentsRect.anchorMin = new Vector2(0, 0.5f);
-        componentsRect.anchorMax = new Vector2(1, 0.5f);
-        componentsRect.pivot = new Vector2(0.5f, 0.5f);
-        componentsRect.sizeDelta = new Vector2(0, 50);
-
-        var componentsLayout = componentsObj.AddComponent<HorizontalLayoutGroup>();
-        componentsLayout.padding = new RectOffset(10, 10, 5, 5);
-        componentsLayout.spacing = 10;
-        componentsLayout.childAlignment = TextAnchor.MiddleCenter;
-
-        var timeObj = new GameObject("CraftingTime");
-        timeObj.transform.SetParent(prefab.transform, false);
-
-        var timeRect = timeObj.AddComponent<RectTransform>();
-        timeRect.anchorMin = new Vector2(0, 0);
-        timeRect.anchorMax = new Vector2(0.5f, 0);
-        timeRect.pivot = new Vector2(0.5f, 0);
-        timeRect.sizeDelta = new Vector2(0, 25);
-
-        var timeText = timeObj.AddComponent<TextMeshProUGUI>();
-        timeText.fontSize = 14;
-        timeText.alignment = TextAlignmentOptions.Left;
-        timeText.color = Color.white;
-
-        var craftButtonObj = new GameObject("CraftButton");
-        craftButtonObj.transform.SetParent(prefab.transform, false);
-
-        var craftButtonRect = craftButtonObj.AddComponent<RectTransform>();
-        craftButtonRect.anchorMin = new Vector2(0.5f, 0);
-        craftButtonRect.anchorMax = new Vector2(1, 0);
-        craftButtonRect.pivot = new Vector2(0.5f, 0);
-        craftButtonRect.sizeDelta = new Vector2(-20, 25);
-        craftButtonRect.anchoredPosition = new Vector2(-10, 10);
-
-        var craftButtonImage = craftButtonObj.AddComponent<Image>();
-        craftButtonImage.color = new Color(0.3f, 0.5f, 0.8f);
-
-        var craftButton = craftButtonObj.AddComponent<Button>();
-
-        var craftButtonText = new GameObject("ButtonText").AddComponent<TextMeshProUGUI>();
-        craftButtonText.transform.SetParent(craftButtonObj.transform, false);
-        craftButtonText.text = "CRAFT";
-        craftButtonText.fontSize = 16;
-        craftButtonText.alignment = TextAlignmentOptions.Center;
-        craftButtonText.color = Color.white;
-
-        var craftButtonTextRect = craftButtonText.GetComponent<RectTransform>();
-        craftButtonTextRect.anchorMin = Vector2.zero;
-        craftButtonTextRect.anchorMax = Vector2.one;
-        craftButtonTextRect.offsetMin = Vector2.zero;
-        craftButtonTextRect.offsetMax = Vector2.zero;
-
-        return prefab;
-    }
-
-    private void CreateRequiredResourcesUI()
-    {
-        var resourcesObj = new GameObject("RequiredResourcesSection");
-        resourcesObj.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var resourcesLayout = resourcesObj.AddComponent<VerticalLayoutGroup>();
-        resourcesLayout.spacing = 10;
-
-        var titleObj = new GameObject("ResourcesTitle");
-        titleObj.transform.SetParent(resourcesObj.transform, false);
-        var titleText = titleObj.AddComponent<TextMeshProUGUI>();
-        titleText.text = "REQUIRED RESOURCES";
-        titleText.fontSize = 20;
-        titleText.alignment = TextAlignmentOptions.Right;
-        titleText.color = Color.white;
-
-        var containerObj = new GameObject("ResourcesItemsContainer");
-        containerObj.transform.SetParent(resourcesObj.transform, false);
-
-        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
-        containerLayout.spacing = 5;
-
-        _resourceItemPrefab = CreateResourceItemPrefab();
-
-        var layoutElement = resourcesObj.AddComponent<LayoutElement>();
-        layoutElement.minHeight = 150;
-        layoutElement.preferredHeight = 150;
-        layoutElement.flexibleHeight = 1;
-
-        _requiredResourcesContainer = containerObj.transform;
-        _requiredResourcesPanel = resourcesObj;
-    }
-
-    private GameObject CreateResourceItemPrefab()
-    {
-        var prefab = new GameObject("ResourceItemPrefab");
-        prefab.SetActive(false);
-        prefab.transform.SetParent(_buildingInfoPanel.transform, false);
-
-        var horizontalLayout = prefab.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = 10;
-        horizontalLayout.childAlignment = TextAnchor.MiddleLeft;
-
-        var iconObj = new GameObject("ItemIcon");
-        iconObj.transform.SetParent(prefab.transform, false);
-        var icon = iconObj.AddComponent<Image>();
-        icon.color = Color.white;
-
-        var nameObj = new GameObject("ItemName");
-        nameObj.transform.SetParent(prefab.transform, false);
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 14;
-        nameText.alignment = TextAlignmentOptions.Left;
-        nameText.color = Color.white;
-
-        var quantityObj = new GameObject("ItemQuantity");
-        quantityObj.transform.SetParent(prefab.transform, false);
-        var quantityText = quantityObj.AddComponent<TextMeshProUGUI>();
-        quantityText.fontSize = 14;
-        quantityText.alignment = TextAlignmentOptions.Right;
-        quantityText.color = Color.white;
-
-        var iconLayout = iconObj.AddComponent<LayoutElement>();
-        iconLayout.minWidth = 30;
-        iconLayout.preferredWidth = 30;
-        iconLayout.minHeight = 30;
-        iconLayout.preferredHeight = 30;
-
-        var nameLayout = nameObj.AddComponent<LayoutElement>();
-        nameLayout.flexibleWidth = 1;
-
-        var quantityLayout = quantityObj.AddComponent<LayoutElement>();
-        quantityLayout.minWidth = 40;
-        quantityLayout.preferredWidth = 40;
-
-        return prefab;
-    }
-
-    private void UpdateRequiredResourcesUI(List<CraftingComponent> requiredResources, bool isVisible)
-    {
-        if (_requiredResourcesPanel != null)
-        {
-            _requiredResourcesPanel.SetActive(isVisible);
-
-            if (!isVisible || requiredResources == null)
+            var viewport = _resourcePanel.transform.Find("ScrollView/Viewport");
+            if (viewport != null)
             {
-                return;
-            }
-
-            for (var i = _requiredResourcesContainer.childCount - 1; i >= 0; i--)
-            {
-                var child = _requiredResourcesContainer.GetChild(i);
-                if (!child.IsDestroyed() && child != null)
+                var viewportRect = viewport.GetComponent<RectTransform>();
+                if (viewportRect != null)
                 {
-                    Destroy(child.gameObject);
+                    layoutElement.minHeight = viewportRect.rect.height;
                 }
             }
-
-            if (requiredResources.Count == 0)
-            {
-                var emptyObj = new GameObject("EmptyResources");
-                emptyObj.transform.SetParent(_requiredResourcesContainer, false);
-                var emptyText = emptyObj.AddComponent<TextMeshProUGUI>();
-                emptyText.text = "No resources required";
-                emptyText.fontSize = 16;
-                emptyText.alignment = TextAlignmentOptions.Center;
-                emptyText.color = Color.white;
-                return;
-            }
-
-            foreach (var resource in requiredResources)
-            {
-                var resourceObj = Instantiate(_resourceItemPrefab, _requiredResourcesContainer);
-                resourceObj.SetActive(true);
-
-                var nameText = resourceObj.transform.Find("ItemName").GetComponent<TextMeshProUGUI>();
-                var quantityText = resourceObj.transform.Find("ItemQuantity").GetComponent<TextMeshProUGUI>();
-
-                nameText.text = resource.BackpackItem.Name;
-                quantityText.text = $"x{resource.Quantity}";
-            }
         }
-    }
-
-    public void ShowCraftingPanel()
-    {
-        if (_currentBuilding == null || _currentBuilding.Crafts == null || _currentBuilding.Crafts.Count == 0)
-        {
-            Debug.Log("No crafting recipes available for this building");
-            return;
-        }
-
-        for (var i = _craftingRecipesContainer.childCount - 1; i >= 0; i--)
-        {
-            Destroy(_craftingRecipesContainer.GetChild(i).gameObject);
-        }
-
-        foreach (var recipe in _currentBuilding.Crafts)
-        {
-            AddCraftingRecipe(recipe);
-        }
-
-        _craftingPanel.SetActive(true);
-    }
-
-    public void HideCraftingPanel()
-    {
-        if (_craftingPanel != null)
-        {
-            _craftingPanel.SetActive(false);
-        }
-    }
-
-    private void AddCraftingRecipe(CraftingRecipe recipe)
-    {
-        var recipeObj = Instantiate(_craftingRecipePrefab, _craftingRecipesContainer);
-        recipeObj.SetActive(true);
-
-        var titleText = recipeObj.transform.Find("RecipeTitle").GetComponent<TextMeshProUGUI>();
-        titleText.text = recipe.Name;
-
-        var timeText = recipeObj.transform.Find("CraftingTime").GetComponent<TextMeshProUGUI>();
-        timeText.text = $"Time: {recipe.CraftingTime} sec";
-
-        var componentsContainer = recipeObj.transform.Find("Components");
-
-        foreach (var component in recipe.Components)
-        {
-            var componentObj = new GameObject("Component");
-            componentObj.transform.SetParent(componentsContainer, false);
-
-            var componentLayout = componentObj.AddComponent<VerticalLayoutGroup>();
-            componentLayout.spacing = 2;
-            componentLayout.childAlignment = TextAnchor.UpperCenter;
-
-            var componentRect = componentObj.GetComponent<RectTransform>();
-            componentRect.sizeDelta = new Vector2(60, 45);
-
-            var iconObj = new GameObject("Icon");
-            iconObj.transform.SetParent(componentObj.transform, false);
-
-            var iconRect = iconObj.AddComponent<RectTransform>();
-            iconRect.sizeDelta = new Vector2(30, 30);
-
-            var iconImage = iconObj.AddComponent<Image>();
-            iconImage.color = Color.gray;
-
-            var quantityObj = new GameObject("Quantity");
-            quantityObj.transform.SetParent(componentObj.transform, false);
-
-            var quantityText = quantityObj.AddComponent<TextMeshProUGUI>();
-            quantityText.text = $"x{component.Quantity}";
-            quantityText.fontSize = 12;
-            quantityText.alignment = TextAlignmentOptions.Center;
-            quantityText.color = Color.white;
-        }
-
-        var craftButton = recipeObj.transform.Find("CraftButton").GetComponent<Button>();
-        craftButton.onClick.AddListener(() => StartCrafting(recipe));
-    }
-
-    private void StartCrafting(CraftingRecipe recipe)
-    {
-        _currentBuilding.BuildingCraftingSystem.StartCraft(recipe);
-
-        HideCraftingPanel();
     }
 
     private void UpdateBackpackUI(Backpack backpack)
     {
-        for (var i = _backpackItemsContainer.childCount - 1; i >= 0; i--)
-        {
-            var child = _backpackItemsContainer.GetChild(i);
-            if (!child.IsDestroyed() && child != null)
-            {
-                Destroy(child.gameObject);
-            }
-        }
-
         if (backpack == null)
         {
-            _backpackCapacityText.text = "No backpack";
+            _buildingBackpackCount.text = "0 / 0";
+        }
+        else
+        {
+            _buildingBackpackCount.text = $"{backpack.CurrentCapacity} / {backpack.MaxCapacity}";
+
+            var resourcesToRemove = new HashSet<int>(_buildingResourceItems.Keys);
+
+            foreach (var (key, quantity) in backpack.GetDetailedItems())
+            {
+                var resourceId = key.Id;
+                
+                resourcesToRemove.Remove(resourceId);
+
+                if (quantity <= 0)
+                {
+                    RemoveResourceFromPanel(resourceId);
+                }
+                else if (_buildingResourceItems.TryGetValue(resourceId, out var resourceItem))
+                {
+                    var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+                    resourceText.text = quantity.ToString();
+                }
+                else
+                {
+                    AddResourceToPanel(resourceId, quantity);
+                }
+            }
+
+            foreach (var resourceId in resourcesToRemove)
+            {
+                RemoveResourceFromPanel(resourceId);
+            }
+        }
+    }
+
+    private void AddResourceToPanel(int resourceId, int quantity)
+    {
+        if (quantity <= 0)
             return;
+
+        var resource = _resourcePrefab.transform.Find("Panel").gameObject;
+
+        var resourceItem = Instantiate(resource, _resourcePanel);
+
+        var rectTransform = resourceItem.GetComponent<RectTransform>();
+
+        if (rectTransform != null)
+        {
+            rectTransform.sizeDelta = new Vector2(0, 30);
+            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
         }
 
-        _backpackCapacityText.text = $"Capacity: {backpack.CurrentCapacity}/{backpack.MaxCapacity}";
+        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceItem.GetComponentInChildren<Image>();
+        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
 
-        if (backpack.GetAllItems() == null || backpack.GetAllItems().Count == 0)
+        _buildingResourceItems[resourceId] = resourceItem;
+        resourceText.text = quantity.ToString();
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
+    }
+
+    private void RemoveResourceFromPanel(int resourceId)
+    {
+        if (_buildingResourceItems.TryGetValue(resourceId, out var resourceItem))
         {
-            var emptyObj = new GameObject("EmptyBackpack");
-            emptyObj.transform.SetParent(_backpackItemsContainer, false);
-            var emptyText = emptyObj.AddComponent<TextMeshProUGUI>();
-            emptyText.text = "Empty";
-            emptyText.fontSize = 16;
-            emptyText.alignment = TextAlignmentOptions.Center;
-            emptyText.color = Color.white;
-            return;
-        }
-
-        foreach (var itemStack in backpack.GetAllItems())
-        {
-            var itemObj = Instantiate(_backpackItemPrefab, _backpackItemsContainer);
-            itemObj.SetActive(true);
-
-            var nameText = itemObj.transform.Find("ItemName").GetComponent<TextMeshProUGUI>();
-            var quantityText = itemObj.transform.Find("ItemQuantity").GetComponent<TextMeshProUGUI>();
-
-            nameText.text = itemStack.Item.Name;
-            quantityText.text = $"x{itemStack.Quantity}";
+            Destroy(resourceItem);
+            _buildingResourceItems.Remove(resourceId);
         }
     }
 
@@ -801,94 +206,11 @@ public class BuildingUIManager : MonoBehaviour
         }
 
         _currentBuilding = building;
-
         _buildingNameText.text = building.Building.Name;
-        _homeTownText.text = building.HomeTown != null ? $"Hometown: {building.HomeTown.Name}" : "No hometown";
-
-        UpdateBackpackUI(building.Backpack);
+        _buildingTownText.text = building.HomeTown != null ? $"{building.HomeTown.Name}" : "No hometown";
         UpdateHealthBar(building.HP, building.Building.MaxHP);
-
-        var showRequiredResources = !building.IsBuilt ||
-                                     (building.BuildingCraftingSystem != null &&
-                                      building.BuildingCraftingSystem.IsCrafting);
-
-        List<CraftingComponent> requiredResources = new();
-        if (showRequiredResources)
-        {
-            var calculatedResources = new List<CraftingComponent>();
-
-            if (!building.IsBuilt && building.HomeTown != null)
-            {
-                var townOrder = building.HomeTown.BuildingTownOrder.GetOrder(building);
-
-                if (townOrder != null)
-                {
-                    var requiredBuildingResources = townOrder.RequiredResources;
-                    var deliveredBuildingResources = townOrder.DeliveredResources;
-
-                    if (requiredBuildingResources != null && requiredBuildingResources.Count > 0)
-                    {
-                        foreach (var required in requiredBuildingResources)
-                        {
-                            var delivered = deliveredBuildingResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
-                            var deliveredQuantity = delivered?.Quantity ?? 0;
-
-                            var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity);
-
-                            if (remainingQuantity > 0)
-                            {
-                                calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
-                            }
-                        }
-                    }
-                }
-
-                requiredResources = calculatedResources;
-            }
-            else if (building.IsBuilt && building.BuildingCraftingSystem != null && building.BuildingCraftingSystem.IsCrafting)
-            {
-                var craftingSystem = building.BuildingCraftingSystem;
-
-                if (craftingSystem.RequiredResources != null && craftingSystem.RequiredResources.Count > 0)
-                {
-                    var craftRequiredResources = craftingSystem.RequiredResources;
-                    var craftDeliveredResources = craftingSystem.DeliveredResources;
-
-                    foreach (var required in craftRequiredResources)
-                    {
-                        var delivered = craftDeliveredResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
-                        var deliveredQuantity = delivered?.Quantity ?? 0;
-
-                        var backpackQuantity = building.Backpack?.GetResourceQuantity(required.BackpackItem) ?? 0;
-
-                        var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity - backpackQuantity);
-
-                        if (remainingQuantity > 0)
-                        {
-                            calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
-                        }
-                    }
-
-                    requiredResources = calculatedResources;
-                }
-            }
-        }
-
-        if (requiredResources.Count == 0)
-        {
-            showRequiredResources = false;
-        }
-
-        UpdateRequiredResourcesUI(requiredResources, showRequiredResources);
-
-        var hasCrafts = building.Crafts != null && building.Crafts.Count > 0 && building.IsBuilt;
-
-        if (_craftsButton == null)
-        {
-            AddCraftsButton();
-        }
-
-        _craftsButton.gameObject.SetActive(hasCrafts);
+        UpdateBackpackUI(building.Backpack);
+        UpdateBuildingResourcesInfo(building);
 
         _buildingInfoPanel.SetActive(true);
     }
@@ -904,31 +226,201 @@ public class BuildingUIManager : MonoBehaviour
         if (_currentBuilding == building)
         {
             UpdateHealthBar(building.HP, building.Building.MaxHP);
-
             UpdateBackpackUI(building.Backpack);
-
-            var showRequiredResources = !building.IsBuilt ||
-                                        (building.BuildingCraftingSystem != null &&
-                                         building.BuildingCraftingSystem.IsCrafting);
-
-            List<CraftingComponent> requiredResources = new();
-            if (showRequiredResources)
-            {
-                if (!building.IsBuilt && building.HomeTown != null)
-                {
-                    requiredResources = building.HomeTown.BuildingTownOrder.GetOrder(building).RequiredResources;
-                }
-                else if (building.IsBuilt && building.BuildingCraftingSystem != null && building.BuildingCraftingSystem.IsCrafting)
-                {
-                    requiredResources = building.BuildingCraftingSystem.RequiredResources;
-                }
-            }
-
-            if (requiredResources.Count == 0)
-            {
-                showRequiredResources = false;
-            }
-            UpdateRequiredResourcesUI(requiredResources, showRequiredResources);
+            UpdateBuildingResourcesInfo(building);
         }
+    }
+
+    private void UpdateBuildingResourcesInfo(BuildingItem building)
+    {
+        ResetUIElements();
+
+        if (IsUnbuiltBuildingWithResources(building))
+        {
+            ShowBuildResourcesInfo(building);
+        }
+        else if (IsCraftingBuilding(building))
+        {
+            ShowCraftingBuildingInfo(building);
+        }
+        else if (IsBuiltBuildingWithCrafts(building))
+        {
+            ShowCraftingOptions(building);
+        }
+        else if (IsBuiltBuildingWithResources(building))
+        {
+            ShowStoredResourcesInfo(building);
+        }
+        else
+        {
+            HideResourcesInfo();
+        }
+    }
+
+    private void ResetUIElements()
+    {
+        _action1Button.gameObject.SetActive(false);
+        _action2Button.gameObject.SetActive(false);
+        _buildingBackpackCount.gameObject.SetActive(true);
+        _resourcePanel.gameObject.SetActive(true);
+        _actionText.gameObject.SetActive(true);
+    }
+
+    private bool IsUnbuiltBuildingWithResources(BuildingItem building)
+    {
+        return !building.IsBuilt && building.HomeTown != null;
+    }
+
+    private void ShowBuildResourcesInfo(BuildingItem building)
+    {
+        if (!building.IsAllDelivered)
+        {
+            var requiredResources = CalculateResourcesToBuild(building);
+            _actionText.text = "Resources to build";
+            UpdateBackpackUI(requiredResources);
+        }
+        else
+        {
+            HideResourcesInfo();
+        }
+    }
+
+    private bool IsCraftingBuilding(BuildingItem building)
+    {
+        return building.BuildingCraftingSystem != null && building.BuildingCraftingSystem.IsCrafting;
+    }
+
+    private void ShowCraftingBuildingInfo(BuildingItem building)
+    {
+        _action1Button.gameObject.SetActive(true);
+        //_action1Image.sprite = ...
+
+        
+            var requiredResources = CalculateResourcesToCraft(building);
+            _actionText.text = "Resources for craft";
+            UpdateBackpackUI(requiredResources);
+        
+    }
+
+    private bool IsBuiltBuildingWithCrafts(BuildingItem building)
+    {
+        return building.IsBuilt && building.Crafts != null && building.Crafts.Count > 0;
+    }
+
+    private void ShowCraftingOptions(BuildingItem building)
+    {
+        _action1Button.gameObject.SetActive(true);
+
+        _action1Button.onClick.RemoveAllListeners();
+
+        _action1Button.onClick.AddListener(() =>
+        {
+            CraftingMenuManager.Instance.ShowBuildingCrafts(building);
+        });
+
+        // _action1Image.sprite = ...
+
+        if (IsBuiltBuildingWithResources(building))
+        {
+            ShowStoredResourcesInfo(building);
+        }
+        else
+        {
+            HideResourcesInfo();
+        }
+    }
+
+    private bool IsBuiltBuildingWithResources(BuildingItem building)
+    {
+        return building.IsBuilt && building.Backpack != null;
+    }
+
+    private void ShowStoredResourcesInfo(BuildingItem building)
+    {
+        _actionText.text = "Resources";
+        UpdateBackpackUI(building.Backpack);
+    }
+
+    private void HideResourcesInfo()
+    {
+        _actionText.gameObject.SetActive(false);
+        _buildingBackpackCount.gameObject.SetActive(false);
+        _resourcePanel.gameObject.SetActive(false);
+    }
+
+    private Backpack CalculateResourcesToCraft(BuildingItem building)
+    {
+        var craftingSystem = building.BuildingCraftingSystem;
+        var resourceCount = 0;
+
+        var craftRequiredResources = craftingSystem.RequiredResources;
+        var craftDeliveredResources = craftingSystem.DeliveredResources;
+
+        var calculatedResources = new List<CraftingComponent>();
+
+        foreach (var required in craftRequiredResources)
+        {
+            var delivered = craftDeliveredResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
+            var deliveredQuantity = delivered?.Quantity ?? 0;
+
+            var backpackQuantity = building.Backpack?.GetResourceQuantity(required.BackpackItem) ?? 0;
+
+            var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity - backpackQuantity);
+
+            if (remainingQuantity > 0)
+            {
+                calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
+                resourceCount += remainingQuantity;
+            }
+        }
+
+        var requiredResources = new Backpack(resourceCount);
+
+        foreach (var resource in calculatedResources)
+        {
+            requiredResources.AddItem(resource.BackpackItem, resource.Quantity);
+        }
+
+        return requiredResources;
+    }
+
+    private Backpack CalculateResourcesToBuild(BuildingItem building)
+    {
+        var calculatedResources = new List<CraftingComponent>();
+        var resourceCount = 0;
+
+        var townOrder = building.HomeTown.BuildingTownOrder.GetOrder(building);
+
+        if (townOrder != null)
+        {
+            var requiredBuildingResources = townOrder.RequiredResources;
+            var deliveredBuildingResources = townOrder.DeliveredResources;
+
+            if (requiredBuildingResources != null && requiredBuildingResources.Count > 0)
+            {
+                foreach (var required in requiredBuildingResources)
+                {
+                    var delivered = deliveredBuildingResources?.FirstOrDefault(d => d.BackpackItem.Id == required.BackpackItem.Id);
+                    var deliveredQuantity = delivered?.Quantity ?? 0;
+
+                    var remainingQuantity = Math.Max(0, required.Quantity - deliveredQuantity);
+
+                    if (remainingQuantity > 0)
+                    {
+                        calculatedResources.Add(new CraftingComponent(required.BackpackItem, remainingQuantity));
+                        resourceCount += remainingQuantity;
+                    }
+                }
+            }
+        }
+
+        var requiredResources = new Backpack(resourceCount);
+
+        foreach (var resource in calculatedResources)
+        {
+            requiredResources.AddItem(resource.BackpackItem, resource.Quantity);
+        }
+
+        return requiredResources;
     }
 }

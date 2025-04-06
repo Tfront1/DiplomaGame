@@ -128,6 +128,20 @@ public class BuildingMenuManager : MonoBehaviour
         if (_buildingContentMenu == null)
         {
             _buildingContentMenu = _buildingMenu.transform.Find("Viewport/Content");
+
+            var layoutElement = _buildingContentMenu.GetComponent<LayoutElement>();
+            if (layoutElement != null)
+            {
+                var viewport = _buildingMenu.transform.Find("ScrollView/Viewport");
+                if (viewport != null)
+                {
+                    var viewportRect = viewport.GetComponent<RectTransform>();
+                    if (viewportRect != null)
+                    {
+                        layoutElement.minHeight = viewportRect.rect.height;
+                    }
+                }
+            }
         }
 
         foreach (Transform child in _buildingContentMenu)
@@ -182,10 +196,7 @@ public class BuildingMenuManager : MonoBehaviour
         if (_currentTown != null)
         {
             BuildingManager.PrePlacementBuilding(building, _currentTown);
-
-            _buildingMenu.gameObject.SetActive(false);
-            _isBuildingMenuOpen = false;
-
+            ToggleBuildingMenu();
             _currentTown.NotifyUIChanged();
         }
     }

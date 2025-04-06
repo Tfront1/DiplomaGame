@@ -166,11 +166,11 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     {
         var args = new BuildingCompletedEventArgs(this);
 
-        UIToChange?.Invoke(this);
-        OnBuildingComplete?.Invoke(this, args);
-
         Backpack?.Clear();
         IsBuilt = true;
+
+        OnBuildingComplete?.Invoke(this, args);
+        UIToChange?.Invoke(this);
     }
 
     public void ApplyDamage(float damage)

@@ -8,9 +8,16 @@ using UnityEngine.UI;
 
 public class UnitListUIManager : MonoBehaviour
 {
-    private GameObject _unitListInfoPanel;
-    private Transform _unitsContainer;
+    private GameObject _unitListUIPrefab;
     private GameObject _unitItemPrefab;
+
+    private GameObject _unitListPanel;
+    private Button _unitHalfButton;
+    private Button _unitSelectButton;
+
+    private Transform _unitsContainer;
+    private Color _unitNotSelectedColor = Color.white;
+
     private Dictionary<UnitItem, GameObject> _unitUIElements = new();
     private Dictionary<UnitItem, GameObject> _selectedUnits = new();
 
@@ -48,6 +55,13 @@ public class UnitListUIManager : MonoBehaviour
         {
             _instance = this;
             DontDestroyOnLoad(gameObject);
+
+            if (_unitListUIPrefab == null)
+                _unitListUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitListUIPrefab");
+
+            if (_unitItemPrefab == null)
+                _unitItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitItemPrefab");
+
             InitializeUI();
             HideUnitList();
 
@@ -66,275 +80,44 @@ public class UnitListUIManager : MonoBehaviour
     {
         _mainCanvas = MainCanvasUI.MainCanvas;
 
-        if (_unitListInfoPanel == null)
-        {
-            CreateUnitListUI();
-        }
+        CreateUnitListUI();
     }
 
     private void CreateUnitListUI()
     {
-        _unitListInfoPanel = new GameObject("UnitListInfoPanel");
-        _unitListInfoPanel.transform.SetParent(_mainCanvas.transform, false);
+        var unitListPanel = _unitListUIPrefab.transform.Find("Canvas/Panel");
+        _unitListPanel = Instantiate(unitListPanel.gameObject, _mainCanvas.transform);
+        _unitListPanel.name = "UnitListPanel";
 
-        var panelRect = _unitListInfoPanel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.75f, 0.5f);
-        panelRect.anchorMax = new Vector2(1.0f, 0.9f);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
+        _unitHalfButton = _unitListPanel.transform.Find("Half").GetComponent<Button>();
+        _unitHalfButton.onClick.AddListener(ChoseHalfOfSelected);
+        var halfImage = _unitListPanel.transform.Find("Half").GetComponent<Image>();
 
-        var panelImage = _unitListInfoPanel.AddComponent<Image>();
-        panelImage.color = new Color(0.2f, 0.2f, 0.3f, 0.8f);
+        _unitSelectButton = _unitListPanel.transform.Find("Select").GetComponent<Button>();
+        _unitSelectButton.onClick.AddListener(CreateNewGroup);
+        var selectImage = _unitListPanel.transform.Find("Select").GetComponent<Image>();
 
-        var verticalLayout = _unitListInfoPanel.AddComponent<VerticalLayoutGroup>();
-        verticalLayout.padding = new RectOffset(10, 10, 10, 10);
-        verticalLayout.spacing = 5;
-        verticalLayout.childAlignment = TextAnchor.UpperCenter;
-        verticalLayout.childControlWidth = true;
-        verticalLayout.childControlHeight = false;
-        verticalLayout.childForceExpandWidth = true;
-        verticalLayout.childForceExpandHeight = false;
-
-        CreateUnitListHeader();
-        AddSplitButton();
-        AddNewGroupButton();
-        CreateUnitsContainer();
+        _unitsContainer = _unitListPanel.transform.Find("ScrollView/Viewport/Content");
     }
 
-    private void AddSplitButton()
-    {
-        var splitButton = new GameObject("SplitButton");
-        splitButton.transform.SetParent(_unitListInfoPanel.transform, false);
-
-        var buttonRect = splitButton.AddComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(1, 1);
-        buttonRect.anchorMax = new Vector2(1, 1);
-        buttonRect.pivot = new Vector2(1, 1);
-        buttonRect.sizeDelta = new Vector2(30, 30);
-        buttonRect.anchoredPosition = new Vector2(-10, -10);
-
-        var buttonImage = splitButton.AddComponent<Image>();
-        buttonImage.color = new Color(0.5f, 0.5f, 0.6f, 1.0f);
-
-        var button = splitButton.AddComponent<Button>();
-        var colors = button.colors;
-        colors.highlightedColor = new Color(0.7f, 0.7f, 0.8f, 1.0f);
-        colors.pressedColor = new Color(0.4f, 0.4f, 0.5f, 1.0f);
-        button.colors = colors;
-
-        var layoutElement = splitButton.AddComponent<LayoutElement>();
-        layoutElement.ignoreLayout = true;
-
-        button.onClick.AddListener(ChoseHalfOfSelected);
-    }
-
-    private void AddNewGroupButton()
-    {
-        var newGroupButton = new GameObject("SplitButton");
-        newGroupButton.transform.SetParent(_unitListInfoPanel.transform, false);
-
-        var buttonRect = newGroupButton.AddComponent<RectTransform>();
-        buttonRect.anchorMin = new Vector2(1, 1);
-        buttonRect.anchorMax = new Vector2(1, 1);
-        buttonRect.pivot = new Vector2(1, 1);
-        buttonRect.sizeDelta = new Vector2(30, 30);
-        buttonRect.anchoredPosition = new Vector2(-50, -10);
-
-        var buttonImage = newGroupButton.AddComponent<Image>();
-        buttonImage.color = new Color(0.2f, 0.2f, 0.2f, 1.0f);
-
-        var button = newGroupButton.AddComponent<Button>();
-        var colors = button.colors;
-        colors.highlightedColor = new Color(0.7f, 0.7f, 0.8f, 1.0f);
-        colors.pressedColor = new Color(0.4f, 0.4f, 0.5f, 1.0f);
-        button.colors = colors;
-
-        var layoutElement = newGroupButton.AddComponent<LayoutElement>();
-        layoutElement.ignoreLayout = true;
-
-        button.onClick.AddListener(CreateNewGroup);
-    }
-
-    private void CreateUnitListHeader()
-    {
-        var headerObj = new GameObject("UnitListHeader");
-        headerObj.transform.SetParent(_unitListInfoPanel.transform, false);
-
-        var headerText = headerObj.AddComponent<TextMeshProUGUI>();
-        headerText.text = "UNITS";
-        headerText.fontSize = 18;
-        headerText.fontStyle = FontStyles.Bold;
-        headerText.alignment = TextAlignmentOptions.Center;
-        headerText.color = Color.white;
-
-        var headerLayout = headerObj.AddComponent<LayoutElement>();
-        headerLayout.minHeight = 30;
-        headerLayout.preferredHeight = 30;
-    }
-
-    private void CreateUnitsContainer()
-    {
-        var containerObj = new GameObject("UnitsContainer");
-        containerObj.transform.SetParent(_unitListInfoPanel.transform, false);
-
-        var containerRect = containerObj.GetComponent<RectTransform>();
-        if (containerRect == null)
-            containerRect = containerObj.AddComponent<RectTransform>();
-
-        containerRect.anchorMin = new Vector2(0, 0);
-        containerRect.anchorMax = new Vector2(1, 1);
-
-        containerRect.offsetMin = new Vector2(10, 10);
-        containerRect.offsetMax = new Vector2(-10, -50);
-
-        containerRect.sizeDelta = new Vector2(containerRect.sizeDelta.x, 200);
-
-        var containerLayout = containerObj.AddComponent<VerticalLayoutGroup>();
-        containerLayout.spacing = 5;
-        containerLayout.childAlignment = TextAnchor.UpperLeft;
-        containerLayout.childControlWidth = true;
-        containerLayout.childControlHeight = false;
-        containerLayout.childForceExpandWidth = true;
-        containerLayout.childForceExpandHeight = false;
-
-        var containerElement = containerObj.AddComponent<LayoutElement>();
-        containerElement.flexibleHeight = 0;
-        containerElement.minHeight = 500;
-
-        var scrollRect = containerObj.AddComponent<ScrollRect>();
-
-        var mask = containerObj.AddComponent<Mask>();
-        mask.showMaskGraphic = false;
-
-        var maskImage = containerObj.AddComponent<Image>();
-        maskImage.color = new Color(1, 1, 1, 0.1f);
-
-        var scrollContent = new GameObject("Content");
-        scrollContent.transform.SetParent(containerObj.transform, false);
-
-        var contentRect = scrollContent.AddComponent<RectTransform>();
-        contentRect.anchorMin = new Vector2(0, 1);
-        contentRect.anchorMax = new Vector2(1, 1);
-        contentRect.pivot = new Vector2(0.5f, 1);
-        contentRect.offsetMin = new Vector2(0, 0);
-        contentRect.offsetMax = new Vector2(0, 0);
-
-        var contentLayout = scrollContent.AddComponent<VerticalLayoutGroup>();
-        contentLayout.spacing = 5;
-        contentLayout.childAlignment = TextAnchor.UpperLeft;
-        contentLayout.childControlWidth = true;
-        contentLayout.childForceExpandWidth = true;
-
-        var contentElement = scrollContent.AddComponent<ContentSizeFitter>();
-        contentElement.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        scrollRect.content = contentRect;
-        scrollRect.horizontal = false;
-        scrollRect.vertical = true;
-        scrollRect.scrollSensitivity = 10;
-        scrollRect.viewport = containerRect;
-
-        CreateScrollbar(containerObj, scrollRect);
-
-        _unitsContainer = scrollContent.transform;
-
-        CreateUnitItemPrefab();
-    }
-
-    private void CreateScrollbar(GameObject containerObj, ScrollRect scrollRect)
-    {
-        var scrollbarObj = new GameObject("Scrollbar");
-        scrollbarObj.transform.SetParent(containerObj.transform, false);
-
-        var scrollbarRect = scrollbarObj.AddComponent<RectTransform>();
-        scrollbarRect.anchorMin = new Vector2(1, 0);
-        scrollbarRect.anchorMax = new Vector2(1, 1);
-        scrollbarRect.pivot = new Vector2(1, 0.5f);
-        scrollbarRect.offsetMin = new Vector2(-10, 5);
-        scrollbarRect.offsetMax = new Vector2(0, -5);
-
-        var scrollbar = scrollbarObj.AddComponent<Scrollbar>();
-        scrollbar.direction = Scrollbar.Direction.BottomToTop;
-
-        var scrollbarImage = scrollbarObj.AddComponent<Image>();
-        scrollbarImage.color = new Color(0.2f, 0.2f, 0.2f, 0.5f);
-
-        var slidingAreaObj = new GameObject("SlidingArea");
-        slidingAreaObj.transform.SetParent(scrollbarObj.transform, false);
-
-        var slidingAreaRect = slidingAreaObj.AddComponent<RectTransform>();
-        slidingAreaRect.anchorMin = Vector2.zero;
-        slidingAreaRect.anchorMax = Vector2.one;
-        slidingAreaRect.offsetMin = Vector2.zero;
-        slidingAreaRect.offsetMax = Vector2.zero;
-
-        var handleObj = new GameObject("Handle");
-        handleObj.transform.SetParent(slidingAreaObj.transform, false);
-
-        var handleRect = handleObj.AddComponent<RectTransform>();
-        handleRect.anchorMin = Vector2.zero;
-        handleRect.anchorMax = new Vector2(1, 0.2f);
-        handleRect.offsetMin = Vector2.zero;
-        handleRect.offsetMax = Vector2.zero;
-
-        var handleImage = handleObj.AddComponent<Image>();
-        handleImage.color = new Color(0.4f, 0.4f, 0.4f, 0.7f);
-
-        scrollbar.handleRect = handleRect;
-        scrollbar.targetGraphic = handleImage;
-
-        scrollRect.verticalScrollbar = scrollbar;
-        scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
-        scrollRect.verticalScrollbarSpacing = 2;
-    }
-
-    private void CreateUnitItemPrefab()
-    {
-        _unitItemPrefab = new GameObject("UnitItemPrefab");
-        _unitItemPrefab.SetActive(false);
-        _unitItemPrefab.transform.SetParent(_unitListInfoPanel.transform, false);
-        var itemRect = _unitItemPrefab.AddComponent<RectTransform>();
-        var horizLayout = _unitItemPrefab.AddComponent<HorizontalLayoutGroup>();
-        horizLayout.spacing = 8;
-        horizLayout.childAlignment = TextAnchor.MiddleLeft;
-        horizLayout.padding = new RectOffset(5, 5, 5, 5);
-        var itemLayout = _unitItemPrefab.AddComponent<LayoutElement>();
-        itemLayout.minHeight = 40;
-        itemLayout.preferredHeight = 40;
-        var button = _unitItemPrefab.AddComponent<Button>();
-
-        var borderImage = _unitItemPrefab.AddComponent<Image>();
-        borderImage.color = Color.white;
-
-        var nameObj = new GameObject("UnitName");
-        nameObj.transform.SetParent(_unitItemPrefab.transform, false);
-        var nameText = nameObj.AddComponent<TextMeshProUGUI>();
-        nameText.fontSize = 14;
-        nameText.alignment = TextAlignmentOptions.Left;
-        nameText.color = Color.white;
-        nameText.overflowMode = TextOverflowModes.Ellipsis;
-        var nameLayout = nameObj.AddComponent<LayoutElement>();
-        nameLayout.flexibleWidth = 1;
-    }
-
-    public void SetWhiteBorder(GameObject unitItem)
+    public void SetDefaultColor(GameObject unitItem)
     {
         var borderImage = unitItem.GetComponent<Image>();
-        if (borderImage != null)
+        if (borderImage != null && _unitNotSelectedColor != Color.white)
         {
-            borderImage.color = Color.white;
+            borderImage.color = _unitNotSelectedColor;
         }
     }
 
-    public void SetGrayBorder(GameObject unitItem)
+    public void SetSelectedColor(GameObject unitItem)
     {
         var borderImage = unitItem.GetComponent<Image>();
-        if (borderImage != null)
+        if (borderImage != null && _unitNotSelectedColor != Color.white)
         {
-            borderImage.color = Color.gray;
+            borderImage.color = _unitNotSelectedColor * 0.7f;
         }
     }
-
+    
     public void UpdateUnitList(List<UnitItem> units)
     {
         _units = units;
@@ -371,20 +154,21 @@ public class UnitListUIManager : MonoBehaviour
                 _unitUIElements[unit] = unitUI;
             }
         }
-
-        if (_units.Count == 0)
-        {
-            ShowEmptyUnitListMessage();
-        }
     }
 
     private GameObject CreateUnitItemUI(UnitItem unit)
     {
-        var unitObj = Instantiate(_unitItemPrefab, _unitsContainer);
+        var unitPrefab = _unitItemPrefab.transform.Find("Panel");
+        var unitObj = Instantiate(unitPrefab.gameObject, _unitsContainer);
         unitObj.SetActive(true);
 
         UpdateUnitItemUI(unitObj, unit);
-        SetWhiteBorder(unitObj);
+        if (_unitNotSelectedColor == Color.white)
+        {
+            _unitNotSelectedColor = unitPrefab.GetComponent<Image>().color;
+        }
+
+        SetDefaultColor(unitObj);
 
         var button = unitObj.GetComponent<Button>();
         button.onClick.AddListener(() => SelectUnit(unit));
@@ -396,30 +180,12 @@ public class UnitListUIManager : MonoBehaviour
     {
         var nameText = unitObj.transform.Find("UnitName").GetComponent<TextMeshProUGUI>();
         nameText.text = unit.Unit.Name;
+        
+        var unitBackpack = unitObj.transform.Find("UnitBackpack").GetComponent<TextMeshProUGUI>();
+        unitBackpack.text = $"{unit.Backpack.CurrentCapacity} / {unit.Backpack.MaxCapacity}";
 
-    }
-
-    private void ShowEmptyUnitListMessage()
-    {
-        foreach (Transform child in _unitsContainer)
-        {
-            Destroy(child.gameObject);
-        }
-
-        _unitUIElements.Clear();
-
-        var emptyObj = new GameObject("EmptyUnitList");
-        emptyObj.transform.SetParent(_unitsContainer, false);
-
-        var emptyText = emptyObj.AddComponent<TextMeshProUGUI>();
-        emptyText.text = "No units available";
-        emptyText.fontSize = 14;
-        emptyText.alignment = TextAlignmentOptions.Center;
-        emptyText.color = Color.white;
-
-        var emptyLayout = emptyObj.AddComponent<LayoutElement>();
-        emptyLayout.minHeight = 40;
-        emptyLayout.preferredHeight = 40;
+        var unitHP = unitObj.transform.Find("UnitHP").GetComponent<TextMeshProUGUI>();
+        unitHP.text = $"{unit.Stats.Health.CurrentValue:F1} / {unit.Stats.Health.MaxValue:F1}";
     }
 
     private void CreateNewGroup()
@@ -448,12 +214,12 @@ public class UnitListUIManager : MonoBehaviour
             if (_selectedUnits.ContainsKey(unit))
             {
                 _selectedUnits.Remove(unit);
-                SetWhiteBorder(_selectedUnits[unit]);
+                SetDefaultColor(_selectedUnits[unit]);
             }
             else
             {
                 _selectedUnits.Add(unit, _unitUIElements[unit]);
-                SetGrayBorder(_selectedUnits[unit]);
+                SetSelectedColor(_selectedUnits[unit]);
             }
         }
     }
@@ -490,25 +256,20 @@ public class UnitListUIManager : MonoBehaviour
         }
 
         _units.RemoveAll(u => u.Id == deadUnit.Id);
-
-        if (_units.Count == 0)
-        {
-            ShowEmptyUnitListMessage();
-        }
     }
 
     public void ShowUnitList()
     {
-        _unitListInfoPanel.SetActive(true);
+        _unitListPanel.SetActive(true);
         foreach (var unitUi in _unitUIElements)
         {
-            SetWhiteBorder(unitUi.Value);
+            SetDefaultColor(unitUi.Value);
         }
     }
 
     public void HideUnitList()
     {
-        _unitListInfoPanel.SetActive(false);
+        _unitListPanel.SetActive(false);
         _selectedUnits.Clear();
     }
 
