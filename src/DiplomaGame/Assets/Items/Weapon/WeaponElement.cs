@@ -11,7 +11,6 @@ namespace Assets.Items.Weapon
         public float MissChance { get; set; }
         public float StaminaToAttack { get; set; }
         public float ArmorPenetration { get; set; }
-        public float Durability { get; set; }
         public float AttackDistance { get; set; }
         public AmmunitionElement Ammunition { get; set; }
         public float CoolDown { get; set; }

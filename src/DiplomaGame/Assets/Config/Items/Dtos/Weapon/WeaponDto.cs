@@ -7,7 +7,6 @@ public class WeaponDto
     public float MissChance;
     public float StaminaToAttack;
     public float ArmorPenetration;
-    public float Durability;
     public float AttackDistance;
     public int AmmunitionId;
     public float CoolDown;

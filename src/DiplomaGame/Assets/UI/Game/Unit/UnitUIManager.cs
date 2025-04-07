@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,28 @@ public class UnitUIManager : MonoBehaviour
     private Dictionary<Type, UnitSkillObj> _skillsDictionary = new();
     private Dictionary<Type, UnitStatObj> _statsDictionary = new();
     private Dictionary<int, GameObject> _playerResourceItems = new();
+
+    private Transform _unitEquipmentPanel;
+
+    private Transform _unitMainWeaponPanel;
+    private Image _unitMainWeaponImage;
+    private TextMeshProUGUI _unitMainWeaponName;
+    private UIElementContext _unitMainWeaponContext;
+
+    private Transform _unitSecondaryWeaponPanel;
+    private Image _unitSecondaryWeaponImage;
+    private TextMeshProUGUI _unitSecondaryWeaponName;
+    private UIElementContext _unitSecondaryWeaponContext;
+
+    private Transform _unitArmorPanel;
+    private Image _unitArmorImage;
+    private TextMeshProUGUI _unitArmorName;
+    private UIElementContext _unitArmorContext;
+
+    private Transform _unitAmmoPanel;
+    private Image _unitAmmoImage;
+    private TextMeshProUGUI _unitAmmoName;
+    private UIElementContext _unitAmmoContext;
 
     private Canvas _mainCanvas;
     private UnitItem _currentUnit;
@@ -59,16 +82,16 @@ public class UnitUIManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (_unitPrefab == null)
-                _unitPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitUIPrefab");
+                _unitPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitUIPrefab");
 
             if (_unitSkillPrefab == null)
-                _unitSkillPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitSkillPrefab");
+                _unitSkillPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitSkillPrefab");
 
             if (_unitStatPrefab == null)
-                _unitStatPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitStatPrefab");
+                _unitStatPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitStatPrefab");
 
             if (_resourcePrefab == null)
-                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab");
+                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
 
             InitializeUI();
             HideUnitInfo();
@@ -111,6 +134,31 @@ public class UnitUIManager : MonoBehaviour
                 }
             }
         }
+
+        _unitEquipmentPanel = _unitInfoPanel.transform.Find("EquipmentPanel");
+
+        _unitMainWeaponPanel = _unitEquipmentPanel.Find("MainWeapon");
+        _unitMainWeaponImage = _unitMainWeaponPanel.Find("ItemImage").GetComponent<Image>();
+        _unitMainWeaponName = _unitMainWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
+        _unitMainWeaponContext = _unitMainWeaponPanel.gameObject.AddComponent<UIElementContext>();
+
+        _unitSecondaryWeaponPanel = _unitEquipmentPanel.Find("SecWeapon");
+        _unitSecondaryWeaponPanel.gameObject.AddComponent<UIElementContext>();
+        _unitSecondaryWeaponImage = _unitSecondaryWeaponPanel.Find("ItemImage").GetComponent<Image>();
+        _unitSecondaryWeaponName = _unitSecondaryWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
+        _unitSecondaryWeaponContext = _unitSecondaryWeaponPanel.gameObject.AddComponent<UIElementContext>();
+
+        _unitArmorPanel = _unitEquipmentPanel.Find("Armor");
+        _unitArmorPanel.gameObject.AddComponent<UIElementContext>();
+        _unitArmorImage = _unitArmorPanel.Find("ItemImage").GetComponent<Image>();
+        _unitArmorName = _unitArmorPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
+        _unitArmorContext = _unitArmorPanel.gameObject.AddComponent<UIElementContext>();
+
+        _unitAmmoPanel = _unitEquipmentPanel.Find("Ammo");
+        _unitAmmoPanel.gameObject.AddComponent<UIElementContext>();
+        _unitAmmoImage = _unitAmmoPanel.Find("ItemImage").GetComponent<Image>();
+        _unitAmmoName = _unitAmmoPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
+        _unitAmmoContext = _unitAmmoPanel.gameObject.AddComponent<UIElementContext>();
     }
 
     private void CreateStatUI(BaseStat stat)
@@ -250,6 +298,64 @@ public class UnitUIManager : MonoBehaviour
         }
     }
 
+    private void UpdateEquipmentUI(UnitItem unit)
+    {
+        var equipment = unit.UnitEquipment;
+
+        //_unitMainWeaponImage
+        _unitMainWeaponName.text = equipment.MainWeapon.Name;
+        _unitMainWeaponContext.SetContextText(
+            $"Name: {equipment.MainWeapon.Name}\n" +
+            $"Damage: {equipment.MainWeapon.Damage:F1}\n" +
+            $"Miss chance: {(equipment.MainWeapon.MissChance * 100):F0}%\n" +
+            $"Stamina To Attack: {equipment.MainWeapon.StaminaToAttack:F1}\n" +
+            $"Armor Penetration: {equipment.MainWeapon.ArmorPenetration:F1}\n" +
+            $"Attack Distance: {equipment.MainWeapon.AttackDistance:F1} м\n" +
+            $"Ammunition: {(equipment.MainWeapon.Ammunition != null ? equipment.MainWeapon.Ammunition.Name : "No")}\n" +
+            $"CoolDown: {equipment.MainWeapon.CoolDown:F1} s"
+        );
+
+        //_unitSecondaryWeaponImage
+        _unitSecondaryWeaponName.text = equipment.SecondaryWeapon.Name;
+        _unitSecondaryWeaponContext.SetContextText(
+            $"Name: {equipment.SecondaryWeapon.Name}\n" +
+            $"Damage: {equipment.SecondaryWeapon.Damage:F1}\n" +
+            $"Miss chance: {(equipment.SecondaryWeapon.MissChance * 100):F0}%\n" +
+            $"Stamina To Attack: {equipment.SecondaryWeapon.StaminaToAttack:F1}\n" +
+            $"Armor Penetration: {equipment.SecondaryWeapon.ArmorPenetration:F1}\n" +
+            $"Attack Distance: {equipment.SecondaryWeapon.AttackDistance:F1} м\n" +
+            $"Ammunition: {(equipment.SecondaryWeapon.Ammunition != null ? equipment.SecondaryWeapon.Ammunition.Name : "No")}\n" +
+            $"CoolDown: {equipment.SecondaryWeapon.CoolDown:F1} s"
+        );
+
+        //_unitAmmoImage
+        _unitArmorName.text = equipment.Armor.Name;
+        _unitArmorContext.SetContextText(
+            $"Name: {equipment.Armor.Name}\n" +
+            $"Armor Resistance: {equipment.Armor.ArmorResistance:F1}"
+        );
+
+        if (equipment.Ammunition.Count > 0)
+        {
+            var ammo = equipment.Ammunition.First();
+
+            _unitAmmoImage.gameObject.SetActive(true);
+            //_unitAmmoImage
+            _unitAmmoName.text = $"{ammo.Name} / {equipment.Ammunition.Count}";
+            _unitAmmoContext.SetContextText(
+                $"Name: {ammo.Name}\n" +
+                $"Damage: {ammo.Damage:F1}\n" +
+                $"Armor Penetration: {ammo.ArmorPenetration:F1}"
+            );
+        }
+        else
+        {
+            _unitAmmoImage.gameObject.SetActive(false);
+            _unitAmmoName.text = "No ammunition";
+            _unitAmmoContext.SetContextText("No ammunition");
+        }
+    }
+
     public void ShowUnitInfo(UnitItem unit)
     {
         _currentUnit = unit;
@@ -266,6 +372,7 @@ public class UnitUIManager : MonoBehaviour
         UpdateStatsUI(unit.Stats);
         UpdateSkillsUI(unit.Skills);
         UpdateBackpackUI(unit);
+        UpdateEquipmentUI(unit);
 
         _unitInfoPanel.SetActive(true);
     }
@@ -301,6 +408,7 @@ public class UnitUIManager : MonoBehaviour
             UpdateStatsUI(unit.Stats);
             UpdateSkillsUI(unit.Skills);
             UpdateBackpackUI(unit);
+            UpdateEquipmentUI(unit);
         }
     }
 

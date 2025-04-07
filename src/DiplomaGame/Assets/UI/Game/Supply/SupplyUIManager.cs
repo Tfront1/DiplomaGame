@@ -47,10 +47,10 @@ public class SupplyUIManager : MonoBehaviour
         else
         {
             if (_supplyUIPrefab == null)
-                _supplyUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/SupplyUIPrefab");
+                _supplyUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Supply/SupplyUIPrefab");
 
             if (_resourceItemPrefab == null)
-                _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab");
+                _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
 
             _instance = this;
             DontDestroyOnLoad(gameObject);

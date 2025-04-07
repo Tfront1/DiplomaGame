@@ -63,10 +63,10 @@ public class BuildingUIManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (_buildingPrefab == null)
-                _buildingPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/BuildingUIPrefab");
+                _buildingPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingUIPrefab");
 
             if (_resourcePrefab == null)
-                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab");
+                _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
 
             InitializeUI();
             HideBuildingInfo();

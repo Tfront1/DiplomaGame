@@ -57,10 +57,10 @@ public class UnitListUIManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (_unitListUIPrefab == null)
-                _unitListUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitListUIPrefab");
+                _unitListUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitListUIPrefab");
 
             if (_unitItemPrefab == null)
-                _unitItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/UnitItemPrefab");
+                _unitItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitItemPrefab");
 
             InitializeUI();
             HideUnitList();

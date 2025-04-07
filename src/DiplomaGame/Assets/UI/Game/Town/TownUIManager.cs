@@ -40,10 +40,10 @@ public class TownUIManager : MonoBehaviour
     private void Awake()
     {
         if (_townUIPrefab == null)
-            _townUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/TownUIPrefab");
+            _townUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Town/TownUIPrefab");
 
         if (_resourceItemPrefab == null)
-            _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/ResourceUIPrefab"); 
+            _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab"); 
 
         CreateUI();
     }

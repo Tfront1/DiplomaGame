@@ -12,7 +12,7 @@ public class BuildingMenuManager : MonoBehaviour
 
     private Canvas _mainCanvas;
 
-    private Transform _buildingButtonTransform;
+    public Transform _buildingButtonTransform;
     private Image _buildingButtonImage;
 
     private Transform _buildingMenu;
@@ -55,13 +55,13 @@ public class BuildingMenuManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (_buildingButtonPrefab == null)
-                _buildingButtonPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/BuildingButtonPrefab");
+                _buildingButtonPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingButtonPrefab");
 
             if (_buildingMenuPrefab == null)
-                _buildingMenuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/BuildingMenuPrefab");
+                _buildingMenuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingMenuPrefab");
 
             if (_buildingItemPrefab == null)
-                _buildingItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/BuildingItemPrefab");
+                _buildingItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingItemPrefab");
 
             InitializeUI();
         }

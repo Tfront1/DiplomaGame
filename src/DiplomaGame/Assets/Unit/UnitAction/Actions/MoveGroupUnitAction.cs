@@ -46,7 +46,7 @@ public class MoveGroupUnitAction : BaseUnitAction
         _unit.CanGroup = true;
 
         PathFinderManager.RequestPath(
-            new Vector2(_unit.X, _unit.Y),
+            _unit.CenterCoords,
             _targetPosition,
             _idAction,
             action

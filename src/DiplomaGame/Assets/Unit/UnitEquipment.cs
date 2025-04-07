@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.Items.Ammunition;
 using Assets.Items.Armor;
 using Assets.Items.Interfaces;
@@ -104,6 +105,9 @@ public class UnitEquipment
     public void AddUnitAmmunition(AmmunitionElement ammunition, int quantity = 1)
     {
         if (ammunition == null || quantity <= 0)
+            return;
+
+        if (Ammunition.Count > 0 && Ammunition.First() != ammunition)
             return;
 
         var canAdd = Math.Min(quantity, _maxAmmunitionCount - Ammunition.Count);

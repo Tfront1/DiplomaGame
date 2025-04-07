@@ -53,7 +53,7 @@ public class MoveUnitAction : BaseUnitAction
         _unit.CanGroup = true;
 
         PathFinderManager.RequestPath(
-            _unit.Coords,
+            _unit.CenterCoords,
             _targetPosition,
             _idAction,
             action

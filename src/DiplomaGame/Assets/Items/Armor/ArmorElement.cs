@@ -7,6 +7,5 @@ namespace Assets.Items.Armor
         public int Id { get; set; }
         public string Name { get; set; }
         public float ArmorResistance { get; set; }
-        public float Durability { get; set; }
     }
 }

@@ -10,9 +10,6 @@ public static class UnitAttackExtensions
     {
         var ammunition = unit.UnitEquipment.Ammunition;
 
-        if (weapon.Durability <= 0)
-            return false;
-
         if (weapon.Ammunition != null)
         {
             if (ammunition == null || !ammunition.Contains(weapon.Ammunition))
@@ -21,7 +18,6 @@ public static class UnitAttackExtensions
             ammunition.Remove(weapon.Ammunition);
         }
 
-        weapon.Durability -= _durabilityPerHit;
         return true;
     }
 

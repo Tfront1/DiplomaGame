@@ -50,10 +50,10 @@ public class CraftingMenuManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             if (_craftingMenuPrefab == null)
-                _craftingMenuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/CraftingMenuPrefab");
+                _craftingMenuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Crafting/CraftingMenuPrefab");
 
             if (_craftingItemPrefab == null)
-                _craftingItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/CraftItemPrefab");
+                _craftingItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Crafting/CraftItemPrefab");
 
             InitializeUI();
         }
@@ -86,6 +86,7 @@ public class CraftingMenuManager : MonoBehaviour
     {
         _isCraftingMenuOpen = !_isCraftingMenuOpen;
         _craftingMenu.gameObject.SetActive(_isCraftingMenuOpen);
+        BuildingMenuManager.Instance._buildingButtonTransform.gameObject.SetActive(!_isCraftingMenuOpen);
 
         if (_isCraftingMenuOpen)
         {

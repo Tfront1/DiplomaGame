@@ -47,7 +47,6 @@ public static partial class ConfigLoader
             Id = x.Id,
             Name = x.Name,
             ArmorResistance = x.ArmorResistance,
-            Durability = x.Durability,
         }));
 
         Debug.Log("Armors config loaded");

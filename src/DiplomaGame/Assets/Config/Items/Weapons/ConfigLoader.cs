@@ -58,7 +58,6 @@ public static partial class ConfigLoader
             MissChance = x.MissChance,
             StaminaToAttack = x.StaminaToAttack,
             ArmorPenetration = x.ArmorPenetration,
-            Durability = x.Durability,
             AttackDistance = x.AttackDistance,
             Ammunition = x.AmmunitionId > 0 ? AmmunitionConfig.AmmunitionElements.Find(a => a.Id == x.AmmunitionId) : null,
             CoolDown = x.CoolDown,

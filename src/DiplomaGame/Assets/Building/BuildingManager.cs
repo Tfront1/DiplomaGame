@@ -125,7 +125,7 @@ public class BuildingManager : MonoBehaviour
         ItemListRegistry.UpsertList(_buildingItemList);
 
         townItem.AddBuilding(buildingItem);
-
+        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
         return true;
     }
 
@@ -165,6 +165,7 @@ public class BuildingManager : MonoBehaviour
         ItemListRegistry.UpsertList(_buildingItemList);
 
         townItem.AddBuilding(buildingItem);
+        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
 
         return true;
     }
@@ -191,6 +192,8 @@ public class BuildingManager : MonoBehaviour
 
         buildingItem.CreateSelectionIndicator();
         //buildingItem.CreateProgressBar();
+
+        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
     }
 
     public static bool RemoveBuilding(Vector2Int gridPosition)
@@ -707,5 +710,82 @@ public class BuildingManager : MonoBehaviour
         };
 
         return buildingTexture;
+    }
+
+    private static void TeleportUnitsToEdgeOfTheBuilding(BuildingItem building)
+    {
+        var buildingCollider = building.Collider;
+
+        if (buildingCollider == null)
+        {
+            return;
+        }
+
+        var buildingBounds = buildingCollider.bounds;
+        var collidingObjects = Physics2D.OverlapBoxAll(
+            buildingBounds.center,
+            buildingBounds.size,
+            0f,
+            LayerMask.GetMask("Units")
+        );
+
+        foreach (var unitCollider in collidingObjects)
+        {
+            if (unitCollider.gameObject == building.gameObject)
+                continue;
+
+            var unitItem = unitCollider.GetComponent<UnitItem>();
+            if (unitItem == null)
+                continue;
+
+            var unitPosition = unitItem.CenterCoords;
+
+            var closestPoint = GetClosestPointOnBuildingEdge2D(unitPosition, buildingBounds);
+
+            unitItem.SetPosition(closestPoint);
+        }
+    }
+
+    private static Vector2 GetClosestPointOnBuildingEdge2D(Vector2 unitPosition, Bounds buildingBounds)
+    {
+        Vector2 center = buildingBounds.center;
+        Vector2 halfSize = buildingBounds.extents;
+        var keyPoints = new Vector2[8];
+        keyPoints[0] = new Vector2(center.x - halfSize.x, center.y - halfSize.y);
+        keyPoints[1] = new Vector2(center.x + halfSize.x, center.y - halfSize.y);
+        keyPoints[2] = new Vector2(center.x - halfSize.x, center.y + halfSize.y);
+        keyPoints[3] = new Vector2(center.x + halfSize.x, center.y + halfSize.y);
+        keyPoints[4] = new Vector2(center.x, center.y - halfSize.y);
+        keyPoints[5] = new Vector2(center.x, center.y + halfSize.y);
+        keyPoints[6] = new Vector2(center.x - halfSize.x, center.y);
+        keyPoints[7] = new Vector2(center.x + halfSize.x, center.y);
+
+        var closestPoint = center;
+        var minDistance = float.MaxValue;
+        foreach (var point in keyPoints)
+        {
+            if (GridService.IsWorldPositionInMapBounds(point))
+            {
+                var distance = Vector2.Distance(unitPosition, point);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            }
+        }
+
+        var directionFromCenter = (closestPoint - center).normalized;
+        var offsetPoint = closestPoint + directionFromCenter * 0.2f;
+
+        var collision = Physics2D.OverlapCircle(offsetPoint, 0.1f, LayerMask.GetMask("Objects"));
+        if (collision == null)
+        {
+            return offsetPoint;
+        }
+        else
+        {
+            return closestPoint;
+        }
     }
 }
