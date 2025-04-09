@@ -90,6 +90,9 @@ public class BuildingUIManager : MonoBehaviour
         _buildingInfoPanel.name = "BuildingInfoPanel";
 
         _buildingNameText = _buildingInfoPanel.transform.Find("BuildingName").GetComponent<TextMeshProUGUI>();
+        var buildingNameButton = _buildingInfoPanel.transform.Find("BuildingName").GetComponent<Button>();
+        buildingNameButton.onClick.AddListener(MoveCameraToBuilding);
+
         _buildingTownText = _buildingInfoPanel.transform.Find("BuildingTown").GetComponent<TextMeshProUGUI>();
 
         _buildingHP = _buildingInfoPanel.transform.Find("HP").GetComponent<TextMeshProUGUI>();
@@ -346,6 +349,14 @@ public class BuildingUIManager : MonoBehaviour
         _actionText.gameObject.SetActive(false);
         _buildingBackpackCount.gameObject.SetActive(false);
         _resourcePanel.gameObject.SetActive(false);
+    }
+
+    private void MoveCameraToBuilding()
+    {
+        if (_currentBuilding != null)
+        {
+            CameraManager.Instance.SetCameraPositionToMove(_currentBuilding.CenterCoords);
+        }
     }
 
     private Backpack CalculateResourcesToCraft(BuildingItem building)

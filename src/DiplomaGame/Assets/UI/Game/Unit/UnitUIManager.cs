@@ -112,6 +112,8 @@ public class UnitUIManager : MonoBehaviour
         _unitInfoPanel.name = "UnitInfoPanel";
 
         _unitNameText = _unitInfoPanel.transform.Find("UnitName").GetComponent<TextMeshProUGUI>();
+        var unitNameButton = _unitInfoPanel.transform.Find("UnitName").GetComponent<Button>();
+        unitNameButton.onClick.AddListener(MoveCameraToUnit);
         _unitTownText = _unitInfoPanel.transform.Find("UnitTown").GetComponent<TextMeshProUGUI>();
 
         _unitBackpackCount = _unitInfoPanel.transform.Find("BackpackCount").GetComponent<TextMeshProUGUI>();
@@ -415,6 +417,14 @@ public class UnitUIManager : MonoBehaviour
     public void UpdateUnitInfo(object sender, UnitItem.UnitUIToChangeEventArgs args)
     {
         UpdateUnitInfo(args.Unit);
+    }
+
+    private void MoveCameraToUnit()
+    {
+        if (_currentUnit != null)
+        {
+            CameraManager.Instance.SetCameraPositionToMove(_currentUnit.CenterCoords);
+        }
     }
 
     private class UnitStatObj

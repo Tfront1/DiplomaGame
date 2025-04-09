@@ -25,6 +25,38 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private Vector3 _positionToMove;
 
+    private static CameraManager _instance;
+
+    public static CameraManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<CameraManager>();
+                if (_instance == null)
+                {
+                    var gameObject = new GameObject("CameraManager");
+                    _instance = gameObject.AddComponent<CameraManager>();
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+
     private void OnEnable()
     {
         GameplayInputHandler.Instance.OnMiddleMouseHold += HandleMiddleMouseMovement;
@@ -51,13 +83,6 @@ public class CameraManager : MonoBehaviour
         _targetPosition = cameraFollow.transform.position;
         cameraFollow.SetCameraZoom(_currentZoom);
     }
-
-    //    //For testing
-    //    if (Input.GetKeyDown(KeyCode.T))
-    //    {
-    //        SetCameraPositionToMove(new Vector3(2845, 2845, 0));
-    //    }
-    //    //Debug
 
     private void HandleEdgeMovement(Vector2 mousePosition)
     {
@@ -264,7 +289,7 @@ public class CameraManager : MonoBehaviour
     {
         _targetPosition.x = _positionToMove.x;
         _targetPosition.y = _positionToMove.y;
-        NormalizeCameraMapPosition();
+        UpdateCameraData();
     }
 
     /// <summary>
@@ -277,6 +302,11 @@ public class CameraManager : MonoBehaviour
     public void SetCameraPositionToMove(Vector3 finalPosition)
     {
         _positionToMove = finalPosition;
+        if (Math.Abs(_targetPosition.x - _positionToMove.x) > 0.001f &&
+            Math.Abs(_targetPosition.y - _positionToMove.y) > 0.001f)
+        {
+            MoveCameraToPosition();
+        }
     }
 
     private void UpdateCameraData()

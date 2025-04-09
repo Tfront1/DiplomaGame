@@ -70,6 +70,9 @@ public class SupplyUIManager : MonoBehaviour
         _supplyInfoPanel.name = "SupplyInfoPanel";
 
         _supplyNameText = _supplyInfoPanel.transform.Find("SupplyName").GetComponent<TextMeshProUGUI>();
+        var supplyNameButton = _supplyInfoPanel.transform.Find("SupplyName").GetComponent<Button>();
+        supplyNameButton.onClick.AddListener(MoveCameraToSupply);
+
         _supplyBackpackCountText = _supplyInfoPanel.transform.Find("BackpackCount").GetComponent<TextMeshProUGUI>();
         _supplyResourcePanel = _supplyInfoPanel.transform.Find("ScrollView/Viewport/Content");
 
@@ -223,5 +226,13 @@ public class SupplyUIManager : MonoBehaviour
     {
         _supplyInfoPanel.gameObject.SetActive(false);
         _currentSupply = null;
+    }
+
+    private void MoveCameraToSupply()
+    {
+        if (_currentSupply != null)
+        {
+            CameraManager.Instance.SetCameraPositionToMove(_currentSupply.CenterCoords);
+        }
     }
 }

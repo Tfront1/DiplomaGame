@@ -11,6 +11,7 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public int X { get; set; }
     public int Y { get; set; }
     public Vector2Int Coords => new(X, Y);
+    public Vector2 CenterCoords => new(X + Supply.WidthCell / 2.0f, Y + Supply.HeightCell / 2.0f);
     public Supply Supply { get; set; }
     public GameObject SupplyGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
