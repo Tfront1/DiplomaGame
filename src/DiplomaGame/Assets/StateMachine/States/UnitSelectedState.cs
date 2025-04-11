@@ -3,6 +3,7 @@ using System.Linq;
 using GameUtilities.Utils;
 using Selection;
 using Selection.Interfaces;
+using UnitAction;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -203,65 +204,9 @@ namespace StateMachine.States
                     if (singleUnit != null)
                     {
                         var building = SelectorFactory.GetBuildingItem(target.Item1.First());
-
-                        if (singleUnit.HomeTown.Id == building.HomeTown.Id)
-                        {
-                            if (isAllUnits)
-                            {
-                                if (!building.IsBuilt)
-                                {
-                                    foreach (var unit in selectedUnits)
-                                    {
-                                        unit.HomeTown.BuildingTownOrder.AssignUnitToOrder(unit, building);
-                                    }
-                                }
-                                else
-                                {
-                                    if (building.BuildingCraftingSystem != null &&
-                                        building.BuildingCraftingSystem.IsCrafting)
-                                    {
-                                        foreach (var unit in selectedUnits)
-                                        {
-                                            building.BuildingCraftingSystem.AssignUnitToCraft(unit);
-                                        }
-                                    }
-                                    else if (building.Backpack != null)
-                                    {
-                                        foreach (var unit in selectedUnits)
-                                        {
-                                            if (unit.Backpack.IsEmpty())
-                                            {
-                                                var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
-                                                UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
-                                            }
-                                            else
-                                            {
-                                                var bringBackResources = new BringBackResourcesAction(unit);
-                                                UnitActionManager.Instance.ExecuteImmediately(bringBackResources);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (var unit in selectedUnits)
-                                        {
-                                            var moveGroupAction = new MoveGroupUnitAction(unit, position, true);
-                                            UnitActionManager.Instance.ExecuteImmediately(moveGroupAction);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            foreach (var unit in selectedUnits)
-                            {
-                                var attackAction = new AttackBuildingAction(unit, building, true);
-                                UnitActionManager.Instance.ExecuteImmediately(attackAction);
-                            }
-                        }
+                        building.BuildingController.OpenActionPanel(selectedUnits);
                     }
-
+                        
                     Debug.Log("Units interacting with building");
                     break;
 

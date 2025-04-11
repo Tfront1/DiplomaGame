@@ -22,6 +22,8 @@ public class GameplayInputHandler : MonoBehaviour
         }
     }
 
+    public HashSet<GraphicRaycaster> CustomGraphicRaycasters { get; } = new();
+
     private InputActionAsset _inputActions;
 
     private bool _isPointerOverUI = false;
@@ -84,7 +86,6 @@ public class GameplayInputHandler : MonoBehaviour
     public event MouseRightClickHandler OnMouseRightUp;
 
     private InputAction _mouseRightClickAction;
-
 
     private void Awake()
     {
@@ -303,6 +304,11 @@ public class GameplayInputHandler : MonoBehaviour
         var results = new List<RaycastResult>();
 
         _graphicRaycaster.Raycast(_pointerEventData, results);
+
+        foreach (var graphicRaycaster in CustomGraphicRaycasters)
+        {
+            graphicRaycaster.Raycast(_pointerEventData, results);
+        }
 
         return results.Count > 0;
     }

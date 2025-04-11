@@ -16,65 +16,59 @@ namespace Items.Resource.BackPack
 
         public event EventHandler<BackpackChangedEventArgs> BackpackChanged;
 
+        private readonly object _lock = new();
+
         public Backpack(int maxCapacity)
         {
             _maxCapacity = maxCapacity;
             _currentCapacity = 0;
             _items = new List<BackpackItem>();
         }
-        
+
         public bool AddItem(IBackpackItem backpackItem, int quantity = 1)
         {
-            if (quantity <= 0)
-                return false;
-
-            if (_currentCapacity + quantity > _maxCapacity)
-                return false;
-
-            var backpackChangeType = BackpackChangeType.Nothing;
-
-            var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
-
-            if (existingItem != null)
+            lock (_lock)
             {
-                existingItem.Quantity += quantity;
-                backpackChangeType = BackpackChangeType.Updated;
+                if (quantity <= 0)
+                    return false;
+                if (_currentCapacity + quantity > _maxCapacity)
+                    return false;
+                var backpackChangeType = BackpackChangeType.Nothing;
+                var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += quantity;
+                    backpackChangeType = BackpackChangeType.Updated;
+                }
+                else
+                {
+                    _items.Add(new BackpackItem(backpackItem, quantity));
+                    backpackChangeType = BackpackChangeType.Added;
+                }
+                _currentCapacity += quantity;
+                OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, backpackChangeType));
+                return true;
             }
-            else
-            {
-                _items.Add(new BackpackItem(backpackItem, quantity));
-                backpackChangeType = BackpackChangeType.Added;
-            }
-
-            _currentCapacity += quantity;
-
-            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, backpackChangeType));
-
-            return true;
         }
 
         public bool RemoveItem(IBackpackItem backpackItem, int quantity)
         {
-            if (quantity <= 0)
-                return false;
-
-            var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
-
-            if (existingItem == null)
-                return false;
-
-            if (existingItem.Quantity < quantity)
-                return false;
-
-            existingItem.Quantity -= quantity;
-            _currentCapacity -= quantity;
-
-            if (existingItem.Quantity == 0)
-                _items.Remove(existingItem);
-
-            OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, BackpackChangeType.Removed));
-
-            return true;
+            lock (_lock)
+            {
+                if (quantity <= 0)
+                    return false;
+                var existingItem = _items.FirstOrDefault(item => item.Item.Id == backpackItem.Id);
+                if (existingItem == null)
+                    return false;
+                if (existingItem.Quantity < quantity)
+                    return false;
+                existingItem.Quantity -= quantity;
+                _currentCapacity -= quantity;
+                if (existingItem.Quantity == 0)
+                    _items.Remove(existingItem);
+                OnBackpackChanged(new BackpackChangedEventArgs(backpackItem, quantity, BackpackChangeType.Removed));
+                return true;
+            }
         }
 
         public int GetResourceQuantity(IBackpackItem backpackItem)

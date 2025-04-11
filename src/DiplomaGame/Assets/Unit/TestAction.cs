@@ -22,9 +22,10 @@ public class TestAction : MonoBehaviour
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _town);
 
         _enemyTown = new TownItem("Enemy town",Guid.NewGuid(), false);
-
         BuildingManager.BuildInstantly(new Vector2Int(10, 10),
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _enemyTown);
+
+        _town.TownHall.Backpack.AddItem(WeaponConfig.WeaponElements.Find(x => x.Id == 2));
     }
 
     private void Update()
@@ -194,7 +195,7 @@ public class TestAction : MonoBehaviour
 
             town.AddUnit(unitItem);
 
-            var rand = Random.Range(1, 5);
+            var rand = Random.Range(1, 2);
             var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
 
             unitItem.Backpack.FillWithSingleItem(res);

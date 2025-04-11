@@ -29,21 +29,25 @@ public class UnitUIManager : MonoBehaviour
     private Transform _unitEquipmentPanel;
 
     private Transform _unitMainWeaponPanel;
+    private Button _unitMainWeaponButton;
     private Image _unitMainWeaponImage;
     private TextMeshProUGUI _unitMainWeaponName;
     private UIElementContext _unitMainWeaponContext;
 
     private Transform _unitSecondaryWeaponPanel;
+    private Button _unitSecondaryWeaponButton;
     private Image _unitSecondaryWeaponImage;
     private TextMeshProUGUI _unitSecondaryWeaponName;
     private UIElementContext _unitSecondaryWeaponContext;
 
     private Transform _unitArmorPanel;
+    private Button _unitArmorButton;
     private Image _unitArmorImage;
     private TextMeshProUGUI _unitArmorName;
     private UIElementContext _unitArmorContext;
 
     private Transform _unitAmmoPanel;
+    private Button _unitAmmoButton;
     private Image _unitAmmoImage;
     private TextMeshProUGUI _unitAmmoName;
     private UIElementContext _unitAmmoContext;
@@ -140,24 +144,25 @@ public class UnitUIManager : MonoBehaviour
         _unitEquipmentPanel = _unitInfoPanel.transform.Find("EquipmentPanel");
 
         _unitMainWeaponPanel = _unitEquipmentPanel.Find("MainWeapon");
+        _unitMainWeaponButton = _unitMainWeaponPanel.GetComponent<Button>();
         _unitMainWeaponImage = _unitMainWeaponPanel.Find("ItemImage").GetComponent<Image>();
         _unitMainWeaponName = _unitMainWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitMainWeaponContext = _unitMainWeaponPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitSecondaryWeaponPanel = _unitEquipmentPanel.Find("SecWeapon");
-        _unitSecondaryWeaponPanel.gameObject.AddComponent<UIElementContext>();
+        _unitSecondaryWeaponButton = _unitSecondaryWeaponPanel.GetComponent<Button>();
         _unitSecondaryWeaponImage = _unitSecondaryWeaponPanel.Find("ItemImage").GetComponent<Image>();
         _unitSecondaryWeaponName = _unitSecondaryWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitSecondaryWeaponContext = _unitSecondaryWeaponPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitArmorPanel = _unitEquipmentPanel.Find("Armor");
-        _unitArmorPanel.gameObject.AddComponent<UIElementContext>();
+        _unitArmorButton = _unitArmorPanel.GetComponent<Button>();
         _unitArmorImage = _unitArmorPanel.Find("ItemImage").GetComponent<Image>();
         _unitArmorName = _unitArmorPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitArmorContext = _unitArmorPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitAmmoPanel = _unitEquipmentPanel.Find("Ammo");
-        _unitAmmoPanel.gameObject.AddComponent<UIElementContext>();
+        _unitAmmoButton = _unitAmmoPanel.GetComponent<Button>();
         _unitAmmoImage = _unitAmmoPanel.Find("ItemImage").GetComponent<Image>();
         _unitAmmoName = _unitAmmoPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitAmmoContext = _unitAmmoPanel.gameObject.AddComponent<UIElementContext>();
@@ -316,6 +321,17 @@ public class UnitUIManager : MonoBehaviour
             $"Ammunition: {(equipment.MainWeapon.Ammunition != null ? equipment.MainWeapon.Ammunition.Name : "No")}\n" +
             $"CoolDown: {equipment.MainWeapon.CoolDown:F1} s"
         );
+        if (equipment.MainWeapon.Id != 1)
+        {
+            _unitMainWeaponButton.onClick.AddListener(() =>
+            {
+                equipment.UnequipItem(UnitEquipment.EquipmentSlot.MainWeapon);
+            });
+        }
+        else
+        {
+            _unitMainWeaponButton.onClick.RemoveAllListeners();
+        }
 
         //_unitSecondaryWeaponImage
         _unitSecondaryWeaponName.text = equipment.SecondaryWeapon.Name;
@@ -329,6 +345,17 @@ public class UnitUIManager : MonoBehaviour
             $"Ammunition: {(equipment.SecondaryWeapon.Ammunition != null ? equipment.SecondaryWeapon.Ammunition.Name : "No")}\n" +
             $"CoolDown: {equipment.SecondaryWeapon.CoolDown:F1} s"
         );
+        if (equipment.SecondaryWeapon.Id != 1)
+        {
+            _unitSecondaryWeaponButton.onClick.AddListener(() =>
+            {
+                equipment.UnequipItem(UnitEquipment.EquipmentSlot.SecondaryWeapon);
+            });
+        }
+        else
+        {
+            _unitSecondaryWeaponButton.onClick.RemoveAllListeners();
+        }
 
         //_unitAmmoImage
         _unitArmorName.text = equipment.Armor.Name;
@@ -336,6 +363,17 @@ public class UnitUIManager : MonoBehaviour
             $"Name: {equipment.Armor.Name}\n" +
             $"Armor Resistance: {equipment.Armor.ArmorResistance:F1}"
         );
+        if (equipment.Armor.Id != 1)
+        {
+            _unitArmorButton.onClick.AddListener(() =>
+            {
+                equipment.UnequipItem(UnitEquipment.EquipmentSlot.Armor);
+            });
+        }
+        else
+        {
+            _unitArmorButton.onClick.RemoveAllListeners();
+        }
 
         if (equipment.Ammunition.Count > 0)
         {
@@ -355,6 +393,17 @@ public class UnitUIManager : MonoBehaviour
             _unitAmmoImage.gameObject.SetActive(false);
             _unitAmmoName.text = "No ammunition";
             _unitAmmoContext.SetContextText("No ammunition");
+        }
+        if (equipment.Ammunition != null && equipment.Ammunition.Count > 0)
+        {
+            _unitAmmoButton.onClick.AddListener(() =>
+            {
+                equipment.UnequipItem(UnitEquipment.EquipmentSlot.Ammunition);
+            });
+        }
+        else
+        {
+            _unitAmmoButton.onClick.RemoveAllListeners();
         }
     }
 

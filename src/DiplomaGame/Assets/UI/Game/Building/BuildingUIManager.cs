@@ -318,7 +318,7 @@ public class BuildingUIManager : MonoBehaviour
 
         _action1Button.onClick.AddListener(() =>
         {
-            CraftingMenuManager.Instance.ShowBuildingCrafts(building);
+            CraftingMenuUIManager.Instance.ShowBuildingCrafts(building);
         });
 
         // _action1Image.sprite = ...

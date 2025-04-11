@@ -24,7 +24,7 @@ public static class TownUIExtensions
         var uiManager = GetOrCreateTownUIManager();
         uiManager.SetPlayerTown(town);
 
-        BuildingMenuManager.Instance.SetCurrentTown(town);
+        BuildingMenuUIManager.Instance.SetCurrentTown(town);
     }
 
     public static void NotifyUIChanged(this TownItem town)
@@ -34,7 +34,7 @@ public static class TownUIExtensions
             var uiManager = GetOrCreateTownUIManager();
             uiManager.RefreshUI(town);
 
-            BuildingMenuManager.Instance.RefreshUI();
+            BuildingMenuUIManager.Instance.RefreshUI();
         }
     }
 
@@ -42,8 +42,8 @@ public static class TownUIExtensions
     {
         if (town.IsUnitControlTown)
         {
-            BuildingMenuManager.Instance.SetCurrentTown(town);
-            BuildingMenuManager.Instance.ToggleBuildingMenu();
+            BuildingMenuUIManager.Instance.SetCurrentTown(town);
+            BuildingMenuUIManager.Instance.ToggleBuildingMenu();
         }
     }
 }

@@ -4,7 +4,7 @@ using Town;
 using UnityEngine.UI;
 using UnityEngine;
 
-public class BuildingMenuManager : MonoBehaviour
+public class BuildingMenuUIManager : MonoBehaviour
 {
     public GameObject _buildingButtonPrefab;
     public GameObject _buildingMenuPrefab;
@@ -24,19 +24,19 @@ public class BuildingMenuManager : MonoBehaviour
 
     private TownItem _currentTown;
 
-    private static BuildingMenuManager _instance;
+    private static BuildingMenuUIManager _instance;
 
-    public static BuildingMenuManager Instance
+    public static BuildingMenuUIManager Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<BuildingMenuManager>();
+                _instance = FindObjectOfType<BuildingMenuUIManager>();
                 if (_instance == null)
                 {
                     var gameObject = new GameObject("BuildingMenuManager");
-                    _instance = gameObject.AddComponent<BuildingMenuManager>();
+                    _instance = gameObject.AddComponent<BuildingMenuUIManager>();
                 }
             }
             return _instance;

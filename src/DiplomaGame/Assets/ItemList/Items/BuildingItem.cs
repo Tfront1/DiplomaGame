@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Assets.Items.Crafts;
+using BuildingAction;
 using Selection.Interfaces;
 using Town;
 using UnityEngine;
@@ -48,21 +49,24 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     public bool IsDestroyed { get; private set; } = false;
     private readonly object _buildingLock = new();
+    
+    public BuildingController BuildingController { get; set; }
 
-    public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack)
+    public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack, bool isBuild)
     {
         var buildingItem = buildingGameObject.AddComponent<BuildingItem>();
-        buildingItem.Initialize(position, guid, building, buildingGameObject, backpack, townItem);
+        buildingItem.Initialize(position, guid, building, buildingGameObject, backpack, townItem, isBuild);
         return buildingItem;
     }
 
     public void Initialize(Vector2Int position, Guid guid, Building building,
-        GameObject buildingGameObject, Backpack backpack, TownItem townItem)
+        GameObject buildingGameObject, Backpack backpack, TownItem townItem, bool isBuild)
     {
         SetBasicProperties(position, guid, building, buildingGameObject);
         SetupComponents();
         CreateSelectionIndicator();
-        SetupGameplayProperties(building, backpack, townItem);
+        SetupGameplayProperties(building, backpack, townItem, isBuild);
+        SetupBuildingActions();
         LoadCrafts(building);
         CreateProgressBar();
     }
@@ -259,12 +263,41 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         SelectionIndicator.SetActive(false);
     }
 
-    private void SetupGameplayProperties(Building building, Backpack backpack, TownItem townItem)
+    private void SetupGameplayProperties(Building building, Backpack backpack, TownItem townItem, bool isBuild)
     {
+        IsBuilt = isBuild;
         HP = building.MaxHP;
         Backpack = backpack;
         HomeTown = townItem;
         SubscribeToBackpackEvents();
+    }
+
+    private void SetupBuildingActions()
+    {
+        BuildingController = new BuildingController(this);
+
+        BuildingController.AddAction(typeof(MoveToBuildingAction));
+
+        if (!HomeTown.IsUnitControlTown)
+        {
+            BuildingController.AddAction(typeof(AttackBuildingAction));
+            return;
+        }
+
+        if (IsBuilt && Backpack != null)
+        {
+            BuildingController.AddAction(typeof(BringResourcesBuildingAction));
+            BuildingController.AddAction(typeof(MoveAndEquipUnitAction));
+        }
+
+        if (!IsBuilt)
+        {
+            BuildingController.AddAction(typeof(BuildStructureAction));
+        }
+        else if (Crafts != null && Crafts.Count > 0)
+        {
+            BuildingController.AddAction(typeof(CraftItemBuildingAction));
+        }
     }
 
     private void LoadCrafts(Building building)

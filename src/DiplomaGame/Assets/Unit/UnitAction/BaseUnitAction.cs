@@ -1,54 +1,56 @@
 ﻿using System;
 
-public abstract class BaseUnitAction : IUnitAction
+namespace UnitAction
 {
-    protected Guid _idAction;
-
-    protected UnitItem _unit;
-    public event Action<IUnitAction> OnActionCompleted;
-
-    protected bool _isPaused = false;
-    public bool IsPaused => _isPaused;
-
-    protected bool _isStopped = false;
-    public bool IsStopped => _isStopped;
-
-    protected bool _isSuccessAction = false;
-    public bool IsSuccess => _isSuccessAction;
-
-
-    public BaseUnitAction(UnitItem unit)
+    public abstract class BaseUnitAction : IUnitAction
     {
-        _unit = unit;
-    }
+        protected Guid _idAction;
 
-    public abstract void Execute();
+        protected UnitItem _unit;
+        public event Action<IUnitAction> OnActionCompleted;
 
-    public abstract bool CanExecute();
+        protected bool _isPaused = false;
+        public bool IsPaused => _isPaused;
 
-    public UnitItem GetUnit()
-    {
-        return _unit;
-    }
+        protected bool _isStopped = false;
+        public bool IsStopped => _isStopped;
 
-    protected virtual void CompleteAction()
-    {
-        OnActionCompleted?.Invoke(this);
-    }
+        protected bool _isSuccessAction = false;
+        public bool IsSuccess => _isSuccessAction;
+
+        public BaseUnitAction(UnitItem unit)
+        {
+            _unit = unit;
+        }
+
+        public abstract void Execute();
+
+        public abstract bool CanExecute();
+
+        public UnitItem GetUnit()
+        {
+            return _unit;
+        }
+
+        protected virtual void CompleteAction()
+        {
+            OnActionCompleted?.Invoke(this);
+        }
 
 
-    public virtual void Pause()
-    {
-        _isPaused = true;
-    }
+        public virtual void Pause()
+        {
+            _isPaused = true;
+        }
 
-    public virtual void Resume()
-    {
-        _isPaused = false;
-    }
+        public virtual void Resume()
+        {
+            _isPaused = false;
+        }
 
-    public virtual void Cancel()
-    {
-        _isStopped = true;
+        public virtual void Cancel()
+        {
+            _isStopped = true;
+        }
     }
 }

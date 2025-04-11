@@ -495,8 +495,10 @@ public class BuildingManager : MonoBehaviour
             backpack = new Backpack(building.BackpackCapacity);
         }
 
+        var isBuild = buildingConstruction == null;
+
         var buildingItem =
-                BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack);
+            BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack, isBuild);
 
         buildingItem.Construction = buildingConstruction;
 

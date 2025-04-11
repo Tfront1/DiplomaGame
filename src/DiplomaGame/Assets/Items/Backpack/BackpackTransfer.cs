@@ -131,4 +131,34 @@ public class BackpackTransfer
 
         return false;
     }
+
+    public bool TransferAllResources(Backpack fromBackpack, Backpack toBackpack)
+    {
+        if (fromBackpack == null || toBackpack == null)
+            return false;
+
+        var anyTransferred = false;
+        var availableResources = fromBackpack.GetDetailedItems();
+        
+        foreach (var (resourceType, availableAmount) in availableResources)
+        {
+            if (availableAmount <= 0)
+                continue;
+
+            var targetFreeSpace = toBackpack.GetFreeQuantity();
+            if (targetFreeSpace <= 0)
+                break;
+
+            var amountToTransfer = Mathf.Min(availableAmount, targetFreeSpace);
+
+            if (amountToTransfer > 0)
+            {
+                toBackpack.AddItem(resourceType, amountToTransfer);
+                fromBackpack.RemoveItem(resourceType, amountToTransfer);
+                anyTransferred = true;
+            }
+        }
+
+        return anyTransferred;
+    }
 }

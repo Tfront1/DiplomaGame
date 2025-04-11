@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CraftingMenuManager : MonoBehaviour
+public class CraftingMenuUIManager : MonoBehaviour
 {
     public GameObject _craftingMenuPrefab;
     public GameObject _craftingItemPrefab;
@@ -19,19 +19,19 @@ public class CraftingMenuManager : MonoBehaviour
 
     private Canvas _mainCanvas;
 
-    private static CraftingMenuManager _instance;
+    private static CraftingMenuUIManager _instance;
 
-    public static CraftingMenuManager Instance
+    public static CraftingMenuUIManager Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<CraftingMenuManager>();
+                _instance = FindObjectOfType<CraftingMenuUIManager>();
                 if (_instance == null)
                 {
                     var gameObject = new GameObject("CraftingMenuManager");
-                    _instance = gameObject.AddComponent<CraftingMenuManager>();
+                    _instance = gameObject.AddComponent<CraftingMenuUIManager>();
                 }
             }
             return _instance;
@@ -86,7 +86,7 @@ public class CraftingMenuManager : MonoBehaviour
     {
         _isCraftingMenuOpen = !_isCraftingMenuOpen;
         _craftingMenu.gameObject.SetActive(_isCraftingMenuOpen);
-        BuildingMenuManager.Instance._buildingButtonTransform.gameObject.SetActive(!_isCraftingMenuOpen);
+        BuildingMenuUIManager.Instance._buildingButtonTransform.gameObject.SetActive(!_isCraftingMenuOpen);
 
         if (_isCraftingMenuOpen)
         {

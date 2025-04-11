@@ -20,7 +20,7 @@ public class UnitEquipment
     {
         _unit = unit;
         MainWeapon = WeaponConfig.WeaponElements.Find(x => x.Id == 1);
-        SecondaryWeapon = MainWeapon;
+        SecondaryWeapon = WeaponConfig.WeaponElements.Find(x => x.Id == 1);
         Armor = ArmorConfig.ArmorElements.Find(x => x.Id == 1);
     }
 
@@ -177,6 +177,17 @@ public class UnitEquipment
                     }
                 }
                 break;
+
+            case EquipmentSlot.Ammunition:
+                if (Ammunition != null && Ammunition.Count > 0)
+                {
+                    var ammo = Ammunition;
+                    if (_unit.Backpack.AddItem(ammo.First(), ammo.Count))
+                    {
+                        Ammunition = GetDefaultAmmo();
+                    }
+                }
+                break;
         }
     }
 
@@ -201,5 +212,10 @@ public class UnitEquipment
     public ArmorElement GetDefaultArmor()
     {
         return ArmorConfig.ArmorElements.Find(x => x.Id == 1);
+    }
+
+    public List<AmmunitionElement> GetDefaultAmmo()
+    {
+        return new List<AmmunitionElement>();
     }
 }
