@@ -92,6 +92,36 @@ namespace BuildingAction
             }
         }
 
+        public void UpdateUIScale()
+        {
+            if (_buildingActionCanvas != null && _building != null)
+            {
+                var bottomCenter = _building.SpriteRenderer.bounds.center;
+                bottomCenter.y = _building.SpriteRenderer.bounds.min.y;
+
+                var topCenter = _building.SpriteRenderer.bounds.center;
+                topCenter.y = _building.SpriteRenderer.bounds.max.y;
+
+                if (GridService.IsWorldPositionInMapBounds(bottomCenter))
+                {
+                    _buildingActionCanvas.position = bottomCenter;
+                }
+                else if (GridService.IsWorldPositionInMapBounds(topCenter))
+                {
+                    _buildingActionCanvas.position = topCenter;
+                }
+
+                var parent = _building.BuildingGameObject.transform;
+                var parentScale = parent.lossyScale;
+
+                _buildingActionCanvas.localScale = new Vector3(
+                    1 / parentScale.x,
+                    1 / parentScale.y,
+                    1 / parentScale.z
+                );
+            }
+        }
+
         private void CreateActionButton(Type actionType)
         {
             var buildingActionItemPrefab = _buildingActionItemPrefab.transform.Find("Image");

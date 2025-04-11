@@ -129,9 +129,12 @@ namespace UnitAction
 
         private void UnassignUnit()
         {
-            if (!InterruptedByCraft && _crafting.HasAssignedUnit(_unit))
+            if (_crafting != null)
             {
-                _crafting.UnassignUnitFromCraft(_unit);
+                if (!InterruptedByCraft && _crafting.HasAssignedUnit(_unit))
+                {
+                    _crafting.UnassignUnitFromCraft(_unit);
+                }
             }
         }
 

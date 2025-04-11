@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Town
 {
@@ -6,19 +7,43 @@ namespace Town
     {
         public static List<TownItem> TownList = new();
 
+        private static object _lock = new();
+        private static GameObject _townSpawnerFolder = null;
+
+        public static GameObject TownSpawnerFolder
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_townSpawnerFolder == null)
+                    {
+                        _townSpawnerFolder = new GameObject("TownSpawnerFolder");
+                    }
+                    return _townSpawnerFolder;
+                }
+            }
+        }
+
         public static void AddTown(TownItem townItem)
         {
-            if (townItem != null && !TownList.Contains(townItem))
+            lock (_lock)
             {
-                TownList.Add(townItem);
+                if (townItem != null && !TownList.Contains(townItem))
+                {
+                    TownList.Add(townItem);
+                }
             }
         }
 
         public static void RemoveTown(TownItem townItem)
         {
-            if (townItem != null && TownList.Contains(townItem))
+            lock (_lock)
             {
-                TownList.Remove(townItem);
+                if (townItem != null && TownList.Contains(townItem))
+                {
+                    TownList.Remove(townItem);
+                }
             }
         }
     }

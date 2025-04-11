@@ -179,7 +179,7 @@ public class UnitListUIManager : MonoBehaviour
     private void UpdateUnitItemUI(GameObject unitObj, UnitItem unit)
     {
         var nameText = unitObj.transform.Find("UnitName").GetComponent<TextMeshProUGUI>();
-        nameText.text = unit.Unit.Name;
+        nameText.text = unit.Name;
         
         var unitBackpack = unitObj.transform.Find("UnitBackpack").GetComponent<TextMeshProUGUI>();
         unitBackpack.text = $"{unit.Backpack.CurrentCapacity} / {unit.Backpack.MaxCapacity}";

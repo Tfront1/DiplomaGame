@@ -52,22 +52,24 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
     
     public BuildingController BuildingController { get; set; }
 
-    public static BuildingItem Create(Vector2Int position, Guid guid, Building building, GameObject buildingGameObject, TownItem townItem, Backpack backpack, bool isBuild)
+    public static BuildingItem Create(Vector2Int position, Guid guid, Building building,
+        GameObject buildingGameObject, TownItem townItem, Backpack backpack,
+        bool isBuild, Building construction = null)
     {
         var buildingItem = buildingGameObject.AddComponent<BuildingItem>();
-        buildingItem.Initialize(position, guid, building, buildingGameObject, backpack, townItem, isBuild);
+        buildingItem.Initialize(position, guid, building, buildingGameObject, backpack, townItem, isBuild, construction);
         return buildingItem;
     }
 
     public void Initialize(Vector2Int position, Guid guid, Building building,
-        GameObject buildingGameObject, Backpack backpack, TownItem townItem, bool isBuild)
+        GameObject buildingGameObject, Backpack backpack, TownItem townItem, bool isBuild, Building construction)
     {
         SetBasicProperties(position, guid, building, buildingGameObject);
         SetupComponents();
         CreateSelectionIndicator();
-        SetupGameplayProperties(building, backpack, townItem, isBuild);
-        SetupBuildingActions();
+        SetupGameplayProperties(building, backpack, townItem, isBuild, construction);
         LoadCrafts(building);
+        SetupBuildingActions();
         CreateProgressBar();
     }
 
@@ -168,6 +170,8 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     private void CompleteBuildingConstruction()
     {
+        HP = Building.MaxHP;
+
         var args = new BuildingCompletedEventArgs(this);
 
         Backpack?.Clear();
@@ -175,6 +179,8 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
         OnBuildingComplete?.Invoke(this, args);
         UIToChange?.Invoke(this);
+
+        SetupBuildingActions();
     }
 
     public void ApplyDamage(float damage)
@@ -263,10 +269,19 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         SelectionIndicator.SetActive(false);
     }
 
-    private void SetupGameplayProperties(Building building, Backpack backpack, TownItem townItem, bool isBuild)
+    private void SetupGameplayProperties(Building building, Backpack backpack, TownItem townItem, bool isBuild, Building construction)
     {
         IsBuilt = isBuild;
-        HP = building.MaxHP;
+        Construction = construction;
+        if (IsBuilt)
+        {
+            HP = building.MaxHP;
+        }
+        else
+        {
+            HP = Construction.MaxHP;
+        }
+
         Backpack = backpack;
         HomeTown = townItem;
         SubscribeToBackpackEvents();
@@ -274,7 +289,14 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 
     private void SetupBuildingActions()
     {
-        BuildingController = new BuildingController(this);
+        if (BuildingController == null)
+        {
+            BuildingController = new BuildingController(this);
+        }
+        else
+        {
+            BuildingController.ClearActions();
+        }
 
         BuildingController.AddAction(typeof(MoveToBuildingAction));
 

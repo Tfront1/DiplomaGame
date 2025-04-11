@@ -4,6 +4,7 @@ using System.Linq;
 using Items.Resource.BackPack;
 using Town;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 
@@ -126,6 +127,10 @@ public class BuildingManager : MonoBehaviour
 
         townItem.AddBuilding(buildingItem);
         TeleportUnitsToEdgeOfTheBuilding(buildingItem);
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
+        buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
+
         return true;
     }
 
@@ -166,6 +171,8 @@ public class BuildingManager : MonoBehaviour
 
         townItem.AddBuilding(buildingItem);
         TeleportUnitsToEdgeOfTheBuilding(buildingItem);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
+        buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
 
         return true;
     }
@@ -194,6 +201,11 @@ public class BuildingManager : MonoBehaviour
         //buildingItem.CreateProgressBar();
 
         TeleportUnitsToEdgeOfTheBuilding(buildingItem);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
+        buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
+
+        buildingItem.HomeTown.RemoveBuilding(buildingItem);
+        buildingItem.HomeTown.AddBuilding(buildingItem);
     }
 
     public static bool RemoveBuilding(Vector2Int gridPosition)
@@ -498,9 +510,7 @@ public class BuildingManager : MonoBehaviour
         var isBuild = buildingConstruction == null;
 
         var buildingItem =
-            BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack, isBuild);
-
-        buildingItem.Construction = buildingConstruction;
+            BuildingItem.Create(gridPosition, buildingGuid, building, buildingGameObject, townItem, backpack, isBuild, buildingConstruction);
 
         buildingItem.OnDestroyed += RemoveBuilding;
         if (buildingConstruction == null)
@@ -714,7 +724,7 @@ public class BuildingManager : MonoBehaviour
         return buildingTexture;
     }
 
-    private static void TeleportUnitsToEdgeOfTheBuilding(BuildingItem building)
+    public static void TeleportUnitsToEdgeOfTheBuilding(BuildingItem building)
     {
         var buildingCollider = building.Collider;
 

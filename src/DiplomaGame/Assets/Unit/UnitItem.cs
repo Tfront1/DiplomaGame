@@ -8,6 +8,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 {
     public Guid Id { get; set; }
     public Unit Unit { get; set; }
+    public string Name { get; set; }
     public float X => UnitGameObject.transform.position.x;
     public float Y => UnitGameObject.transform.position.y;
     public float Z => UnitGameObject.transform.position.z;
@@ -18,6 +19,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public GameObject UnitGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
     public BoxCollider2D Collider { get; set; }
+    public bool ToRotateToLeft { get; set; } = false;
 
     //Gameplay
     public UnitStats Stats { get; set; }
@@ -45,17 +47,18 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     private object _unitLock = new();
 
-    public static UnitItem Create(Vector2 position, Guid guid, Unit unit, GameObject unitGameObject, TownItem townItem)
+    public static UnitItem Create(Vector2 position, Guid guid, string unitName, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
         var unitItem = unitGameObject.AddComponent<UnitItem>();
-        unitItem.Initialize(position, guid, unit, townItem);
+        unitItem.Initialize(position, guid, unitName, unit, townItem);
         return unitItem;
     }
 
-    public void Initialize(Vector2 position, Guid guid, Unit unit, TownItem townItem)
+    public void Initialize(Vector2 position, Guid guid, string unitName, Unit unit, TownItem townItem)
     {
         Id = guid;
         Unit = unit;
+        Name = unitName;
         UnitGameObject = gameObject;
         HomeTown = townItem;
         SpriteRenderer = UnitGameObject.GetComponent<SpriteRenderer>();

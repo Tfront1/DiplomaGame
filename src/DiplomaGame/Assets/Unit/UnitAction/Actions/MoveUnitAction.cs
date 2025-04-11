@@ -118,7 +118,7 @@ namespace UnitAction
                 {
                     _toRecalculatePath = false;
 
-                    Vector2 currentPosition = _unit.CenterCoords;
+                    var currentPosition = _unit.CenterCoords;
                     var destination = pathCopy.Last();
 
                     List<Vector2> remainingPath = null;
@@ -152,6 +152,10 @@ namespace UnitAction
                     currentPathIndex++;
                     continue;
                 }
+
+                _unit.ToRotateToLeft = targetPosition.x - startPosition.x < 0;
+                UnitManager.StopAnimation(_unit);
+                UnitManager.PlayAnimation(_unit, "Move", true, 5f);
 
                 var startTime = Time.time;
                 var pausedTime = 0f;
@@ -201,6 +205,9 @@ namespace UnitAction
 
         protected override void CompleteAction()
         {
+            UnitManager.StopAnimation(_unit);
+            UnitManager.PlayAnimation(_unit, "Idle");
+
             ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
             _unit.CanGroup = true;
             base.CompleteAction();

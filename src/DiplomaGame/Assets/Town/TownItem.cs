@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Assets.Items.Crafts;
 using Items.Resource.BackPack;
+using UnityEngine;
 using static UnitItem;
 
 namespace Town
@@ -20,6 +21,10 @@ namespace Town
         public int DiedUnits { get; set; } = 0;
         public BuildingTownOrder BuildingTownOrder { get; set; } = new();
 
+        public TownUnitSpawner TownUnitSpawner { get; set; }
+        public int MaxUnits { get; private set; } = 0;
+        public int UnitsCount => Units.Count;
+
         public TownItem(string name, Guid id, bool isUnitControlTown = true)
         {
             Name = name;
@@ -31,6 +36,8 @@ namespace Town
                 this.SetAsPlayerTown();
                 this.NotifyUIChanged();
             }
+
+            InitializeUnitSpawner(this);
         }
 
         public TownItem(string name, Guid id, BuildingItem townHall)
@@ -69,6 +76,10 @@ namespace Town
 
                     BuildingTownOrder.CreateOrder(building, buildingCraftingComponents, this);
                 }
+                else
+                {
+                    MaxUnits += building.Building.MaxResidents;
+                }
 
                 this.NotifyUIChanged();
             }
@@ -86,6 +97,8 @@ namespace Town
 
                     RecalculateTotalResources();
                 }
+
+                MaxUnits -= building.Building.MaxResidents;
 
                 this.NotifyUIChanged();
             }
@@ -268,6 +281,18 @@ namespace Town
             }
 
             TotalBackpack = result;
+        }
+
+        private void InitializeUnitSpawner(TownItem town)
+        {
+            if (TownUnitSpawner == null)
+            {
+                var spawnerObj = new GameObject($"{Name}UnitSpawner");
+                TownUnitSpawner = spawnerObj.AddComponent<TownUnitSpawner>();
+                TownUnitSpawner.transform.parent = TownRegistry.TownSpawnerFolder.transform;
+            }
+            
+            TownUnitSpawner.Initialize(town);
         }
 
         private void BuildingBackpackChanged(object sender, Backpack.BackpackChangedEventArgs e)

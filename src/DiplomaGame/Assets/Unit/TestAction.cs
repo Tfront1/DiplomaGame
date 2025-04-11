@@ -33,11 +33,15 @@ public class TestAction : MonoBehaviour
         //Spawn unit
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            SpawnUnit(_town);
+            var clickPosition = UtilsClass.GetMouseWorldPosition();
+            UnitManager.CreateUnit(clickPosition, 3, _town);
+            //SpawnUnit(_town);
         }
         else if (Input.GetKeyDown(KeyCode.W))
         {
-            SpawnUnit(_enemyTown);
+            var clickPosition = UtilsClass.GetMouseWorldPosition();
+            UnitManager.CreateUnit(clickPosition, 3, _enemyTown);
+            //SpawnUnit(_enemyTown);
         }
 
         /*
@@ -157,7 +161,7 @@ public class TestAction : MonoBehaviour
         */
     }
 
-    private List<UnitItem> SpawnUnit(TownItem town)
+    public static void SpawnUnit(TownItem town)
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
 
@@ -191,7 +195,7 @@ public class TestAction : MonoBehaviour
             randomY = clickPosition.y;
             var randomPosition = new Vector2(randomX, randomY);
 
-            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), unit, unitGameObject, town);
+            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), UtilsClass.GetRandomName(), unit, unitGameObject, town);
 
             town.AddUnit(unitItem);
 
@@ -200,7 +204,5 @@ public class TestAction : MonoBehaviour
 
             unitItem.Backpack.FillWithSingleItem(res);
         }
-
-        return units;
     }
 }

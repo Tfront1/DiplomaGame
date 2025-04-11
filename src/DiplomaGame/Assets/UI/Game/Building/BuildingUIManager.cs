@@ -211,7 +211,14 @@ public class BuildingUIManager : MonoBehaviour
         _currentBuilding = building;
         _buildingNameText.text = building.Building.Name;
         _buildingTownText.text = building.HomeTown != null ? $"{building.HomeTown.Name}" : "No hometown";
-        UpdateHealthBar(building.HP, building.Building.MaxHP);
+        if (building.IsBuilt)
+        {
+            UpdateHealthBar(building.HP, building.Building.MaxHP);
+        }
+        else
+        {
+            UpdateHealthBar(building.HP, building.Construction.MaxHP);
+        }
         UpdateBackpackUI(building.Backpack);
         UpdateBuildingResourcesInfo(building);
 

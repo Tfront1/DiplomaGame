@@ -160,6 +160,16 @@ public static class GridService
     }
 
     /// <summary>
+    /// Converts grid coordinates to world position.
+    /// </summary>
+    /// <param name="coords">coordinates in the grid.</param>
+    /// <returns>World position vector corresponding to the grid cell center.</returns>
+    public static Vector3 GetWorldPosition(Vector3 coords)
+    {
+        return GetWorldPosition(coords.x, coords.y);
+    }
+
+    /// <summary>
     /// Converts world position to grid coordinates.
     /// </summary>
     /// <param name="worldPosition">Position in world space.</param>

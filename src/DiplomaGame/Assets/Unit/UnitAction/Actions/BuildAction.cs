@@ -148,9 +148,12 @@ namespace UnitAction
         private void UnassignUnit()
         {
             var buildingOrder = _targetBuilding.HomeTown.BuildingTownOrder.GetOrder(_targetBuilding);
-            if (!InterruptedByOrder && buildingOrder.HasAssignedUnit(_unit))
+            if (buildingOrder != null)
             {
-                buildingOrder.UnassignUnit(_unit, false);
+                if (!InterruptedByOrder && buildingOrder.HasAssignedUnit(_unit))
+                {
+                    buildingOrder.UnassignUnit(_unit, false);
+                }
             }
         }
 

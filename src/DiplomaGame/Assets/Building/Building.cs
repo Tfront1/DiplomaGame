@@ -13,8 +13,10 @@ public class Building
 	public bool HasCrafts { get; set; }
     public int BuildingCraftId { get; set; }
     public List<int> CraftsIds { get; set; } = new();
+	public int MaxResidents { get; set; }
 
-	public enum BuildingTypes
+
+    public enum BuildingTypes
     {
         Construction,
         TownHall,

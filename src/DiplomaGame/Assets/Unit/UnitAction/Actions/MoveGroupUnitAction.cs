@@ -147,6 +147,10 @@ namespace UnitAction
                     continue;
                 }
 
+                _unit.ToRotateToLeft = targetPosition.x - startPosition.x < 0;
+                UnitManager.StopAnimation(_unit);
+                UnitManager.PlayAnimation(_unit, "Move", true, 5f);
+
                 var startTime = Time.time;
                 var pausedTime = 0f;
 
@@ -195,6 +199,9 @@ namespace UnitAction
 
         protected override void CompleteAction()
         {
+            UnitManager.StopAnimation(_unit);
+            UnitManager.PlayAnimation(_unit, "Idle");
+
             ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
             base.CompleteAction();
         }

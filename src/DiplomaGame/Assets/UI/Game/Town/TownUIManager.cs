@@ -128,7 +128,7 @@ public class TownUIManager : MonoBehaviour
 
         _playerTownNameText.text = town.Name;
         _playerBuildingsCountText.text = town.TownHall != null ? $" : {town.Buildings.Count + 1}" : $" : {town.Buildings.Count}";
-        _playerUnitsCountText.text = $" : {town.Units.Count}";
+        _playerUnitsCountText.text = $" : {town.UnitsCount} / {town.MaxUnits}";
         _playerDeadUnitsText.text = $" : {town.DiedUnits}";
 
         if (town.TotalBackpack == null)

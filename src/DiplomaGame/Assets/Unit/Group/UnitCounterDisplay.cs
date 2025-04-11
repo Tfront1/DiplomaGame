@@ -7,9 +7,9 @@ public class UnitCounterDisplay : MonoBehaviour
     private GameObject _textObject;
     private int _currentCount = 0;
 
-    [SerializeField] private Vector3 _textOffset = new(0.1f, 0.2f, 0);
-    [SerializeField] private Color _textColor = Color.white;
-    [SerializeField] private float _textSize = 30.0f;
+    private Vector3 _textOffset = new(0.1f, 0.2f, 0);
+    private Color _textColor = Color.white;
+    private float _textSize = 30.0f;
 
     private void Awake()
     {
@@ -44,6 +44,19 @@ public class UnitCounterDisplay : MonoBehaviour
 
         _textObject.SetActive(true);
         _textComponent.text = count.ToString();
+    }
+
+    public void RotateText(bool toLeft)
+    {
+        var scale = _textObject.transform.localScale;
+
+        var absScaleX = Mathf.Abs(scale.x);
+
+        _textObject.transform.localScale = new Vector3(
+            toLeft ? -absScaleX : absScaleX,
+            scale.y,
+            scale.z
+        );
     }
 
     private void OnDestroy()

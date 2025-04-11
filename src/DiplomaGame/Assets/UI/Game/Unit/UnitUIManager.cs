@@ -417,7 +417,7 @@ public class UnitUIManager : MonoBehaviour
             return;
         }
 
-        _unitNameText.text = unit.Unit.Name;
+        _unitNameText.text = unit.Name;
         _unitTownText.text = unit.HomeTown != null ? $"{unit.HomeTown.Name}" : "No hometown";
 
         UpdateStatsUI(unit.Stats);

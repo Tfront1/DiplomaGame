@@ -174,6 +174,9 @@ public class BuildingCraftingSystem
 
     public bool AssignUnitToCraft(UnitItem unit)
     {
+        if (!IsCrafting)
+            return false;
+
         if (AssignedUnits.Count >= MaxUnitCraftingCount)
             return false;
 

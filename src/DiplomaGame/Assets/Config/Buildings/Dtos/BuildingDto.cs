@@ -10,4 +10,5 @@ public class BuildingDto
     public string BuildingType;
     public int BackpackCapacity;
     public bool HasCrafts;
+    public int MaxResidents;
 }

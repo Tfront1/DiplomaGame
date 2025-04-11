@@ -6,7 +6,6 @@ public static partial class ConfigLoader
 {
     public static void LoadUnitTexturesConfig()
     {
-
         var json = File.ReadAllText(ConfigPaths.UnitsTexturesPath);
         var unitTexturesCollectionDto = JsonUtility.FromJson<UnitTexturesCollectionDto>(json);
 
@@ -16,7 +15,7 @@ public static partial class ConfigLoader
             return;
         }
 
-        var nonPositiveUnitIds = unitTexturesCollectionDto.UnitsGroup
+        var nonPositiveUnitIds = unitTexturesCollectionDto.UnitsGroups
             .Where(unit => unit.UnitId < 0)
             .Select(unit => unit.UnitId)
             .ToList();
@@ -26,7 +25,7 @@ public static partial class ConfigLoader
             Debug.Log($"Unit IDs must be positive. Found non-positive IDs: {string.Join(", ", nonPositiveUnitIds)}");
         }
 
-        var duplicateUnitIds = unitTexturesCollectionDto.UnitsGroup
+        var duplicateUnitIds = unitTexturesCollectionDto.UnitsGroups
             .GroupBy(unit => unit.UnitId)
             .Where(g => g.Count() > 1)
             .Select(g => g.Key)
@@ -37,7 +36,7 @@ public static partial class ConfigLoader
             Debug.Log($"Duplicate Unit IDs found: {string.Join(", ", duplicateUnitIds)}");
         }
 
-        foreach (var unit in unitTexturesCollectionDto.UnitsGroup)
+        foreach (var unit in unitTexturesCollectionDto.UnitsGroups)
         {
 
             var nonPositiveActionIds = unit.ActionGroups
@@ -87,7 +86,7 @@ public static partial class ConfigLoader
         }
 
         UnitsTexturesConfig.TexturesPath = unitTexturesCollectionDto.TexturesPath;
-        UnitsTexturesConfig.UnitsGroupsList = unitTexturesCollectionDto.UnitsGroup
+        UnitsTexturesConfig.UnitsGroupsList = unitTexturesCollectionDto.UnitsGroups
             .Select(unitGroup => new UnitsTexturesConfig.UnitsGroup
             {
                 UnitId = unitGroup.UnitId,

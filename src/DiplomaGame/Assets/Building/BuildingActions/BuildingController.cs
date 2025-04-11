@@ -12,13 +12,13 @@ namespace BuildingAction
         public List<UnitItem> SelectedUnits { get; set; }
         public IBackpackItem Item { get; set; } = null;
 
-        private BuildingActionUIController _buildingActionUI;
+        public BuildingActionUIController BuildingActionUI;
 
         public BuildingController(BuildingItem building)
         {
             _building = building;
-            _buildingActionUI = _building.BuildingGameObject.AddComponent<BuildingActionUIController>();
-            _buildingActionUI.Initialize(_building, this);
+            BuildingActionUI = _building.BuildingGameObject.AddComponent<BuildingActionUIController>();
+            BuildingActionUI.Initialize(_building, this);
         }
 
         public void ExecuteAction(Type actionType)
@@ -35,7 +35,7 @@ namespace BuildingAction
         public void OpenActionPanel(List<UnitItem> selectedUnits)
         {
             SelectedUnits = selectedUnits;
-            _buildingActionUI.OpenActionPanel();
+            BuildingActionUI.OpenActionPanel();
             SubscribeToClicks();
         }
 
@@ -44,7 +44,7 @@ namespace BuildingAction
             if (!BuildingActions.Contains(action))
             {
                 BuildingActions.Add(action);
-                _buildingActionUI.SetActions(BuildingActions);
+                BuildingActionUI.SetActions(BuildingActions);
             }
         }
 
@@ -53,19 +53,25 @@ namespace BuildingAction
             if (BuildingActions.Contains(action))
             {
                 BuildingActions.Remove(action);
-                _buildingActionUI.SetActions(BuildingActions);
+                BuildingActionUI.SetActions(BuildingActions);
             }
+        }
+
+        public void ClearActions()
+        {
+            BuildingActions.Clear();
+            BuildingActionUI.SetActions(BuildingActions);
         }
 
         private void OnClick(Vector2 position)
         {
-            _buildingActionUI.CloseActionPanel();
+            BuildingActionUI.CloseActionPanel();
             UnsubscribeToClicks();
         }
 
         private void SubscribeToClicks()
         {
-            GameplayInputHandler.Instance.CustomGraphicRaycasters.Add(_buildingActionUI.CanvasRaycaster);
+            GameplayInputHandler.Instance.CustomGraphicRaycasters.Add(BuildingActionUI.CanvasRaycaster);
             GameplayInputHandler.Instance.OnMouseLeftClick += OnClick;
             GameplayInputHandler.Instance.OnMouseRightClick += OnClick;
             GameplayInputHandler.Instance.OnMouseLeftHoldStart += OnClick;
@@ -73,7 +79,7 @@ namespace BuildingAction
 
         private void UnsubscribeToClicks()
         {
-            GameplayInputHandler.Instance.CustomGraphicRaycasters.Remove(_buildingActionUI.CanvasRaycaster);
+            GameplayInputHandler.Instance.CustomGraphicRaycasters.Remove(BuildingActionUI.CanvasRaycaster);
             GameplayInputHandler.Instance.OnMouseLeftClick -= OnClick;
             GameplayInputHandler.Instance.OnMouseRightClick -= OnClick;
             GameplayInputHandler.Instance.OnMouseLeftHoldStart -= OnClick;
