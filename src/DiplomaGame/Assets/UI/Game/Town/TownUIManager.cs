@@ -65,6 +65,8 @@ public class TownUIManager : MonoBehaviour
         var background = topBar.GetComponent<Image>();
 
         _townNameText = background.transform.Find("TownName").GetComponent<TextMeshProUGUI>();
+        var townNameButton = background.transform.Find("TownName").GetComponent<Button>();
+        townNameButton.onClick.AddListener(MoveToTown);
         _townBuildingsImage = background.transform.Find("BuildingsCountImage").GetComponent<Image>();
 
         _townBuildingsCountText = _townBuildingsImage.transform.Find("BuildingsCount").GetComponent<TextMeshProUGUI>();
@@ -231,6 +233,15 @@ public class TownUIManager : MonoBehaviour
                     AddResourceToPanel(resource.Key.Id, resource.Value);
                 }
             }
+        }
+    }
+
+    private void MoveToTown()
+    {
+        if(_currentPlayerTown != null && _currentPlayerTown.TownHall != null)
+        {
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
         }
     }
 
