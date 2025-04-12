@@ -1,6 +1,7 @@
 ﻿using Biomes;
 using Supplies;
 using System.Collections.Generic;
+using Town;
 using UnityEngine;
 
 namespace Game
@@ -21,6 +22,7 @@ namespace Game
             GenerateSupplies();
             DisplaySupplies();
             DisplayTilemap();
+            SpawnTowns();
         }
 
         private void InitializeComponents()
@@ -76,6 +78,13 @@ namespace Game
 
             float endTime = Time.realtimeSinceStartup;
             Debug.Log($"Tilemap display time: {(endTime - startTime) * 1000:F2}ms");
+        }
+
+        private void SpawnTowns()
+        {
+            TownSpawner.SpawnTowns(3, 20, "UserTestTown");
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
         }
     }
 }

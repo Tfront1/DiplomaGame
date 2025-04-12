@@ -8,7 +8,5 @@ namespace GameUtilities.Utils.MapUtils
         {
             return (random.Next(width), random.Next(height));
         }
-
-        
     }
 }

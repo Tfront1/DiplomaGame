@@ -15,8 +15,12 @@ public class TestAction : MonoBehaviour
     public static TownItem _town;
     public static TownItem _enemyTown;
 
-    public void Awake()
+    public void Start()
     {
+        _town = TownRegistry.UserTown;
+
+        _enemyTown = TownRegistry.TownList.Find(x => !x.IsUnitControlTown);
+        /*
         _town = new TownItem("Town", Guid.NewGuid());
         BuildingManager.BuildInstantly(new Vector2Int(5, 5),
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _town);
@@ -25,6 +29,7 @@ public class TestAction : MonoBehaviour
         BuildingManager.BuildInstantly(new Vector2Int(10, 10),
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _enemyTown);
 
+        */
         _town.TownHall.Backpack.AddItem(WeaponConfig.WeaponElements.Find(x => x.Id == 2));
     }
 

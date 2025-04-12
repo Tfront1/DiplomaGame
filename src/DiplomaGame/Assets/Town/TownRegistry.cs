@@ -5,6 +5,7 @@ namespace Town
 {
     public static class TownRegistry
     {
+        public static TownItem UserTown { get; private set; }
         public static List<TownItem> TownList = new();
 
         private static object _lock = new();
@@ -32,6 +33,10 @@ namespace Town
                 if (townItem != null && !TownList.Contains(townItem))
                 {
                     TownList.Add(townItem);
+                    if (townItem.IsUnitControlTown)
+                    {
+                        UserTown = townItem;
+                    }
                 }
             }
         }

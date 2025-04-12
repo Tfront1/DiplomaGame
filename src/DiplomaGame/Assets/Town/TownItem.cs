@@ -29,7 +29,6 @@ namespace Town
         {
             Name = name;
             Id = id;
-            TownRegistry.AddTown(this);
             IsUnitControlTown = isUnitControlTown;
             if (IsUnitControlTown)
             {
@@ -38,13 +37,6 @@ namespace Town
             }
 
             InitializeUnitSpawner(this);
-        }
-
-        public TownItem(string name, Guid id, BuildingItem townHall)
-        {
-            Name = name;
-            Id = id;
-            TownHall = townHall;
             TownRegistry.AddTown(this);
         }
 
