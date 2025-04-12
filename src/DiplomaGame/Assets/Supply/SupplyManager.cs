@@ -7,7 +7,7 @@ using Random = System.Random;
 
 namespace Supplies
 {
-    internal class SupplyManager : MonoBehaviour
+    public class SupplyManager : MonoBehaviour
     {
         /// <summary>
         /// How much percent would be minimum offset
