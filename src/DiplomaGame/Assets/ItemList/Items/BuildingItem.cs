@@ -365,8 +365,12 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
             Destroy(_progressBarObject);
         }
 
-        _progressBarObject = new GameObject("ProgressBar");
-        _progressBarObject.transform.SetParent(transform, false);
+        var _progressBarPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/ProgressBarPrefab");
+        _progressBarPrefab = _progressBarPrefab.transform.Find("Canvas").gameObject;
+
+        _progressBarObject = Instantiate(_progressBarPrefab, transform);
+        _progressBarObject.name = "ProgressBar";
+        _progressSlider = _progressBarObject.transform.Find("Slider").GetComponent<Slider>();
 
         var yOffset = 0.5f;
         var buildingHeight = 0f;
@@ -378,64 +382,25 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
             buildingHeight = spriteRenderer.bounds.size.y;
         }
 
-        _progressBarObject.transform.position = new Vector3(
+        var localScaleX = 1 / BuildingGameObject.transform.localScale.x / 3;
+        var localScaleY = 1 / BuildingGameObject.transform.localScale.y / 3;
+
+        _progressSlider.transform.localScale = new Vector3(localScaleX, localScaleY, BuildingGameObject.transform.localScale.z);
+
+        _progressSlider.transform.position = new Vector3(
             BuildingGameObject.transform.position.x + buildingWidth / 2,
             BuildingGameObject.transform.position.y + buildingHeight + yOffset,
             BuildingGameObject.transform.position.z
         );
 
+        var sliderRect = _progressSlider.GetComponent<RectTransform>();
+        if (sliderRect != null)
+        {
+            var sliderWidth = Building.WidthCell * MapConfig.CellSize * 3f;
+            sliderRect.sizeDelta = new Vector2(sliderWidth, sliderRect.sizeDelta.y);
+        }
+
         _progressBarObject.layer = LayerMask.NameToLayer("GameplayUI");
-
-        var canvas = _progressBarObject.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.sortingOrder = 10;
-
-        var canvasScaler = _progressBarObject.AddComponent<CanvasScaler>();
-        canvasScaler.dynamicPixelsPerUnit = 100f;
-
-        var canvasRect = canvas.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(buildingWidth * 0.08f, buildingHeight * 0.01f);
-
-        // Create Background
-        var backgroundObject = new GameObject("Background");
-        backgroundObject.transform.SetParent(_progressBarObject.transform, false);
-        var bgImage = backgroundObject.AddComponent<Image>();
-        bgImage.color = Color.gray;
-        var bgRect = backgroundObject.GetComponent<RectTransform>();
-        bgRect.sizeDelta = canvasRect.sizeDelta;
-
-        // Create Slider
-        var sliderObject = new GameObject("ProgressSlider");
-        sliderObject.transform.SetParent(_progressBarObject.transform, false);
-        _progressSlider = sliderObject.AddComponent<Slider>();
-        _progressSlider.transition = Selectable.Transition.None;
-        _progressSlider.interactable = false;
-        var sliderRect = sliderObject.GetComponent<RectTransform>();
-        sliderRect.anchorMin = Vector2.zero;
-        sliderRect.anchorMax = Vector2.one;
-        sliderRect.offsetMin = Vector2.zero;
-        sliderRect.offsetMax = Vector2.zero;
-
-        // Create Fill Area
-        var fillArea = new GameObject("FillArea");
-        fillArea.transform.SetParent(sliderObject.transform, false);
-        var fillAreaRect = fillArea.AddComponent<RectTransform>();
-        fillAreaRect.anchorMin = new Vector2(0, 0);
-        fillAreaRect.anchorMax = new Vector2(1, 1);
-        fillAreaRect.offsetMin = Vector2.zero;
-        fillAreaRect.offsetMax = Vector2.zero;
-
-        var fill = new GameObject("Fill");
-        fill.transform.SetParent(fillArea.transform, false);
-        var fillImage = fill.AddComponent<Image>();
-        fillImage.color = Color.green;
-        _progressSlider.fillRect = fillImage.GetComponent<RectTransform>();
-        var fillRect = fill.GetComponent<RectTransform>();
-        fillRect.anchorMin = new Vector2(0, 0);
-        fillRect.anchorMax = new Vector2(1, 1);
-        fillRect.offsetMin = Vector2.zero;
-        fillRect.offsetMax = Vector2.zero;
-        
         _progressBarObject.SetActive(false);
     }
 

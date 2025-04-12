@@ -200,12 +200,9 @@ public class UnitActionManager
         var unitGuid = action.GetUnit().GetId();
 
         // Cancel the current action if one exists
-        if (_currentActions.ContainsKey(unitGuid))
+        if (_currentActions.TryGetValue(unitGuid, out var currentAction))
         {
-            var currentAction = _currentActions[unitGuid];
             currentAction.Cancel();
-            currentAction.OnActionCompleted -= HandleActionCompleted;
-            _currentActions.Remove(unitGuid);
         }
 
         // Clear any queued actions
@@ -218,21 +215,8 @@ public class UnitActionManager
             _unitActionQueues[unitGuid].Clear();
         }
 
-        // Execute the new action if possible
-        if (action.CanExecute())
-        {
-            action.OnActionCompleted += HandleActionCompleted;
-            _currentActions[unitGuid] = action;
-
-            if (_isPaused)
-            {
-                action.Pause();
-            }
-
-            action.Execute();
-            return true;
-        }
-        return false;
+        QueueAction(action);
+        return true;
     }
 
     /// <summary>

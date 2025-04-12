@@ -46,14 +46,14 @@ public class UnitCounterDisplay : MonoBehaviour
         _textComponent.text = count.ToString();
     }
 
-    public void RotateText(bool toLeft)
+    public void RotateText(Vector2 unitDirection)
     {
         var scale = _textObject.transform.localScale;
 
         var absScaleX = Mathf.Abs(scale.x);
 
         _textObject.transform.localScale = new Vector3(
-            toLeft ? -absScaleX : absScaleX,
+            unitDirection.x < 0 ? -absScaleX : absScaleX,
             scale.y,
             scale.z
         );

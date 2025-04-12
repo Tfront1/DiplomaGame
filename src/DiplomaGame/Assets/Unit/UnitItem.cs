@@ -19,7 +19,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public GameObject UnitGameObject { get; set; }
     public SpriteRenderer SpriteRenderer { get; set; }
     public BoxCollider2D Collider { get; set; }
-    public bool ToRotateToLeft { get; set; } = false;
+    public Vector2 UnitMoveDirection { get; set; }
 
     //Gameplay
     public UnitStats Stats { get; set; }
@@ -27,6 +27,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     public Backpack Backpack { get; set; }
     public TownItem HomeTown { get; set; }
     public UnitEquipment UnitEquipment { get; set; }
+
+    public UnitState State { get; set; } = UnitState.Idle;
 
     public Guid GroupId { get; set; } = Guid.Empty;
     public bool IsInGroup { get; set; } = false;
@@ -47,16 +49,16 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     private object _unitLock = new();
 
-    public static UnitItem Create(Vector2 position, Guid guid, string unitName, Unit unit, GameObject unitGameObject, TownItem townItem)
+    public static UnitItem Create(Vector2 position, Guid id, string unitName, Unit unit, GameObject unitGameObject, TownItem townItem)
     {
         var unitItem = unitGameObject.AddComponent<UnitItem>();
-        unitItem.Initialize(position, guid, unitName, unit, townItem);
+        unitItem.Initialize(position, id, unitName, unit, townItem);
         return unitItem;
     }
 
-    public void Initialize(Vector2 position, Guid guid, string unitName, Unit unit, TownItem townItem)
+    public void Initialize(Vector2 position, Guid id, string unitName, Unit unit, TownItem townItem)
     {
-        Id = guid;
+        Id = id;
         Unit = unit;
         Name = unitName;
         UnitGameObject = gameObject;

@@ -198,7 +198,6 @@ public class BuildingManager : MonoBehaviour
         }
 
         buildingItem.CreateSelectionIndicator();
-        //buildingItem.CreateProgressBar();
 
         TeleportUnitsToEdgeOfTheBuilding(buildingItem);
         LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
@@ -206,6 +205,8 @@ public class BuildingManager : MonoBehaviour
 
         buildingItem.HomeTown.RemoveBuilding(buildingItem);
         buildingItem.HomeTown.AddBuilding(buildingItem);
+
+        buildingItem.CreateProgressBar();
     }
 
     public static bool RemoveBuilding(Vector2Int gridPosition)

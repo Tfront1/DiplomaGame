@@ -125,8 +125,8 @@ public class UnitManager
             Debug.LogWarning($"No Idle animation found for unit type {unit.Id}");
         }
     }
-    
-    public static void PlayAnimation(UnitItem unit, string actionName, bool loop = true, float frameRate = 3f)
+
+    private static void PlayAnimation(UnitItem unit, string actionName, bool loop = true, float frameRate = 3f)
     {
         var animKey = $"{unit.Unit.Id}_{actionName}";
         var renderer = unit.SpriteRenderer;
@@ -137,25 +137,14 @@ public class UnitManager
             return;
         }
 
-        if (_activeAnimations.TryGetValue(unit, out var activeCoroutine))
-        {
-            if (unit.IsDestroyed)
-            {
-                var monoBehaviour = unit.UnitGameObject.GetComponent<MonoBehaviour>();
-                if (monoBehaviour != null)
-                {
-                    monoBehaviour.StopCoroutine(activeCoroutine);
-                }
-            }
-            _activeAnimations.Remove(unit);
-        }
+        StopAnimation(unit);
 
         ApplySpriteRotation(unit);
 
         if (unit.UnitGameObject != null)
         {
             var monoBehaviour = unit.UnitGameObject.GetComponent<MonoBehaviour>();
-            
+
             var coroutine = monoBehaviour.StartCoroutine(PlaySpriteAnimation(renderer, frames, frameRate, loop));
             _activeAnimations[unit] = coroutine;
         }
@@ -166,17 +155,20 @@ public class UnitManager
         if (unit?.UnitGameObject == null || unit.SpriteRenderer == null)
             return;
 
+        if (unit.UnitMoveDirection == Vector2.zero)
+            return;
+
         var scale = unit.UnitGameObject.transform.localScale;
 
         var absScaleX = Mathf.Abs(scale.x);
 
         unit.UnitGameObject.transform.localScale = new Vector3(
-            unit.ToRotateToLeft ? -absScaleX : absScaleX,
+            unit.UnitMoveDirection.x < 0 ? -absScaleX : absScaleX,
             scale.y,
             scale.z
         );
 
-        unit.DisplayGroupCounter.RotateText(unit.ToRotateToLeft);
+        unit.DisplayGroupCounter.RotateText(unit.UnitMoveDirection);
     }
 
     private static IEnumerator PlaySpriteAnimation(SpriteRenderer renderer, List<Sprite> sprites, float frameRate = 3f, bool loop = true)
@@ -206,7 +198,7 @@ public class UnitManager
         } while (loop || currentFrame != 0);
     }
 
-    public static void StopAnimation(UnitItem unit)
+    private static void StopAnimation(UnitItem unit)
     {
         if (_activeAnimations.TryGetValue(unit, out var coroutine) && unit.UnitGameObject != null)
         {
@@ -218,4 +210,35 @@ public class UnitManager
             _activeAnimations.Remove(unit);
         }
     }
+
+    public static void UpdateAnimation(UnitItem unit, bool loop = true, float frameRate = 3f)
+    {
+        switch (unit.State)
+        {
+            case UnitState.Move:
+                PlayAnimation(unit, "Move", loop, frameRate);
+                break;
+            case UnitState.Attacking:
+                PlayAnimation(unit, "Attack", loop, frameRate);
+                break;
+            case UnitState.Idle:
+                PlayAnimation(unit, "Idle", loop, frameRate);
+                break;
+            case UnitState.Dying:
+                PlayAnimation(unit, "Die", loop, frameRate);
+                break;
+            case UnitState.TakingDamage:
+                PlayAnimation(unit, "TakeDamage", loop, frameRate);
+                break;
+        }
+    }
+}
+
+public enum UnitState
+{
+    Idle,
+    Move,
+    Attacking,
+    Dying,
+    TakingDamage
 }

@@ -34,7 +34,13 @@ public class TestAction : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             var clickPosition = UtilsClass.GetMouseWorldPosition();
-            UnitManager.CreateUnit(clickPosition, 3, _town);
+            var unitItem = UnitManager.CreateUnit(clickPosition, 3, _town);
+            
+            var rand = Random.Range(1, 2);
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
+
+            unitItem.Backpack.FillWithSingleItem(res);
+
             //SpawnUnit(_town);
         }
         else if (Input.GetKeyDown(KeyCode.W))
@@ -185,7 +191,7 @@ public class TestAction : MonoBehaviour
                 Vector2.zero
             );
 
-            var unit = new Unit { Name = UtilsClass.GetRandomName(), Speed = 15f };
+            var unit = UnitsConfig.Units.Find(x => x.Id == 3);
             renderer.sprite = newBuildingSprite;
             unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
 
