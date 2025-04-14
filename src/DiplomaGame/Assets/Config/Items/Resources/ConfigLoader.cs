@@ -7,7 +7,7 @@ public static partial class ConfigLoader
 {
     public static void LoadResourceItemsConfig()
     {
-        var json = File.ReadAllText(ConfigPaths.ResourceItemsConfig);
+        var json = File.ReadAllText(ConfigPaths.ResourceItemsConfigPath);
         var resourcesDto = JsonUtility.FromJson<ResourcesDto>(json);
         
         if (resourcesDto == null)

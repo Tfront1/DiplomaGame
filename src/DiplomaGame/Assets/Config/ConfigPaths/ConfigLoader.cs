@@ -21,10 +21,12 @@ public static partial class ConfigLoader
         ConfigPaths.BuildingsConfigPath = configPathsDto.BuildingsConfigPath;
         ConfigPaths.UnitsConfigPath = configPathsDto.UnitsConfigPath;
         ConfigPaths.UnitsTexturesPath = configPathsDto.UnitsTexturesPath;
-        ConfigPaths.ResourceItemsConfig = configPathsDto.ResourceItemsConfig;
-        ConfigPaths.CraftingRecipesConfig = configPathsDto.CraftingRecipesConfig;
-        ConfigPaths.WeaponsConfig = configPathsDto.WeaponsConfig;
-        ConfigPaths.ArmorsConfig = configPathsDto.ArmorsConfig;
+        ConfigPaths.ResourceItemsConfigPath = configPathsDto.ResourceItemsConfigPath;
+        ConfigPaths.CraftingRecipesConfigPath = configPathsDto.CraftingRecipesConfigPath;
+        ConfigPaths.WeaponsConfigPath = configPathsDto.WeaponsConfigPath;
+        ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
+        ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
+        ConfigPaths.UITexturesPath = configPathsDto.UITexturesPath;
 
         Debug.Log("Config paths loaded");
 	}

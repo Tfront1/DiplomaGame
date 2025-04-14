@@ -182,8 +182,8 @@ public class BuildingUIManager : MonoBehaviour
         }
 
         var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.GetComponentInChildren<Image>();
-        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
+        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
 
         _buildingResourceItems[resourceId] = resourceItem;
         resourceText.text = quantity.ToString();
@@ -302,14 +302,9 @@ public class BuildingUIManager : MonoBehaviour
 
     private void ShowCraftingBuildingInfo(BuildingItem building)
     {
-        _action1Button.gameObject.SetActive(true);
-        //_action1Image.sprite = ...
-
-        
-            var requiredResources = CalculateResourcesToCraft(building);
-            _actionText.text = "Resources for craft";
-            UpdateBackpackUI(requiredResources);
-        
+        var requiredResources = CalculateResourcesToCraft(building);
+        _actionText.text = "Resources for craft";
+        UpdateBackpackUI(requiredResources);
     }
 
     private bool IsBuiltBuildingWithCrafts(BuildingItem building)
@@ -328,7 +323,7 @@ public class BuildingUIManager : MonoBehaviour
             CraftingMenuUIManager.Instance.ShowBuildingCrafts(building);
         });
 
-        // _action1Image.sprite = ...
+        _action1Image.sprite = UITextureManager.Instance.GetActionSprite("Craft");
 
         if (IsBuiltBuildingWithResources(building))
         {

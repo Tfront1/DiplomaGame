@@ -11,8 +11,9 @@
   "BuildingsConfigPath": "Assets/Config/Buildings/BuildingsConfig.json",
   "UnitsConfigPath": "Assets/Config/Units/UnitsConfig.json",
   "UnitsTexturesPath": "Assets/Config/Textures/Units/UnitsTexturesConfig.json",
-  "ResourceItemsConfig": "Assets/Config/Items/Resources/ResourcesConfig.json",
-  "CraftingRecipesConfig": "Assets/Config/Items/CraftingRecipes/CraftingRecipesConfig.json",
-  "WeaponsConfig": "Assets/Config/Items/Weapons/WeaponConfig.json",
-  "ArmorsConfig": "Assets/Config/Items/Armor/ArmorConfig.json"
+  "ResourceItemsConfigPath": "Assets/Config/Items/Resources/ResourcesConfig.json",
+  "CraftingRecipesConfigPath": "Assets/Config/Items/CraftingRecipes/CraftingRecipesConfig.json",
+  "WeaponsConfigPath": "Assets/Config/Items/Weapons/WeaponConfig.json",
+  "ArmorsConfigPath": "Assets/Config/Items/Armor/ArmorConfig.json",
+  "UITexturesPath": "Assets/Config/Textures/UI/UITexturesConfig.json"
 }

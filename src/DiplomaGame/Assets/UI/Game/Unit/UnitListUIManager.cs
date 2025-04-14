@@ -92,10 +92,12 @@ public class UnitListUIManager : MonoBehaviour
         _unitHalfButton = _unitListPanel.transform.Find("Half").GetComponent<Button>();
         _unitHalfButton.onClick.AddListener(ChoseHalfOfSelected);
         var halfImage = _unitListPanel.transform.Find("Half").GetComponent<Image>();
+        halfImage.sprite = UITextureManager.Instance.Sprites["General/HalfGroup"];
 
         _unitSelectButton = _unitListPanel.transform.Find("Select").GetComponent<Button>();
         _unitSelectButton.onClick.AddListener(CreateNewGroup);
         var selectImage = _unitListPanel.transform.Find("Select").GetComponent<Image>();
+        selectImage.sprite = UITextureManager.Instance.Sprites["General/NewGroup"];
 
         _unitsContainer = _unitListPanel.transform.Find("ScrollView/Viewport/Content");
     }

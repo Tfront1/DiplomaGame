@@ -17,7 +17,7 @@ public class UnitManager
 
     private static float _unitSize = 30f;
 
-    public static void InitializeCache()
+    public static void InitializeCaches()
     {
         _spriteCache.Clear();
         _animationCache.Clear();
@@ -77,7 +77,7 @@ public class UnitManager
     {
         if (_spriteCache.Count == 0)
         {
-            InitializeCache();
+            InitializeCaches();
         }
 
         if (_unitFolder == null)

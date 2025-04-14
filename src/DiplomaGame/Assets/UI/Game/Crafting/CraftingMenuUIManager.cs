@@ -75,6 +75,7 @@ public class CraftingMenuUIManager : MonoBehaviour
         _craftingMenu.gameObject.SetActive(false);
 
         _closeCraftingMenuImage = _craftingMenu.transform.Find("CloseButton").GetComponent<Image>();
+        _closeCraftingMenuImage.sprite = UITextureManager.Instance.Sprites["General/Close"];
         _closeCraftingMenuButton = _craftingMenu.transform.Find("CloseButton").GetComponent<Button>();
         _closeCraftingMenuButton.onClick.AddListener(ToggleCraftingMenu);
 
@@ -152,15 +153,16 @@ public class CraftingMenuUIManager : MonoBehaviour
         var buildingItemObj = Instantiate(buildingPanel, parentTransform);
         buildingItemObj.gameObject.SetActive(true);
 
-        var buildingImage = buildingItemObj.transform.Find("CraftingImage").GetComponent<Image>();
-        var buildingText = buildingItemObj.transform.Find("CraftingText").GetComponent<TextMeshProUGUI>();
+        var craftingImage = buildingItemObj.transform.Find("CraftingImage").GetComponent<Image>();
+        var craftingText = buildingItemObj.transform.Find("CraftingText").GetComponent<TextMeshProUGUI>();
 
-        var buildButton = buildingItemObj.transform.Find("CraftingButton").GetComponent<Button>();
-        var buildImage = buildingItemObj.transform.Find("CraftingButton").GetComponent<Image>();
+        var craftButton = buildingItemObj.transform.Find("CraftingButton").GetComponent<Button>();
+        var craftImage = buildingItemObj.transform.Find("CraftingButton").GetComponent<Image>();
+        craftImage.sprite = UITextureManager.Instance.GetActionSprite("Craft");
 
-        buildingText.text = $"{recipe.Name}\n{recipe.GetComponentsToString()}\n{recipe.CraftingTime:F1} s";
+        craftingText.text = $"{recipe.Name}\n{recipe.GetComponentsToString()}\n{recipe.CraftingTime:F1} s";
 
-        buildButton.onClick.AddListener(() => StartCrafting(recipe));
+        craftButton.onClick.AddListener(() => StartCrafting(recipe));
     }
 
     private void StartCrafting(CraftingRecipe recipe)

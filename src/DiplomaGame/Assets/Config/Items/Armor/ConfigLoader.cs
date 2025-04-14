@@ -8,7 +8,7 @@ public static partial class ConfigLoader
 {
     public static void LoadArmorsConfig()
     {
-        var json = File.ReadAllText(ConfigPaths.ArmorsConfig);
+        var json = File.ReadAllText(ConfigPaths.ArmorsConfigPath);
         var armorsDto = JsonUtility.FromJson<ArmorsDto>(json);
 
         if (armorsDto == null)

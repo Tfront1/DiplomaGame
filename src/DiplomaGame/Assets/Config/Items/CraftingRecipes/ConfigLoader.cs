@@ -9,7 +9,7 @@ public static partial class ConfigLoader
 {
     public static void LoadCraftingRecipesConfig()
     {
-        var json = File.ReadAllText(ConfigPaths.CraftingRecipesConfig);
+        var json = File.ReadAllText(ConfigPaths.CraftingRecipesConfigPath);
         var craftingRecipesDto = JsonUtility.FromJson<CraftingRecipesDto>(json);
 
         if (craftingRecipesDto == null)

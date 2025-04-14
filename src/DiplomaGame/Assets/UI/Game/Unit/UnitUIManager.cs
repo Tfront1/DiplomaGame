@@ -146,24 +146,28 @@ public class UnitUIManager : MonoBehaviour
         _unitMainWeaponPanel = _unitEquipmentPanel.Find("MainWeapon");
         _unitMainWeaponButton = _unitMainWeaponPanel.GetComponent<Button>();
         _unitMainWeaponImage = _unitMainWeaponPanel.Find("ItemImage").GetComponent<Image>();
+        _unitMainWeaponImage.sprite = UITextureManager.Instance.Sprites["Unit/Equipment/MainWeapon"];
         _unitMainWeaponName = _unitMainWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitMainWeaponContext = _unitMainWeaponPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitSecondaryWeaponPanel = _unitEquipmentPanel.Find("SecWeapon");
         _unitSecondaryWeaponButton = _unitSecondaryWeaponPanel.GetComponent<Button>();
         _unitSecondaryWeaponImage = _unitSecondaryWeaponPanel.Find("ItemImage").GetComponent<Image>();
+        _unitSecondaryWeaponImage.sprite = UITextureManager.Instance.Sprites["Unit/Equipment/SecWeapon"];
         _unitSecondaryWeaponName = _unitSecondaryWeaponPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitSecondaryWeaponContext = _unitSecondaryWeaponPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitArmorPanel = _unitEquipmentPanel.Find("Armor");
         _unitArmorButton = _unitArmorPanel.GetComponent<Button>();
         _unitArmorImage = _unitArmorPanel.Find("ItemImage").GetComponent<Image>();
+        _unitArmorImage.sprite = UITextureManager.Instance.Sprites["Unit/Equipment/Armor"];
         _unitArmorName = _unitArmorPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitArmorContext = _unitArmorPanel.gameObject.AddComponent<UIElementContext>();
 
         _unitAmmoPanel = _unitEquipmentPanel.Find("Ammo");
         _unitAmmoButton = _unitAmmoPanel.GetComponent<Button>();
         _unitAmmoImage = _unitAmmoPanel.Find("ItemImage").GetComponent<Image>();
+        _unitAmmoImage.sprite = UITextureManager.Instance.Sprites["Unit/Equipment/Ammo"];
         _unitAmmoName = _unitAmmoPanel.Find("ItemName").GetComponent<TextMeshProUGUI>();
         _unitAmmoContext = _unitAmmoPanel.gameObject.AddComponent<UIElementContext>();
     }
@@ -177,7 +181,7 @@ public class UnitUIManager : MonoBehaviour
             var statUI = new UnitStatObj(statObj.transform);
             _statsDictionary[stat.GetType()] = statUI;
 
-            //statUI.Image.sprite = stat.Image;
+            statUI.Image.sprite = UITextureManager.Instance.GetUnitStatSprite(stat);
             statUI.Slider.maxValue = stat.MaxValue;
             statUI.Slider.value = stat.CurrentValue;
             statUI.StatText.text = $"{stat.CurrentValue:F0}/{stat.MaxValue:F0}";
@@ -188,7 +192,6 @@ public class UnitUIManager : MonoBehaviour
     {
         if (_statsDictionary.TryGetValue(stat.GetType(), out var statObj))
         {
-            //statObj.Image.sprite = stat.Image;
             statObj.Slider.maxValue = stat.MaxValue;
             statObj.Slider.value = stat.CurrentValue;
             statObj.StatText.text = $"{stat.CurrentValue:F0}/{stat.MaxValue:F0}";
@@ -216,7 +219,6 @@ public class UnitUIManager : MonoBehaviour
     {
         if (_skillsDictionary.TryGetValue(skill.GetType(), out var skillObj))
         {
-            //skillObj.Image.sprite = stat.Image;
             skillObj.Slider.maxValue = skill.ExperienceToNextLevel;
             skillObj.Slider.value = skill.Experience;
             skillObj.SkillText.text = $"Lvl. {skill.CurrentLevel}";
@@ -287,8 +289,8 @@ public class UnitUIManager : MonoBehaviour
         }
 
         var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.GetComponentInChildren<Image>();
-        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
+        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
 
         _playerResourceItems[resourceId] = resourceItem;
         resourceText.text = quantity.ToString();
@@ -440,7 +442,7 @@ public class UnitUIManager : MonoBehaviour
 
         UpdateStatUI(stats.Health);
         UpdateStatUI(stats.Armor); 
-        UpdateStatUI(stats.Hunger); 
+        //UpdateStatUI(stats.Hunger); 
         UpdateStatUI(stats.Stamina);
     }
 

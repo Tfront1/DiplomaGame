@@ -50,7 +50,7 @@ public class BuildingManager : MonoBehaviour
     /// <summary>
     /// Initializes building caches with data from configs
     /// </summary>
-    private static void InitializeCaches()
+    public static void InitializeCaches()
     {
         _buildingItemList = new ItemList<BuildingItem>();
         _grid = new MapGrid<BuildingGridObject>(

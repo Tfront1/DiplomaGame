@@ -17,6 +17,7 @@ namespace Game
             // Debug
             GameRandom.SetSeed(new System.Random().Next(1000000, 10000000));
 
+            LoadAllTextures();
             InitializeComponents();
             GenerateBiomeMap();
             GenerateSupplies();
@@ -32,18 +33,18 @@ namespace Game
 
         private void GenerateBiomeMap()
         {
-            float startTime = Time.realtimeSinceStartup;
+            var startTime = Time.realtimeSinceStartup;
 
-            int seed = GameRandom.Seed;
+            var seed = GameRandom.Seed;
             _biomeMap = BiomeManager.GetBiomeMap(seed);
 
-            float endTime = Time.realtimeSinceStartup;
+            var endTime = Time.realtimeSinceStartup;
             Debug.Log($"BiomeMap generation time: {(endTime - startTime) * 1000:F2}ms");
         }
 
         private void GenerateSupplies()
         {
-            float startTime = Time.realtimeSinceStartup;
+            var startTime = Time.realtimeSinceStartup;
 
             _supplyData = SupplyGenerator.GenerateSupply(
                 MapConfig.MapWidth,
@@ -55,28 +56,28 @@ namespace Game
                 _biomeMap
             );
 
-            float endTime = Time.realtimeSinceStartup;
+            var endTime = Time.realtimeSinceStartup;
             Debug.Log($"SupplyMap generation time: {(endTime - startTime) * 1000:F2}ms");
         }
 
         private void DisplaySupplies()
         {
-            float startTime = Time.realtimeSinceStartup;
+            var startTime = Time.realtimeSinceStartup;
 
             var supplyListInfo = _supplyData.Item2;
             SupplyManager.DisplaySupplyMap(supplyListInfo);
 
-            float endTime = Time.realtimeSinceStartup;
+            var endTime = Time.realtimeSinceStartup;
             Debug.Log($"Supply display time: {(endTime - startTime) * 1000:F2}ms");
         }
 
         private void DisplayTilemap()
         {
-            float startTime = Time.realtimeSinceStartup;
+            var startTime = Time.realtimeSinceStartup;
 
             TilemapManager.DisplayTilemap(_biomeMap, _displayAllTiles);
 
-            float endTime = Time.realtimeSinceStartup;
+            var endTime = Time.realtimeSinceStartup;
             Debug.Log($"Tilemap display time: {(endTime - startTime) * 1000:F2}ms");
         }
 
@@ -85,6 +86,14 @@ namespace Game
             TownSpawner.SpawnTowns(3, 20, "UserTestTown");
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
+        }
+
+        private void LoadAllTextures()
+        {
+            UITextureManager.LoadAllTextures();
+            BuildingManager.InitializeCaches();
+            SupplyManager.InitializeCaches();
+            UnitManager.InitializeCaches();
         }
     }
 }

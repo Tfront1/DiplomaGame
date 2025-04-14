@@ -128,13 +128,13 @@ namespace BuildingAction
 
             var actionItem = Instantiate(buildingActionItemPrefab, _buildingActionPanel);
 
-            /*
+            
             var iconComponent = actionItem.GetComponentInChildren<Image>();
             if (iconComponent != null)
             {
-                iconComponent.sprite = GetActionIcon(actionType);
+                iconComponent.sprite = UITextureManager.Instance.GetBuildingActionSprite(actionType);
             }
-            */
+            
 
             var button = actionItem.GetComponent<Button>();
             if (button != null)
@@ -274,8 +274,8 @@ namespace BuildingAction
             }
 
             var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-            //var resourceImage = resourceItem.GetComponentInChildren<Image>();
-            //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
+            var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
+            resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resource.Id);
 
             _buildingResourceItems[resource] = resourceItem;
             resourceText.text = quantity.ToString();

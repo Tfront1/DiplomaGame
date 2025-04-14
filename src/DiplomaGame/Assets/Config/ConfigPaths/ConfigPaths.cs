@@ -12,8 +12,9 @@ public static class ConfigPaths
     public static string BuildingsConfigPath { get; set; }
     public static string UnitsConfigPath { get; set; }
     public static string UnitsTexturesPath { get; set; }
-    public static string ResourceItemsConfig { get; set; }
-    public static string CraftingRecipesConfig { get; set; }
-    public static string WeaponsConfig { get; set; }
-    public static string ArmorsConfig { get; set; }
+    public static string ResourceItemsConfigPath { get; set; }
+    public static string CraftingRecipesConfigPath { get; set; }
+    public static string WeaponsConfigPath { get; set; }
+    public static string ArmorsConfigPath { get; set; }
+    public static string UITexturesPath { get; set; }
 }

@@ -55,7 +55,7 @@ namespace Supplies
         /// <summary>
         /// Initializes supply caches with data from configs
         /// </summary>
-        private static void InitializeCaches()
+        public static void InitializeCaches()
         {
             _supplyItemList = new ItemList<SupplyItem>();
             _grid = new MapGrid<SupplyGridObject>(

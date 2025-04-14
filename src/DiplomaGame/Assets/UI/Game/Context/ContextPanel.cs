@@ -95,6 +95,7 @@ public class ContextPanel : MonoBehaviour
             }
 
             _contextPanel.position = panelPosition;
+
             _contextPanel.gameObject.SetActive(true);
         }
     }

@@ -9,7 +9,7 @@ public static partial class ConfigLoader
 {
     public static void LoadWeaponsConfig()
     {
-        var json = File.ReadAllText(ConfigPaths.WeaponsConfig);
+        var json = File.ReadAllText(ConfigPaths.WeaponsConfigPath);
         var weaponsDto = JsonUtility.FromJson<WeaponsDto>(json);
         
         if (weaponsDto == null)

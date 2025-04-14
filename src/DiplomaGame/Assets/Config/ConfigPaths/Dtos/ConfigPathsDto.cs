@@ -13,9 +13,10 @@ public class ConfigPathsDto
     public string BuildingsConfigPath;
     public string UnitsConfigPath;
     public string UnitsTexturesPath;
-    public string ResourceItemsConfig;
-    public string CraftingRecipesConfig;
-    public string WeaponsConfig;
-    public string ArmorsConfig;
+    public string ResourceItemsConfigPath;
+    public string CraftingRecipesConfigPath;
+    public string WeaponsConfigPath;
+    public string ArmorsConfigPath;
+    public string UITexturesPath;
 }
 

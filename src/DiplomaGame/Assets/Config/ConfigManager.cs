@@ -28,5 +28,7 @@ public class ConfigManager : MonoBehaviour
         ConfigLoader.LoadUnitTexturesConfig();
 
         ConfigLoader.LoadCraftingRecipesConfig();
+
+        ConfigLoader.LoadUITexturesConfig();
     }
 }

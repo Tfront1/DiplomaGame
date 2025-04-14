@@ -82,6 +82,7 @@ public class BuildingMenuUIManager : MonoBehaviour
         _buildingButtonTransform.name = "BuildingButton";
 
         _buildingButtonImage = _buildingButtonTransform.GetComponent<Image>();
+        _buildingButtonImage.sprite = UITextureManager.Instance.Sprites["General/Build"];
 
         var buildingButton = _buildingButtonTransform.GetComponent<Button>();
 
@@ -97,6 +98,7 @@ public class BuildingMenuUIManager : MonoBehaviour
         _buildingMenu.gameObject.SetActive(false);
 
         _closeBuildingMenuImage = _buildingMenu.transform.Find("CloseButton").GetComponent<Image>();
+        _closeBuildingMenuImage.sprite = UITextureManager.Instance.Sprites["General/Close"];
         _closeBuildingMenuButton = _buildingMenu.transform.Find("CloseButton").GetComponent<Button>();
         _closeBuildingMenuButton.onClick.AddListener(ToggleBuildingMenu);
 
@@ -185,6 +187,7 @@ public class BuildingMenuUIManager : MonoBehaviour
 
         var buildButton = buildingItemObj.transform.Find("BuildButton").GetComponent<Button>();
         var buildImage = buildingItemObj.transform.Find("BuildButton").GetComponent<Image>();
+        buildImage.sprite = UITextureManager.Instance.Sprites["General/Build"];
 
         buildingText.text = $"{building.Name}\n{craft.GetComponentsToString()}\n{craft.CraftingTime:F1} s";
 

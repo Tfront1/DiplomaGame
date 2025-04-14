@@ -26,6 +26,8 @@ public class TownUIManager : MonoBehaviour
 
     private Image _resourcesImage;
 
+    private Image _menuImage;
+
     private TextMeshProUGUI _playerTownNameText;
     private TextMeshProUGUI _playerUnitsCountText;
     private TextMeshProUGUI _playerBuildingsCountText;
@@ -68,17 +70,23 @@ public class TownUIManager : MonoBehaviour
         var townNameButton = background.transform.Find("TownName").GetComponent<Button>();
         townNameButton.onClick.AddListener(MoveToTown);
         _townBuildingsImage = background.transform.Find("BuildingsCountImage").GetComponent<Image>();
-
+        _townBuildingsImage.sprite = UITextureManager.Instance.Sprites["Town/Buildings"];
         _townBuildingsCountText = _townBuildingsImage.transform.Find("BuildingsCount").GetComponent<TextMeshProUGUI>();
+
         _townUnitsImage = background.transform.Find("UnitsCountImage").GetComponent<Image>();
-
+        _townUnitsImage.sprite = UITextureManager.Instance.Sprites["Town/AliveUnits"];
         _townUnitsCountText = _townUnitsImage.transform.Find("UnitsCount").GetComponent<TextMeshProUGUI>();
-        _townDiedUnitsImage = background.transform.Find("DiedUnitsCountImage").GetComponent<Image>();
 
+        _townDiedUnitsImage = background.transform.Find("DiedUnitsCountImage").GetComponent<Image>();
+        _townDiedUnitsImage.sprite = UITextureManager.Instance.Sprites["Town/DiedUnits"];
         _townDiedUnitsCountText = _townDiedUnitsImage.transform.Find("DiedUnitsCount").GetComponent<TextMeshProUGUI>();
 
         _resourcesImage = background.transform.Find("ResourcesImage").GetComponent<Image>();
-
+        
+        _menuImage = background.transform.Find("MenuImage").GetComponent<Image>();
+        _menuImage.sprite = UITextureManager.Instance.Sprites["Town/Settings"];
+        var menuButton = _menuImage.GetComponent<Button>();
+        
         _resourcesPanel = _scrollView.transform.Find("Viewport/Panel");
 
         var layoutElement = _resourcesPanel.GetComponent<LayoutElement>();
@@ -190,9 +198,8 @@ public class TownUIManager : MonoBehaviour
         }
 
         var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.GetComponentInChildren<Image>();
-        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
-
+        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
         _playerResourceItems[resourceId] = resourceItem;
         resourceText.text = quantity.ToString();
 
