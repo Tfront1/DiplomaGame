@@ -13,21 +13,19 @@ namespace Town
         public static List<TownItem> SpawnTowns(int townCount, float townSafeDistance, string userTownName)
         {
             var towns = new List<TownItem>();
-            var random = GameRandom.Random;
             var townHall = BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall);
             var townSize = new Vector2Int(townHall.WidthCell, townHall.HeightCell);
 
             var createdTownForUser = false;
 
-            for (int i = 0; i < townCount; i++)
+            for (var i = 0; i < townCount; i++)
             {
-                Vector2Int coords;
-                bool isValidPosition = false;
-                int attempts = 0;
+                var isValidPosition = false;
+                var attempts = 0;
 
                 while (!isValidPosition && attempts < _maxAttempts)
                 {
-                    coords = GameRandom.GetRandomCoords();
+                    var coords = GameRandom.GetRandomCoords();
 
                     if (GridService.CanPlaceAtPosition(coords, townSize, GridRegistry.GetAllGridsList().ToArray()))
                     {
@@ -35,7 +33,7 @@ namespace Town
 
                         foreach (var town in towns)
                         {
-                            float distance = Vector2.Distance(coords, town.TownHall.Coords);
+                            var distance = Vector2.Distance(coords, town.TownHall.Coords);
                             if (distance < townSafeDistance)
                             {
                                 isValidPosition = false;

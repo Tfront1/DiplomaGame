@@ -170,10 +170,10 @@ public class BuildingManager : MonoBehaviour
         ItemListRegistry.UpsertList(_buildingItemList);
 
         townItem.AddBuilding(buildingItem);
-        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
-        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
-        buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
 
+        buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
+        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
+        
         return true;
     }
 
@@ -197,11 +197,10 @@ public class BuildingManager : MonoBehaviour
             buildingItem.Backpack = null;
         }
 
-        buildingItem.CreateSelectionIndicator();
-
-        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
-        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
         buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
+
+        buildingItem.CreateSelectionIndicator();
+        TeleportUnitsToEdgeOfTheBuilding(buildingItem);
 
         buildingItem.HomeTown.RemoveBuilding(buildingItem);
         buildingItem.HomeTown.AddBuilding(buildingItem);
@@ -451,7 +450,7 @@ public class BuildingManager : MonoBehaviour
         }
         else
         {
-            Sprite newSprite = Sprite.Create(
+            var newSprite = Sprite.Create(
                 buildingTexture.Texture,
                 new Rect(0.0f, 0.0f, buildingTexture.Texture.width, buildingTexture.Texture.height),
                 Vector2.zero
@@ -701,7 +700,7 @@ public class BuildingManager : MonoBehaviour
 
         copyConstruction.BackpackCapacity = buildingCraft.GetAllComponentsQuantity();
 
-        copyConstruction.HasMargin = building.HasMargin;
+        copyConstruction.HasMargin = true;
         copyConstruction.Name = building.Name;
         copyConstruction.HeightCell = building.HeightCell;
         copyConstruction.WidthCell = building.WidthCell;
@@ -751,7 +750,7 @@ public class BuildingManager : MonoBehaviour
             if (unitItem == null)
                 continue;
 
-            var unitPosition = unitItem.CenterCoords;
+            var unitPosition = unitItem.Coords;
 
             var closestPoint = GetClosestPointOnBuildingEdge2D(unitPosition, buildingBounds);
 

@@ -1,6 +1,7 @@
 ﻿using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using Assets.Items.Interfaces;
 using Town;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ public class TownUIManager : MonoBehaviour
     private TextMeshProUGUI _playerDeadUnitsText;
     private Transform _playerResourcesPanel;
     private TextMeshProUGUI _playerResourcesCountText;
-    private Dictionary<int, GameObject> _playerResourceItems = new();
+    private Dictionary<IBackpackItem, GameObject> _playerResourceItems = new();
     private TownItem _currentPlayerTown;
 
     private Canvas _mainCanvas;
@@ -149,69 +150,66 @@ public class TownUIManager : MonoBehaviour
         {
             _playerResourcesCountText.text = $"{town.TotalBackpack.CurrentCapacity} / {town.TotalBackpack.MaxCapacity}";
 
-            var resourcesToRemove = new HashSet<int>(_playerResourceItems.Keys);
+            var resourcesToRemove = new HashSet<IBackpackItem>(_playerResourceItems.Keys);
 
-            foreach (var resource in town.TotalBackpack.GetDetailedItems())
+            foreach (var (resourceItem, quantity) in town.TotalBackpack.GetDetailedItems())
             {
-                var resourceId = resource.Key.Id;
-                var quantity = resource.Value;
-
-                resourcesToRemove.Remove(resourceId);
-
+                resourcesToRemove.Remove(resourceItem);
+                
                 if (quantity <= 0)
                 {
-                    RemoveResourceFromPanel(resourceId);
+                    RemoveResourceFromPanel(resourceItem);
                 }
-                else if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                else if (_playerResourceItems.TryGetValue(resourceItem, out var resourceGO))
                 {
-                    var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+                    var resourceText = resourceGO.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
                 }
                 else
                 {
-                    AddResourceToPanel(resourceId, quantity);
+                    AddResourceToPanel(resourceItem, quantity);
                 }
             }
 
-            foreach (var resourceId in resourcesToRemove)
+            foreach (var resourceToRemove in resourcesToRemove)
             {
-                RemoveResourceFromPanel(resourceId);
+                RemoveResourceFromPanel(resourceToRemove);
             }
         }
     }
 
-    private void AddResourceToPanel(int resourceId, int quantity)
+    private void AddResourceToPanel(IBackpackItem resourceItem, int quantity)
     {
         if (quantity <= 0)
             return;
 
         var resource = _resourceItemPrefab.transform.Find("Panel").gameObject;
 
-        var resourceItem = Instantiate(resource, _playerResourcesPanel);
+        var resourceGO = Instantiate(resource, _playerResourcesPanel);
 
-        var rectTransform = resourceItem.GetComponent<RectTransform>();
+        var rectTransform = resourceGO.GetComponent<RectTransform>();
 
         if (rectTransform != null)
         {
             rectTransform.sizeDelta = new Vector2(0, 30);
-            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
+            resourceGO.transform.localScale = new Vector3(1f, 1f, 1f);
         }
 
-        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
-        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
-        _playerResourceItems[resourceId] = resourceItem;
+        var resourceText = resourceGO.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceGO.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceItem);
+        _playerResourceItems[resourceItem] = resourceGO;
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_playerResourcesPanel as RectTransform);
     }
 
-    private void RemoveResourceFromPanel(int resourceId)
+    private void RemoveResourceFromPanel(IBackpackItem resourceItem)
     {
-        if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        if (_playerResourceItems.TryGetValue(resourceItem, out var resourceGO))
         {
-            Destroy(resourceItem);
-            _playerResourceItems.Remove(resourceId);
+            Destroy(resourceGO);
+            _playerResourceItems.Remove(resourceItem);
         }
     }
 
@@ -237,7 +235,7 @@ public class TownUIManager : MonoBehaviour
             {
                 if (resource.Value > 0)
                 {
-                    AddResourceToPanel(resource.Key.Id, resource.Value);
+                    AddResourceToPanel(resource.Key, resource.Value);
                 }
             }
         }

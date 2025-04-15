@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Assets.Items.Interfaces;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,7 +25,7 @@ public class UnitUIManager : MonoBehaviour
 
     private Dictionary<Type, UnitSkillObj> _skillsDictionary = new();
     private Dictionary<Type, UnitStatObj> _statsDictionary = new();
-    private Dictionary<int, GameObject> _playerResourceItems = new();
+    private Dictionary<IBackpackItem, GameObject> _playerResourceItems = new();
 
     private Transform _unitEquipmentPanel;
 
@@ -209,7 +210,7 @@ public class UnitUIManager : MonoBehaviour
         var skillUI = new UnitSkillObj(skillObj.transform);
         _skillsDictionary[skill.GetType()] = skillUI;
 
-        //skillUI.Image.sprite = skill.Icon;
+        skillUI.Image.sprite = UITextureManager.Instance.GetUnitSkillSprite(skill);
         skillUI.Slider.maxValue = skill.ExperienceToNextLevel;
         skillUI.Slider.value = skill.Experience;
         skillUI.SkillText.text = $"Lvl.{skill.CurrentLevel}";
@@ -240,70 +241,70 @@ public class UnitUIManager : MonoBehaviour
         {
             _unitBackpackCount.text = $"{unit.Backpack.CurrentCapacity} / {unit.Backpack.MaxCapacity}";
 
-            var resourcesToRemove = new HashSet<int>(_playerResourceItems.Keys);
+            var resourcesToRemove = new HashSet<IBackpackItem>(_playerResourceItems.Keys);
 
             foreach (var resource in unit.Backpack.GetDetailedItems())
             {
-                var resourceId = resource.Key.Id;
+                var resourceItem = resource.Key;
                 var quantity = resource.Value;
 
-                resourcesToRemove.Remove(resourceId);
+                resourcesToRemove.Remove(resourceItem);
 
                 if (quantity <= 0)
                 {
-                    RemoveResourceFromPanel(resourceId);
+                    RemoveResourceFromPanel(resourceItem);
                 }
-                else if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                else if (_playerResourceItems.TryGetValue(resourceItem, out var resourceGO))
                 {
-                    var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
+                    var resourceText = resourceGO.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
                 }
                 else
                 {
-                    AddResourceToPanel(resourceId, quantity);
+                    AddResourceToPanel(resourceItem, quantity);
                 }
             }
 
-            foreach (var resourceId in resourcesToRemove)
+            foreach (var resourceItem in resourcesToRemove)
             {
-                RemoveResourceFromPanel(resourceId);
+                RemoveResourceFromPanel(resourceItem);
             }
         }
     }
 
-    private void AddResourceToPanel(int resourceId, int quantity)
+    private void AddResourceToPanel(IBackpackItem resourceItem, int quantity)
     {
         if (quantity <= 0)
             return;
 
         var resource = _resourcePrefab.transform.Find("Panel").gameObject;
 
-        var resourceItem = Instantiate(resource, _resourcePanel);
+        var resourceGO = Instantiate(resource, _resourcePanel);
 
-        var rectTransform = resourceItem.GetComponent<RectTransform>();
+        var rectTransform = resourceGO.GetComponent<RectTransform>();
 
         if (rectTransform != null)
         {
             rectTransform.sizeDelta = new Vector2(0, 30);
-            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
+            resourceGO.transform.localScale = new Vector3(1f, 1f, 1f);
         }
 
-        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
-        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
+        var resourceText = resourceGO.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceGO.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceItem);
 
-        _playerResourceItems[resourceId] = resourceItem;
+        _playerResourceItems[resourceItem] = resourceGO;
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
     }
 
-    private void RemoveResourceFromPanel(int resourceId)
+    private void RemoveResourceFromPanel(IBackpackItem resourceItem)
     {
-        if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        if (_playerResourceItems.TryGetValue(resourceItem, out var resourceGO))
         {
-            Destroy(resourceItem);
-            _playerResourceItems.Remove(resourceId);
+            Destroy(resourceGO);
+            _playerResourceItems.Remove(resourceItem);
         }
     }
 

@@ -232,7 +232,7 @@ public class SupplyUIManager : MonoBehaviour
     {
         if (_currentSupply != null)
         {
-            CameraManager.Instance.SetCameraPositionToMove(_currentSupply.CenterCoords);
+            CameraManager.Instance.SetCameraPositionToMove(GridService.GetWorldPosition(_currentSupply.CenterCoords));
         }
     }
 }

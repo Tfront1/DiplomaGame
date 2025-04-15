@@ -12,10 +12,10 @@ public class UnitSkills
     public UnitSkills()
     {
         Skills.Add(new ArcherySkill(1, 50, 100));
+        Skills.Add(new SwordsmanshipSkill(1, 80, 90));
         Skills.Add(new BuildingSkill(1, 75, 80));
         Skills.Add(new FarmingSkill(1, 50, 75));
         Skills.Add(new SmithingSkill(1, 100, 120));
-        Skills.Add(new SwordsmanshipSkill(1, 80, 90));
     }
 
     public void SetActiveSkill(Type skillType)

@@ -6,6 +6,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Assets.Items.Interfaces;
 
 public class BuildingUIManager : MonoBehaviour
 {
@@ -21,7 +22,7 @@ public class BuildingUIManager : MonoBehaviour
     private TextMeshProUGUI _buildingBackpackCount;
 
     private Transform _resourcePanel;
-    private Dictionary<int, GameObject> _buildingResourceItems = new();
+    private Dictionary<IBackpackItem, GameObject> _buildingResourceItems = new();
 
     private Canvas _mainCanvas;
     private BuildingItem _currentBuilding;
@@ -134,69 +135,67 @@ public class BuildingUIManager : MonoBehaviour
         {
             _buildingBackpackCount.text = $"{backpack.CurrentCapacity} / {backpack.MaxCapacity}";
 
-            var resourcesToRemove = new HashSet<int>(_buildingResourceItems.Keys);
+            var resourcesToRemove = new HashSet<IBackpackItem>(_buildingResourceItems.Keys);
 
-            foreach (var (key, quantity) in backpack.GetDetailedItems())
+            foreach (var (resource, quantity) in backpack.GetDetailedItems())
             {
-                var resourceId = key.Id;
-                
-                resourcesToRemove.Remove(resourceId);
+                resourcesToRemove.Remove(resource);
 
                 if (quantity <= 0)
                 {
-                    RemoveResourceFromPanel(resourceId);
+                    RemoveResourceFromPanel(resource);
                 }
-                else if (_buildingResourceItems.TryGetValue(resourceId, out var resourceItem))
+                else if (_buildingResourceItems.TryGetValue(resource, out var resourceItem))
                 {
                     var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
                 }
                 else
                 {
-                    AddResourceToPanel(resourceId, quantity);
+                    AddResourceToPanel(resource, quantity);
                 }
             }
 
-            foreach (var resourceId in resourcesToRemove)
+            foreach (var resource in resourcesToRemove)
             {
-                RemoveResourceFromPanel(resourceId);
+                RemoveResourceFromPanel(resource);
             }
         }
     }
 
-    private void AddResourceToPanel(int resourceId, int quantity)
+    private void AddResourceToPanel(IBackpackItem resourceItem, int quantity)
     {
         if (quantity <= 0)
             return;
 
         var resource = _resourcePrefab.transform.Find("Panel").gameObject;
 
-        var resourceItem = Instantiate(resource, _resourcePanel);
+        var resourceGO = Instantiate(resource, _resourcePanel);
 
-        var rectTransform = resourceItem.GetComponent<RectTransform>();
+        var rectTransform = resourceGO.GetComponent<RectTransform>();
 
         if (rectTransform != null)
         {
             rectTransform.sizeDelta = new Vector2(0, 30);
-            resourceItem.transform.localScale = new Vector3(1f, 1f, 1f);
+            resourceGO.transform.localScale = new Vector3(1f, 1f, 1f);
         }
 
-        var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
-        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceId);
+        var resourceText = resourceGO.GetComponentInChildren<TextMeshProUGUI>();
+        var resourceImage = resourceGO.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resourceItem);
 
-        _buildingResourceItems[resourceId] = resourceItem;
+        _buildingResourceItems[resourceItem] = resourceGO;
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
     }
 
-    private void RemoveResourceFromPanel(int resourceId)
+    private void RemoveResourceFromPanel(IBackpackItem resource)
     {
-        if (_buildingResourceItems.TryGetValue(resourceId, out var resourceItem))
+        if (_buildingResourceItems.TryGetValue(resource, out var resourceItem))
         {
             Destroy(resourceItem);
-            _buildingResourceItems.Remove(resourceId);
+            _buildingResourceItems.Remove(resource);
         }
     }
 
@@ -303,8 +302,28 @@ public class BuildingUIManager : MonoBehaviour
     private void ShowCraftingBuildingInfo(BuildingItem building)
     {
         var requiredResources = CalculateResourcesToCraft(building);
-        _actionText.text = "Resources for craft";
-        UpdateBackpackUI(requiredResources);
+        if (requiredResources.IsEmpty())
+        {
+            var craftingItemName = building.BuildingCraftingSystem.CurrentCraftingRecipe.Name;
+            _actionText.text = $"Crafting item {craftingItemName}";
+            HideResourcesInfo();
+        }
+        else
+        {
+            _actionText.text = "Resources for craft";
+            UpdateBackpackUI(requiredResources);
+        }
+
+        _action1Button.gameObject.SetActive(true);
+
+        _action1Button.onClick.RemoveAllListeners();
+
+        _action1Button.onClick.AddListener(() =>
+        {
+            building.BuildingCraftingSystem.StopCraft();
+        });
+
+        _action1Image.sprite = UITextureManager.Instance.Sprites["General/Close"];
     }
 
     private bool IsBuiltBuildingWithCrafts(BuildingItem building)
@@ -357,7 +376,7 @@ public class BuildingUIManager : MonoBehaviour
     {
         if (_currentBuilding != null)
         {
-            CameraManager.Instance.SetCameraPositionToMove(_currentBuilding.CenterCoords);
+            CameraManager.Instance.SetCameraPositionToMove(GridService.GetWorldPosition(_currentBuilding.CenterCoords));
         }
     }
 

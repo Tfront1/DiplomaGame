@@ -96,6 +96,12 @@ namespace BuildingAction
         {
             if (_buildingActionCanvas != null && _building != null)
             {
+                var rect = _building.gameObject.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+                }
+
                 var bottomCenter = _building.SpriteRenderer.bounds.center;
                 bottomCenter.y = _building.SpriteRenderer.bounds.min.y;
 
@@ -275,7 +281,7 @@ namespace BuildingAction
 
             var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
             var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
-            resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resource.Id);
+            resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(resource);
 
             _buildingResourceItems[resource] = resourceItem;
             resourceText.text = quantity.ToString();

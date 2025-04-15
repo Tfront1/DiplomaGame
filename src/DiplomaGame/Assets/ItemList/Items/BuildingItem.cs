@@ -230,6 +230,15 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         }
     }
 
+    public void HideProgressBar()
+    {
+        if (_progressBarObject != null && _progressSlider != null)
+        {
+            UpdateProgress(0);
+            _progressBarObject.SetActive(false);
+        }
+    }
+
     public Guid GetId()
     {
         return Id;

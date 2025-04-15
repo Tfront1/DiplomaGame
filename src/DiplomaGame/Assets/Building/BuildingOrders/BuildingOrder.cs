@@ -449,8 +449,8 @@ public class BuildingOrder
             return false;
         }
 
-        var distanceToTarget = Vector2.Distance(GridService.GetWorldPosition(targetBuilding.X, targetBuilding.Y), unit.Coords);
-        var distanceToResourceBuilding = Vector2.Distance(GridService.GetWorldPosition(resourceBuildings.First().X, resourceBuildings.First().Y), unit.Coords);
+        var distanceToTarget = Vector2.Distance(GridService.GetWorldPosition(targetBuilding.X, targetBuilding.Y), unit.CenterCoords);
+        var distanceToResourceBuilding = Vector2.Distance(GridService.GetWorldPosition(resourceBuildings.First().X, resourceBuildings.First().Y), unit.CenterCoords);
         var distanceFromResourceToTarget = Vector2.Distance(GridService.GetWorldPosition(resourceBuildings.First().X, resourceBuildings.First().Y), GridService.GetWorldPosition(targetBuilding.X, targetBuilding.Y));
         var totalIndirectRoute = distanceToResourceBuilding + distanceFromResourceToTarget;
 

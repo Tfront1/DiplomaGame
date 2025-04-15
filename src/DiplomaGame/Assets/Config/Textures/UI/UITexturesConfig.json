@@ -60,7 +60,7 @@
       ]
     },
     {
-      "Folder": "Resources/",
+      "Folder": "Items/Resource/",
       "Textures": [
         {
           "Name": "Gold",
@@ -77,6 +77,153 @@
         {
           "Name": "Wood",
           "Path": "Wood.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Armor/",
+      "Textures": [
+        {
+          "Name": "GoldArmor",
+          "Path": "GoldArmor.png"
+        },
+        {
+          "Name": "GoldIronArmor",
+          "Path": "GoldIronArmor.png"
+        },
+        {
+          "Name": "IronArmor",
+          "Path": "IronArmor.png"
+        },
+        {
+          "Name": "StoneArmor",
+          "Path": "StoneArmor.png"
+        },
+        {
+          "Name": "StrongGoldIronArmor",
+          "Path": "StrongGoldIronArmor.png"
+        },
+        {
+          "Name": "StrongIronArmor",
+          "Path": "StrongIronArmor.png"
+        },
+        {
+          "Name": "WoodenArmor",
+          "Path": "WoodenArmor.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Equipment/",
+      "Textures": [
+        {
+          "Name": "GoldArrow",
+          "Path": "GoldArrow.png"
+        },
+        {
+          "Name": "IronArrow",
+          "Path": "IronArrow.png"
+        },
+        {
+          "Name": "SharpWoodenArrow",
+          "Path": "SharpWoodenArrow.png"
+        },
+        {
+          "Name": "StoneArrow",
+          "Path": "StoneArrow.png"
+        },
+        {
+          "Name": "WoodenArrow",
+          "Path": "WoodenArrow.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Weapon/",
+      "Textures": [
+        {
+          "Name": "GoldHammer",
+          "Path": "GoldHammer.png"
+        },
+        {
+          "Name": "GoldIronAxe",
+          "Path": "GoldIronAxe.png"
+        },
+        {
+          "Name": "GoldIronSword",
+          "Path": "GoldIronSword.png"
+        },
+        {
+          "Name": "GoldSword",
+          "Path": "GoldSword.png"
+        },
+        {
+          "Name": "IronAxe",
+          "Path": "IronAxe.png"
+        },
+        {
+          "Name": "IronGoldHammer",
+          "Path": "IronGoldHammer.png"
+        },
+        {
+          "Name": "IronHammer",
+          "Path": "IronHammer.png"
+        },
+        {
+          "Name": "IronSword",
+          "Path": "IronSword.png"
+        },
+        {
+          "Name": "StoneAxe",
+          "Path": "StoneAxe.png"
+        },
+        {
+          "Name": "StoneHammer",
+          "Path": "StoneHammer.png"
+        },
+        {
+          "Name": "StoneIronAxe",
+          "Path": "StoneIronAxe.png"
+        },
+        {
+          "Name": "StoneIronHammer",
+          "Path": "StoneIronHammer.png"
+        },
+        {
+          "Name": "StoneSword",
+          "Path": "StoneSword.png"
+        },
+        {
+          "Name": "StrongIronSword",
+          "Path": "StrongIronSword.png"
+        },
+        {
+          "Name": "StrongWoodenBow",
+          "Path": "StrongWoodenBow.png"
+        },
+        {
+          "Name": "WoodenAxe",
+          "Path": "WoodenAxe.png"
+        },
+        {
+          "Name": "WoodenBow",
+          "Path": "WoodenBow.png"
+        },
+        {
+          "Name": "WoodenHammer",
+          "Path": "WoodenHammer.png"
+        },
+        {
+          "Name": "WoodenStoneBow",
+          "Path": "WoodenStoneBow.png"
+        },
+        {
+          "Name": "Wooden Sword",
+          "Path": "WoodenSword.png"
+        },
+        {
+          "Name": "WoodGoldStoneBow",
+          "Path": "WoodGoldStoneBow.png"
         }
       ]
     },
@@ -136,6 +283,31 @@
         {
           "Name": "Stamina",
           "Path": "Stamina.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Unit/Skills/",
+      "Textures": [
+        {
+          "Name": "ArcherySkill",
+          "Path": "ArcherySkill.png"
+        },
+        {
+          "Name": "BuildingSkill",
+          "Path": "BuildingSkill.png"
+        },
+        {
+          "Name": "CraftSkill",
+          "Path": "CraftSkill.png"
+        },
+        {
+          "Name": "SupplySkill",
+          "Path": "SupplySkill.png"
+        },
+        {
+          "Name": "SwordSkill",
+          "Path": "SwordSkill.png"
         }
       ]
     }

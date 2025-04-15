@@ -136,8 +136,19 @@ public class PathFinder
     {
         if (Physics2D.OverlapPoint(start, _obstacleMask))
         {
-            Debug.LogWarning("Start point inside of a collision");
-            return null;
+            var obstacleCollider = Physics2D.OverlapPoint(start, _obstacleMask);
+            if (obstacleCollider != null)
+            {
+                var bounds = obstacleCollider.bounds;
+
+                var closestPoint = GetClosestPointOnEdge2D(start, bounds);
+
+                start = closestPoint;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         if (Physics2D.OverlapPoint(end, _obstacleMask))
@@ -327,7 +338,7 @@ public class PathFinder
         return ReconstructPath(cameFrom, bestPosition);
     }
 
-    public List<Vector2> FindNearestAccessiblePath(Vector2 characterPosition, Vector2 targetPoint, int pointsPerEdge = 2)
+    public List<Vector2> FindNearestAccessiblePath(Vector2 characterPosition, Vector2 targetPoint, int pointsPerEdge = 3)
     {
         if (!Physics2D.OverlapPoint(targetPoint, _obstacleMask))
         {
@@ -346,7 +357,7 @@ public class PathFinder
         var minY = bounds.min.y - _avoidanceOffset;
         var maxY = bounds.max.y + _avoidanceOffset;
 
-        var edgePoints = new List<Vector2>();
+        var edgePoints = new HashSet<Vector2>();
         for (var i = 0; i <= pointsPerEdge; i++)
         {
             var x = Mathf.Lerp(minX, maxX, i / (float)pointsPerEdge);
@@ -589,6 +600,49 @@ public class PathFinder
         }
 
         return complexity;
+    }
+
+    private static Vector2 GetClosestPointOnEdge2D(Vector2 unitPosition, Bounds buildingBounds)
+    {
+        Vector2 center = buildingBounds.center;
+        Vector2 halfSize = buildingBounds.extents;
+        var keyPoints = new Vector2[8];
+        keyPoints[0] = new Vector2(center.x - halfSize.x, center.y - halfSize.y);
+        keyPoints[1] = new Vector2(center.x + halfSize.x, center.y - halfSize.y);
+        keyPoints[2] = new Vector2(center.x - halfSize.x, center.y + halfSize.y);
+        keyPoints[3] = new Vector2(center.x + halfSize.x, center.y + halfSize.y);
+        keyPoints[4] = new Vector2(center.x, center.y - halfSize.y);
+        keyPoints[5] = new Vector2(center.x, center.y + halfSize.y);
+        keyPoints[6] = new Vector2(center.x - halfSize.x, center.y);
+        keyPoints[7] = new Vector2(center.x + halfSize.x, center.y);
+
+        var closestPoint = center;
+        var minDistance = float.MaxValue;
+        foreach (var point in keyPoints)
+        {
+            if (GridService.IsWorldPositionInMapBounds(point))
+            {
+                var distance = Vector2.Distance(unitPosition, point);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            }
+        }
+
+        var directionFromCenter = (closestPoint - center).normalized;
+        var offsetPoint = closestPoint + directionFromCenter * 0.2f;
+
+        var collision = Physics2D.OverlapCircle(offsetPoint, 0.1f, LayerMask.GetMask("Objects"));
+        if (collision == null)
+        {
+            return offsetPoint;
+        }
+        else
+        {
+            return closestPoint;
+        }
     }
 
     private class NodeWithPriority

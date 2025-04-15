@@ -48,10 +48,8 @@ namespace Town
                 {
                     TownHall = building;
                 }
-                else
-                {
-                    Buildings.Add(building);
-                }
+                
+                Buildings.Add(building);
                 
                 if (building.Backpack != null)
                 {
@@ -82,6 +80,7 @@ namespace Town
             if (TownHall == building)
             {
                 TownHall = null;
+                Buildings.Remove(building);
                 if (building.Backpack != null)
                 {
                     building.Backpack.BackpackChanged -= BuildingBackpackChanged;
@@ -262,14 +261,6 @@ namespace Town
                         result.AddItem(item.Item, item.Quantity);
                     });
                 }
-            }
-
-            if (TownHall != null && TownHall.Backpack != null)
-            {
-                TownHall.Backpack.GetAllItems().ForEach(item =>
-                {
-                    result.AddItem(item.Item, item.Quantity);
-                });
             }
 
             TotalBackpack = result;

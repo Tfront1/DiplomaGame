@@ -14,7 +14,7 @@
     },
     {
       "Id": 2,
-      "Name": "Wood Sword",
+      "Name": "Wooden Sword",
       "Damage": 25.5,
       "MissChance": 0.15,
       "StaminaToAttack": 10.0,

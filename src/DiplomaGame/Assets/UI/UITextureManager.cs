@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Assets.Items.Ammunition;
+using Assets.Items.Armor;
+using Assets.Items.Interfaces;
+using Assets.Items.Weapon;
 using BuildingAction;
+using Items.Resource;
 using UnityEngine;
 
 public class UITextureManager
@@ -53,6 +58,10 @@ public class UITextureManager
 
                     if (texture.LoadImage(fileData))
                     {
+                        texture.filterMode = FilterMode.Point;
+                        texture.wrapMode = TextureWrapMode.Clamp;
+                        texture.Apply();
+
                         var sprite = Sprite.Create(
                             texture,
                             new Rect(0, 0, texture.width, texture.height),
@@ -74,10 +83,26 @@ public class UITextureManager
         });
     }
 
-    public Sprite GetResourceSprite(int id)
+    public Sprite GetResourceSprite(IBackpackItem resourceItem)
     {
-        var resource = ResourcesConfig.ResourceElements.Find(x => x.Id == id);
-        return Sprites[$"Resources/{resource.Name}"];
+        if (resourceItem.GetType() == typeof(ResourceElement))
+        {
+            return Sprites[$"Items/Resource/{resourceItem.Name}"];
+        }
+        if (resourceItem.GetType() == typeof(WeaponElement))
+        {
+            return Sprites[$"Items/Weapon/{resourceItem.Name}"];
+        }
+        if (resourceItem.GetType() == typeof(ArmorElement))
+        {
+            return Sprites[$"Items/Armor/{resourceItem.Name}"];
+        }
+        if (resourceItem.GetType() == typeof(AmmunitionElement))
+        {
+            return Sprites[$"Items/Equipment/{resourceItem.Name}"];
+        }
+
+        return null;
     }
 
     public Sprite GetActionSprite(string actionName)
@@ -106,6 +131,34 @@ public class UITextureManager
             return Sprites[$"{statsPath}Hunger"];
         }
         
+        return null;
+    }
+
+    public Sprite GetUnitSkillSprite(BaseSkill skill)
+    {
+        var statsPath = "Unit/Skills/";
+
+        if (skill is SwordsmanshipSkill)
+        {
+            return Sprites[$"{statsPath}SwordSkill"];
+        }
+        if (skill is ArcherySkill)
+        {
+            return Sprites[$"{statsPath}ArcherySkill"];
+        }
+        if (skill is BuildingSkill)
+        {
+            return Sprites[$"{statsPath}BuildingSkill"];
+        }
+        if (skill is FarmingSkill)
+        {
+            return Sprites[$"{statsPath}SupplySkill"];
+        }
+        if (skill is SmithingSkill)
+        {
+            return Sprites[$"{statsPath}CraftSkill"];
+        }
+
         return null;
     }
 
