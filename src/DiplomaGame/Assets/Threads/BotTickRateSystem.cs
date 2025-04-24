@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class BotTickRateSystem : MonoBehaviour
@@ -19,7 +20,7 @@ public class BotTickRateSystem : MonoBehaviour
         }
     }
 
-    public event Action<float> OnTick;
+    public event Action<Task> OnTick;
     private float _ticksPerSecond = 0.2f;
     private Coroutine _tickCoroutine;
     private bool _isRunning = false;
@@ -51,12 +52,8 @@ public class BotTickRateSystem : MonoBehaviour
         while (_isRunning)
         {
             yield return new WaitForSeconds(TickInterval);
-
-            var currentTime = Time.time;
-            var actualDeltaTime = currentTime - previousTime;
-            previousTime = currentTime;
-
-            OnTick?.Invoke(actualDeltaTime);
+            
+            OnTick?.Invoke(null);
         }
     }
 
@@ -67,12 +64,7 @@ public class BotTickRateSystem : MonoBehaviour
         while (_isRunning)
         {
             yield return new WaitForSecondsRealtime(TickInterval);
-
-            var currentTime = Time.realtimeSinceStartup;
-            var actualDeltaTime = currentTime - previousTime;
-            previousTime = currentTime;
-
-            OnTick?.Invoke(actualDeltaTime);
+            OnTick?.Invoke(null);
         }
     }
 

@@ -1,4 +1,7 @@
-﻿using Town;
+﻿using System;
+using System.Collections;
+using System.Threading.Tasks;
+using Town;
 using UnityEngine;
 
 namespace Bots
@@ -7,8 +10,6 @@ namespace Bots
     {
         public TownItem Town { get; set; }
         public BotBrain BotBrain { get; set; }
-
-        private object _lockObject = new();
 
         public void Initialize(TownItem town)
         {
@@ -28,15 +29,24 @@ namespace Bots
             BotTickRateSystem.Instance.OnTick -= Think;
             UnitRegistry.OnUnitChangedCell -= BotBrain.OnUnitChangedCellHandler;
         }
-
-        private void Think(float _)
+        
+        private void Think(Task task)
         {
+            CoroutineRunner.Instance.StartCoroutineWithId(Guid.NewGuid(), ToThink());
+        }
+
+        IEnumerator ToThink()
+        {
+            var randomDelay = UnityEngine.Random.Range(0f, 5f);
+
+            yield return new WaitForSeconds(randomDelay);
+
             BotBrain.Think();
         }
 
         private void OnDestroy()
         {
-            TickRateSystem.Instance.OnTick -= Think;
+            BotTickRateSystem.Instance.OnTick -= Think;
         }
     }
 }
