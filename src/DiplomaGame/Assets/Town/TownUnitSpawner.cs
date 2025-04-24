@@ -39,9 +39,18 @@ namespace Town
 
         private void TrySpawnUnit()
         {
-            if (_town.UnitsCount < _town.MaxUnits && Random.value <= _spawnChance)
+            if (_town.UnitsCount < _town.MaxUnits)
             {
-                SpawnUnit();
+                var freeSpacePercentage = 1f - ((float)_town.UnitsCount / _town.MaxUnits);
+
+                var adjustedSpawnChance = _spawnChance + (freeSpacePercentage * 0.5f);
+
+                adjustedSpawnChance = Mathf.Clamp(adjustedSpawnChance, _spawnChance, 0.9f);
+
+                if (Random.value <= adjustedSpawnChance)
+                {
+                    SpawnUnit();
+                }
             }
         }
 
@@ -51,6 +60,18 @@ namespace Town
             {
                 UnitManager.CreateUnit(GridService.GetWorldPosition(_town.TownHall.CenterCoords), 3, _town);
                 BuildingManager.TeleportUnitsToEdgeOfTheBuilding(_town.TownHall);
+            }
+        }
+
+        public void SpawnStartUnits(int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                if (_town != null && _town.TownHall != null)
+                {
+                    UnitManager.CreateUnit(GridService.GetWorldPosition(_town.TownHall.CenterCoords), 3, _town);
+                    BuildingManager.TeleportUnitsToEdgeOfTheBuilding(_town.TownHall);
+                }
             }
         }
     }

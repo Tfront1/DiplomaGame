@@ -77,6 +77,8 @@ public static class UnitAttackExtensions
         var damage = unit.CalculateDamage(weapon);
 
         ApplyDamageToBuilding(unit, target, damage);
+
+        unit.Stats.Stamina.Modify(-weapon.StaminaToAttack);
     }
 
     public static void AttackUnit(this UnitItem unit, UnitItem target, bool attackWithMainWeapon = true)
@@ -94,6 +96,8 @@ public static class UnitAttackExtensions
         var damage = unit.CalculateDamage(weapon);
 
         ApplyDamageToUnit(unit, target, weapon, damage);
+
+        unit.Stats.Stamina.Modify(-weapon.StaminaToAttack);
     }
 
     private static void ApplyDamageToBuilding(UnitItem attacker, BuildingItem target, float damage)

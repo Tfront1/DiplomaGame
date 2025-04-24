@@ -63,11 +63,11 @@
       "Folder": "Items/Resource/",
       "Textures": [
         {
-          "Name": "Gold",
+          "Name": "Gold Ore",
           "Path": "Gold.png"
         },
         {
-          "Name": "Iron",
+          "Name": "Iron Ore",
           "Path": "Iron.png"
         },
         {

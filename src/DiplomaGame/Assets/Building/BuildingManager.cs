@@ -67,6 +67,10 @@ public class BuildingManager : MonoBehaviour
         {
             if (texture.Texture != null)
             {
+                texture.Texture.filterMode = FilterMode.Point;
+                texture.Texture.wrapMode = TextureWrapMode.Clamp;
+                texture.Texture.Apply();
+
                 var buildingSprite = Sprite.Create(
                     texture.Texture,
                     new Rect(0.0f, 0.0f, texture.Texture.width, texture.Texture.height),
@@ -80,7 +84,7 @@ public class BuildingManager : MonoBehaviour
         _isInitializedCaches = true; 
     }
 
-    public static bool BuildWithFoundation(Vector2Int gridPosition, Building building, Building construction, TownItem townItem)
+    public static bool BuildWithFoundation(Vector2Int gridPosition, Building building, TownItem townItem)
     {
         if (!_isInitializedCaches)
         {
@@ -100,6 +104,8 @@ public class BuildingManager : MonoBehaviour
         {
             return false;
         }
+
+        var construction = BuildingsConfig.Buildings.Find(x => x.Id == 1);
 
         var buildingGuid = Guid.NewGuid();
         var newBuildingObject = CreateBuildingGameObject(building.Name);
@@ -334,8 +340,7 @@ public class BuildingManager : MonoBehaviour
                     }
                     else
                     {
-                        success = BuildWithFoundation(gridPosition, _previewBuilding,
-                            BuildingsConfig.Buildings.Find(x => x.Id == 1), _town);
+                        success = BuildWithFoundation(gridPosition, _previewBuilding, _town);
                     }
                 }
             }

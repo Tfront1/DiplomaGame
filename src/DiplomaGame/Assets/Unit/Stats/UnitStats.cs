@@ -5,6 +5,9 @@
     public Stamina Stamina { get; }
     public Hunger Hunger { get; }
 
+    public delegate void UpdateEventHandler();
+    public event UpdateEventHandler OnUpdate;
+
     public UnitStats(float health, float maxHealth, float armor, float maxArmor,
         float stamina, float maxStamina, float hunger, float maxHunger)
     {
@@ -17,7 +20,7 @@
     public void Update(float deltaTime)
     {
         Stamina.Update(deltaTime);
-        Hunger.Update(deltaTime);
+        //Hunger.Update(deltaTime);
 
         if (Hunger.GetPercentage() < 0.2f)
         {
@@ -28,6 +31,6 @@
             Stamina.StartRegeneration();
         }
 
-        //Debug.Log($"Stamina: {Stamina}\n Hunger: {Hunger}");
+        OnUpdate?.Invoke();
     }
 }

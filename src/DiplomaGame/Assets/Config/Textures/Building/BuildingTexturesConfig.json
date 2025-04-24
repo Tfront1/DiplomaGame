@@ -14,16 +14,16 @@
     {
       "Id": 2,
       "BuildingId": 2,
-      "TextureFileName": "B1.png",
+      "TextureFileName": "TownHall.png",
       "VisualWidthCell": 2,
-      "VisualHeightCell": 2,
+      "VisualHeightCell": 3,
       "Scale": 1.0,
       "RandomPos": false
     },
     {
       "Id": 4,
       "BuildingId": 4,
-      "TextureFileName": "B2.png",
+      "TextureFileName": "Vault.png",
       "VisualWidthCell": 2,
       "VisualHeightCell": 2,
       "Scale": 1.0,
@@ -32,7 +32,7 @@
     {
       "Id": 5,
       "BuildingId": 5,
-      "TextureFileName": "B3.png",
+      "TextureFileName": "Blacksmith.png",
       "VisualWidthCell": 2,
       "VisualHeightCell": 2,
       "Scale": 1.0,

@@ -12,6 +12,7 @@ public class BuildingUIManager : MonoBehaviour
 {
     private GameObject _buildingPrefab;
     private GameObject _resourcePrefab;
+    private GameObject _resourceRemovePrefab;
 
     private GameObject _buildingInfoPanel;
     private TextMeshProUGUI _buildingNameText;
@@ -32,6 +33,15 @@ public class BuildingUIManager : MonoBehaviour
     private Button _action2Button;
     private Image _action1Image;
     private Image _action2Image;
+
+    private IBackpackItem _resourceToRemove = null;
+    private GameObject _resourceRemovePanel;
+    private Image _resourceRemoveImage;
+    private Button _resourceRemoveButton;
+    private Image _resourceCloseImage;
+    private Button _resourceCloseButton;
+    private Slider _resourceRemoveSlider;
+    private TMP_InputField _resourceRemoveField;
 
     private static BuildingUIManager _instance;
 
@@ -68,6 +78,9 @@ public class BuildingUIManager : MonoBehaviour
 
             if (_resourcePrefab == null)
                 _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
+
+            if(_resourceRemovePrefab == null)
+                _resourceRemovePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/RemoveResourcePrefab");
 
             InitializeUI();
             HideBuildingInfo();
@@ -149,6 +162,7 @@ public class BuildingUIManager : MonoBehaviour
                 {
                     var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
+                    UpdateRemoveResourcePanel(_currentBuilding, resource);
                 }
                 else
                 {
@@ -188,6 +202,8 @@ public class BuildingUIManager : MonoBehaviour
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
+
+        resourceGO.GetComponent<Button>().onClick.AddListener(() => SpawnResourceRemovePanel(_currentBuilding, resourceItem));
     }
 
     private void RemoveResourceFromPanel(IBackpackItem resource)
@@ -196,6 +212,71 @@ public class BuildingUIManager : MonoBehaviour
         {
             Destroy(resourceItem);
             _buildingResourceItems.Remove(resource);
+            if (_resourceToRemove == resource)
+            {
+                _resourceRemovePanel.SetActive(false);
+            }
+        }
+    }
+
+    private void SpawnResourceRemovePanel(BuildingItem building, IBackpackItem itemToRemove)
+    {
+        _resourceToRemove = itemToRemove;
+
+        if (_resourceRemovePanel == null)
+        {
+            var resourceRemovePanel = _resourceRemovePrefab.transform.Find("Panel");
+            _resourceRemovePanel = Instantiate(resourceRemovePanel, _mainCanvas.transform).gameObject;
+
+            _resourceRemoveImage = _resourceRemovePanel.transform.Find("Remove").GetComponent<Image>();
+            //_resourceRemoveImage.sprite = 
+
+            _resourceRemoveButton = _resourceRemovePanel.transform.Find("Remove").GetComponent<Button>();
+            _resourceRemoveButton.onClick.AddListener(() =>
+            {
+                building.Backpack.RemoveItem(itemToRemove, (int)_resourceRemoveSlider.value);
+                //_resourceRemovePanel.SetActive(false);
+            });
+
+            _resourceRemoveField = _resourceRemovePanel.transform.Find("Field").GetComponent<TMP_InputField>();
+
+            _resourceCloseButton = _resourceRemovePanel.transform.Find("Close").GetComponent<Button>();
+            _resourceCloseButton.onClick.AddListener(() => _resourceRemovePanel.SetActive(false));
+
+            _resourceCloseImage = _resourceRemovePanel.transform.Find("Close").GetComponent<Image>();
+            _resourceCloseImage.sprite = UITextureManager.Instance.Sprites["General/Close"];
+
+            _resourceRemoveSlider = _resourceRemovePanel.transform.Find("Slider").GetComponent<Slider>();
+
+            _resourceRemoveSlider.onValueChanged.AddListener((float value) => {
+                _resourceRemoveField.text = ((int)value).ToString();
+            });
+
+            _resourceRemoveField.onEndEdit.AddListener((text) => {
+                if (int.TryParse(text, out var value))
+                {
+                    value = Mathf.Clamp(value, (int)_resourceRemoveSlider.minValue, (int)_resourceRemoveSlider.maxValue);
+                    _resourceRemoveSlider.value = value;
+                    _resourceRemoveField.text = value.ToString();
+                }
+                else
+                {
+                    _resourceRemoveField.text = ((int)_resourceRemoveSlider.value).ToString();
+                }
+            });
+        }
+
+        _resourceRemovePanel.SetActive(true);
+        UpdateRemoveResourcePanel(building, itemToRemove);
+    }
+
+    public void UpdateRemoveResourcePanel(BuildingItem building, IBackpackItem itemToRemove)
+    {
+        if (_resourceToRemove == itemToRemove && _resourceRemovePanel != null)
+        {
+            _resourceRemovePanel.transform.position = _buildingResourceItems[itemToRemove].transform.position;
+            _resourceRemoveSlider.maxValue = building.Backpack.GetResourceQuantity(itemToRemove);
+            _resourceRemoveField.text = ((int)_resourceRemoveSlider.value).ToString();
         }
     }
 
@@ -227,6 +308,7 @@ public class BuildingUIManager : MonoBehaviour
     public void HideBuildingInfo()
     {
         _buildingInfoPanel.SetActive(false);
+        _resourceRemovePanel?.gameObject.SetActive(false);
         _currentBuilding = null;
     }
 

@@ -26,6 +26,23 @@ namespace Town
             }
         }
 
+        private static GameObject _townBotFolder = null;
+
+        public static GameObject TownBotFolder
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_townBotFolder == null)
+                    {
+                        _townBotFolder = new GameObject("TownBotFolder");
+                    }
+                    return _townBotFolder;
+                }
+            }
+        }
+
         public static void AddTown(TownItem townItem)
         {
             lock (_lock)

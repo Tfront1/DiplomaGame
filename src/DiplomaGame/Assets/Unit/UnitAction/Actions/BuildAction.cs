@@ -88,6 +88,7 @@ namespace UnitAction
                 }
 
                 _unit.Skills.SetActiveSkill(typeof(BuildingSkill));
+                _unit.Stats.Stamina.StartGetTired(0.1f);
 
                 while (!_targetBuilding.UpdateBuildingProgress(_fixedDeltaTime, _unit))
                 {
@@ -108,6 +109,12 @@ namespace UnitAction
                         }
 
                         _unit.Skills.SetActiveSkill(typeof(BuildingSkill));
+                    }
+
+                    if (_unit.Stats.Stamina.CurrentValue < 10f)
+                    {
+                        CompleteAction();
+                        yield break;
                     }
 
                     yield return new WaitForSeconds(0.5f);
@@ -132,6 +139,8 @@ namespace UnitAction
 
         protected override void CompleteAction()
         {
+            _unit.Stats.Stamina.StopGetTired();
+
             _targetBuilding.OnDestroyed -= OnBuildingDestroyed;
 
             if (!InterruptedByOrder)

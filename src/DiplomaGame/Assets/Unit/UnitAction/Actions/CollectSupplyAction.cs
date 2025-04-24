@@ -79,6 +79,8 @@ namespace UnitAction
 
                 _unit.Skills.SetActiveSkill(typeof(FarmingSkill));
 
+                _unit.Stats.Stamina.StartGetTired(0.1f);
+
                 while (!_unit.Backpack.IsFull() && !_supply.Backpack.IsEmpty())
                 {
                     if (IsStopped)
@@ -98,6 +100,12 @@ namespace UnitAction
                         }
 
                         _unit.Skills.SetActiveSkill(typeof(FarmingSkill));
+                    }
+
+                    if (_unit.Stats.Stamina.CurrentValue < 10f)
+                    {
+                        CompleteAction();
+                        yield break;
                     }
 
                     _supply.CollectResources(_unit, resource);
@@ -197,6 +205,7 @@ namespace UnitAction
 
         protected override void CompleteAction()
         {
+            _unit.Stats.Stamina.StopGetTired();
             _supply.OnDestroyed -= OnSupplyDestroyed;
             base.CompleteAction();
         }

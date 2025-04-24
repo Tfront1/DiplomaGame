@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Items.Resource.BackPack;
 using Town;
 
 public class BuildingTownOrder
@@ -88,17 +89,7 @@ public class BuildingTownOrder
 
     public BuildingOrder GetOrder(BuildingItem building)
     {
-        if (_activeOrders.TryGetValue(building, out var order))
-        {
-            return order;
-        }
-
-        if (_completedOrders.TryGetValue(building, out order))
-        {
-            return order;
-        }
-
-        return null;
+        return _activeOrders.GetValueOrDefault(building);
     }
 
     public BuildingOrder GetOrderById(Guid orderId)
@@ -117,9 +108,19 @@ public class BuildingTownOrder
         return _completedOrders.Values.ToList();
     }
 
-    public BuildingOrder GetOrderForBuilding(BuildingItem building)
+    public BuildingOrder GetAnyOrderForBuilding(BuildingItem building)
     {
-        return _activeOrders.GetValueOrDefault(building);
+        if (_activeOrders.TryGetValue(building, out var order))
+        {
+            return order;
+        }
+
+        if (_completedOrders.TryGetValue(building, out order))
+        {
+            return order;
+        }
+
+        return null;
     }
 
     public void ChangeOrderPriority(int priority, BuildingOrder order)
@@ -254,6 +255,36 @@ public class BuildingTownOrder
 
         _activeOrders.Clear();
         _completedOrders.Clear();
+    }
+
+    public Backpack GetAllNeedResources()
+    {
+        Backpack needBackpack = new(0);
+        foreach (var order in _activeOrders)
+        {
+            var resources = order.Value.RequiredResources;
+
+            foreach (var resource in resources)
+            {
+                needBackpack.SetMaxCapacity(needBackpack.MaxCapacity + resource.Quantity);
+                needBackpack.AddItem(resource.BackpackItem, resource.Quantity);
+            }
+        }
+
+        return needBackpack;
+    }
+
+    public bool IsUnitAssignedToAnyOrder(UnitItem unit)
+    {
+        foreach (var order in _activeOrders)
+        {
+            if (order.Value.HasAssignedUnit(unit))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ReassignBuilderToHigherPriorityOrder(UnitItem builder, BuildingOrder oldOrder, BuildingOrder newOrder)

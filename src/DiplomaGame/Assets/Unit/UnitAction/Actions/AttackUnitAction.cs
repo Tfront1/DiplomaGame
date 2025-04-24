@@ -36,6 +36,10 @@ namespace UnitAction
 
         public override bool CanExecute()
         {
+            if (_unit.Stats.Stamina.CurrentValue < 10f)
+            {
+                return false;
+            }
             return true;
         }
 
@@ -140,6 +144,12 @@ namespace UnitAction
                         {
                             _unit.Skills.SetActiveSkill<ArcherySkill>();
                         }
+                    }
+
+                    if (_unit.Stats.Stamina.CurrentValue < 10f)
+                    {
+                        CompleteAction();
+                        yield break;
                     }
 
                     if (Time.time >= lastAttackTime + attackCooldown)

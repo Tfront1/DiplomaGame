@@ -5,7 +5,7 @@
     private bool _isGettingTired = false;
     private float _tiredRate = 0.1f;
 
-    public Stamina(float initialStamina, float maxStamina, float regenerationRate = 1f)
+    public Stamina(float initialStamina, float maxStamina, float regenerationRate = 0.5f)
         : base("Stamina", initialStamina, maxStamina)
     {
         _regenerationRate = regenerationRate;
@@ -16,10 +16,10 @@
         if (!_isGettingTired && _isRegenerating && CurrentValue < MaxValue)
         {
             Modify(_regenerationRate * deltaTime);
-        } 
+        }
         else if (_isGettingTired)
         {
-            Modify(_tiredRate * deltaTime);
+            Modify(-_tiredRate * deltaTime);
         }
     }
     
@@ -35,13 +35,14 @@
 
     public void StartGetTired(float tiredRate)
     {
+        StopRegeneration();
         _isGettingTired = true;
         _tiredRate = tiredRate;
     }
 
-    public void StopGetTired(float tiredRate)
+    public void StopGetTired()
     {
+        StartRegeneration();
         _isGettingTired = false;
-        _tiredRate = tiredRate;
     }
 }

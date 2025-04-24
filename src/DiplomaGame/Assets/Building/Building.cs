@@ -15,7 +15,6 @@ public class Building
     public List<int> CraftsIds { get; set; } = new();
 	public int MaxResidents { get; set; }
 
-
     public enum BuildingTypes
     {
         Construction,
@@ -23,6 +22,7 @@ public class Building
         Blacksmith,
 		Vault,
         Fence,
-		None
+        Housing,
+        None
     }
 }

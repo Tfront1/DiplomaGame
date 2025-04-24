@@ -72,6 +72,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         SetupSelectionIndicator();
         InitializeStats();
         InitializeInventory();
+
+        UnitRegistry.AddUnit(this);
     }
 
     public void SetPosition(Vector2 position)
@@ -81,6 +83,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             _lastTimePositionEventInvoked = Time.time;
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
         }
+
+        UnitRegistry.UpdateUnitGridCell(this, position);
 
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
@@ -95,6 +99,8 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             _lastTimePositionEventInvoked = Time.time;
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
         }
+
+        UnitRegistry.UpdateUnitGridCell(this, position);
 
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
@@ -174,6 +180,7 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             if (!IsDestroyed)
             {
                 Stats.Health.Attack(damage);
+                UIToChange?.Invoke(this, new UnitUIToChangeEventArgs(this));
                 if (Stats.Health.CurrentValue <= Stats.Health.MinValue)
                 {
                     Die();
@@ -186,6 +193,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     {
         if (!IsDestroyed)
         {
+            UnitRegistry.RemoveUnit(this);
+            UnitActionManager.Instance.InterruptCurrentAction(this);
+
             TickRateSystem.Instance.OnTick -= Stats.Update;
             TickRateSystem.Instance.OnTick -= Skills.Update;
 
@@ -265,6 +275,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
         TickRateSystem.Instance.OnTick += Stats.Update;
         TickRateSystem.Instance.OnTick += Skills.Update;
+
+        Stats.OnUpdate += () => UIToChange?.Invoke(this, new UnitUIToChangeEventArgs(this));
+        Skills.OnUpdate += () => UIToChange?.Invoke(this, new UnitUIToChangeEventArgs(this));
     }
 
     private void InitializeInventory()
@@ -280,10 +293,13 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         var item = args.Item;
         var backpackChangeType = args.ChangeType;
 
-        if (backpackChangeType != Backpack.BackpackChangeType.Added)
+        if (backpackChangeType == Backpack.BackpackChangeType.Added)
+        {
+            UnitEquipment.TryAutoEquip(item, args.Quantity);
             return;
+        }
 
-        UnitEquipment.TryAutoEquip(item, args.Quantity);
+        UIToChange?.Invoke(this, new UnitUIToChangeEventArgs(this));
     }
 
     public class UnitDiedEventArgs : EventArgs

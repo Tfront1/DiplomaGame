@@ -23,7 +23,9 @@ namespace Game
             GenerateSupplies();
             DisplaySupplies();
             DisplayTilemap();
-            SpawnTowns();
+            SpawnTowns(20);
+            SpawnTownUnits(5);
+            StartAllBots();
         }
 
         private void InitializeComponents()
@@ -81,9 +83,9 @@ namespace Game
             Debug.Log($"Tilemap display time: {(endTime - startTime) * 1000:F2}ms");
         }
 
-        private void SpawnTowns()
+        private void SpawnTowns(int count)
         {
-            TownSpawner.SpawnTowns(3, 20, "UserTestTown");
+            TownSpawner.SpawnTowns(count, 20, "UserTestTown");
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
         }
@@ -94,6 +96,25 @@ namespace Game
             BuildingManager.InitializeCaches();
             SupplyManager.InitializeCaches();
             UnitManager.InitializeCaches();
+        }
+
+        private void StartAllBots()
+        {
+            foreach (var town in TownRegistry.TownList)
+            {
+                if (town.Bot != null)
+                {
+                    town.Bot.StartBot();
+                }
+            }
+        }
+
+        private void SpawnTownUnits(int startUnits)
+        {
+            foreach (var town in TownRegistry.TownList)
+            {
+                town.TownUnitSpawner.SpawnStartUnits(startUnits);
+            }
         }
     }
 }

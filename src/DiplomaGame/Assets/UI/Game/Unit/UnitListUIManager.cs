@@ -275,6 +275,11 @@ public class UnitListUIManager : MonoBehaviour
         _selectedUnits.Clear();
     }
 
+    public void UpdateUnitInfo(object sender, UnitItem.UnitUIToChangeEventArgs args)
+    {
+        UpdateUnitList(_units);
+    }
+
     private void OnShiftStart()
     {
         _isShiftHold = true;

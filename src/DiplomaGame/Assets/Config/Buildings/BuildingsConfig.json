@@ -16,7 +16,7 @@
       "Id": 2,
       "Name": "TownHall",
       "WidthCell": 2,
-      "HeightCell": 2,
+      "HeightCell": 3,
       "HasMargin": true,
       "MaxHP": 1000,
       "BuildingType": "TownHall",

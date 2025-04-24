@@ -9,6 +9,16 @@
       "Id": 2,
       "Name": "Wood armor",
       "ArmorResistance": 4
+    },
+    {
+      "Id": 3,
+      "Name": "Stone armor",
+      "ArmorResistance": 6
+    },
+    {
+      "Id": 4,
+      "Name": "Iron armor",
+      "ArmorResistance": 10
     }
   ]
 }

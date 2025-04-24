@@ -10,7 +10,10 @@ namespace UnitAction
     public class MoveGroupUnitAction : BaseUnitAction
     {
         private Vector2 _targetPosition;
+
         private float _moveSpeed;
+        private bool _hasLowSpeed = false;
+
         private bool _toRecalculatePath = false;
         private bool _moveCloseToObject;
 
@@ -23,7 +26,10 @@ namespace UnitAction
 
         public override bool CanExecute()
         {
-            //ToDo: Add cases when unit can`t move
+            if (_unit.Stats.Stamina.CurrentValue < 0.1f)
+            {
+                return false;
+            }
             return true;
         }
 
@@ -70,6 +76,8 @@ namespace UnitAction
                 }
 
                 ItemListRegistry.ItemChanged += RefindPathOnItemChanged;
+
+                _unit.Stats.Stamina.StartGetTired(0.1f);
                 CoroutineRunner.Instance.StartCoroutineWithId(_idAction, MoveAlongPath(movePath));
             }
             else
@@ -152,16 +160,14 @@ namespace UnitAction
                 _unit.State = UnitState.Move;
                 UnitManager.UpdateAnimation(_unit, true, 5f);
 
-                var startTime = Time.time;
-                var pausedTime = 0f;
+                var distanceTraveled = 0f;
+
 
                 while (true)
                 {
                     if (IsPaused)
                     {
-                        var timeWhenPaused = Time.time;
                         yield return new WaitUntil(() => !IsPaused);
-                        pausedTime += (Time.time - timeWhenPaused);
                     }
 
                     if (IsStopped)
@@ -175,8 +181,19 @@ namespace UnitAction
                         break;
                     }
 
-                    var distanceCovered = (Time.time - startTime - pausedTime) * _moveSpeed;
-                    var fractionOfJourney = Mathf.Clamp01(distanceCovered / journeyLength);
+                    if (!_hasLowSpeed && _unit.Stats.Stamina.CurrentValue < 5.0f)
+                    {
+                        _moveSpeed /= 2;
+                        _hasLowSpeed = true;
+                    }
+                    else if (_unit.Stats.Stamina.CurrentValue < 0.1f)
+                    {
+                        CompleteAction();
+                        yield break;
+                    }
+
+                    distanceTraveled += _moveSpeed * Time.deltaTime;
+                    var fractionOfJourney = Mathf.Clamp01(distanceTraveled / journeyLength);
 
                     _unit.SetPositionWithGroup(Vector3.Lerp(startPosition, targetPosition, fractionOfJourney));
 
@@ -205,6 +222,9 @@ namespace UnitAction
             UnitManager.UpdateAnimation(_unit);
 
             ItemListRegistry.ItemChanged -= RefindPathOnItemChanged;
+
+            _unit.Stats.Stamina.StopGetTired();
+
             base.CompleteAction();
         }
     }

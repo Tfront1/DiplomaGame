@@ -20,6 +20,10 @@ namespace UnitAction
 
         public override bool CanExecute()
         {
+            if (_unit.Stats.Stamina.CurrentValue < 10f)
+            {
+                return false;
+            }
             return true;
         }
 
@@ -70,6 +74,7 @@ namespace UnitAction
             if (_movementSuccess)
             {
                 _unit.Skills.SetActiveSkill(typeof(SmithingSkill));
+                _unit.Stats.Stamina.StartGetTired(0.1f);
 
                 while (_crafting.IsCrafting)
                 {
@@ -90,6 +95,12 @@ namespace UnitAction
                         }
 
                         _unit.Skills.SetActiveSkill(typeof(SmithingSkill));
+                    }
+
+                    if (_unit.Stats.Stamina.CurrentValue < 10f)
+                    {
+                        CompleteAction();
+                        yield break;
                     }
 
                     _crafting.UpdateCraftingProgress(_fixedDeltaTime);
@@ -116,6 +127,7 @@ namespace UnitAction
 
         protected override void CompleteAction()
         {
+            _unit.Stats.Stamina.StopGetTired();
             if (!InterruptedByCraft)
             {
                 UnassignUnit();
@@ -133,7 +145,7 @@ namespace UnitAction
             {
                 if (!InterruptedByCraft && _crafting.HasAssignedUnit(_unit))
                 {
-                    _crafting.UnassignUnitFromCraft(_unit);
+                    _crafting.UnassignUnitFromCraft(_unit, false);
                 }
             }
         }

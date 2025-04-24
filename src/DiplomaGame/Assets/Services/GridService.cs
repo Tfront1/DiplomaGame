@@ -195,4 +195,27 @@ public static class GridService
                gridPosition.y >= 0 &&
                gridPosition.y < MapConfig.MapHeight * MapConfig.CellSize + MapConfig.MapStartPointY;
     }
+
+    /// <summary>
+    /// Checks if the world position is within the map boundaries.
+    /// </summary>
+    /// <param name="position">Position in world space to check.</param>
+    /// <param name="width">Width of the object.</param>
+    /// <param name="height">Height of the object.</param>
+    /// <returns>True if the position is within map bounds, false otherwise.</returns>
+    public static bool IsWorldPositionInMapBounds(Vector2 position, int width, int height)
+    {
+        for (var i = 0; i < width; i++)
+        {
+            for (var j = 0; j < height; j++)
+            {
+                if (!IsWorldPositionInMapBounds(new Vector2(position.x + i, position.y + j)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

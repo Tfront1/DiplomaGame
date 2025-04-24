@@ -4,10 +4,13 @@ using System.Linq;
 
 public class UnitSkills
 {
-    private float _passiveExperienceRate = 0.1f;
+    private float _passiveExperienceRate = 1.0f;
     private BaseSkill _activeSkill;
 
     public HashSet<BaseSkill> Skills { get; set; } = new();
+
+    public delegate void UpdateEventHandler();
+    public event UpdateEventHandler OnUpdate;
 
     public UnitSkills()
     {
@@ -45,6 +48,10 @@ public class UnitSkills
 
     public void Update(float deltaTime)
     {
-        _activeSkill?.AddExperience(_passiveExperienceRate * deltaTime);
+        if (_activeSkill != null)
+        {
+            _activeSkill.AddExperience(_passiveExperienceRate * deltaTime);
+            OnUpdate?.Invoke();
+        }
     }
 }

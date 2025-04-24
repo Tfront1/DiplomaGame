@@ -97,7 +97,7 @@ public class UnitUIManager : MonoBehaviour
 
             if (_resourcePrefab == null)
                 _resourcePrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
-
+            
             InitializeUI();
             HideUnitInfo();
         }
@@ -297,6 +297,11 @@ public class UnitUIManager : MonoBehaviour
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
+
+        resourceGO.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            _currentUnit.UnitEquipment.TryAutoEquip(resourceItem);
+        });
     }
 
     private void RemoveResourceFromPanel(IBackpackItem resourceItem)

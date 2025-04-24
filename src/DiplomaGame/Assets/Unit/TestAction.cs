@@ -30,7 +30,7 @@ public class TestAction : MonoBehaviour
             BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _enemyTown);
 
         */
-        _town.TownHall.Backpack.AddItem(WeaponConfig.WeaponElements.Find(x => x.Id == 2));
+        //_town.TownHall.Backpack.AddItem(WeaponConfig.WeaponElements.Find(x => x.Id == 2));
     }
 
     private void Update()

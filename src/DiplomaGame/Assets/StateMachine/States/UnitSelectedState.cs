@@ -47,6 +47,7 @@ namespace StateMachine.States
                     foreach (var unit in _units)
                     {
                         unit.OnDied += OnUnitDied;
+                        unit.UIToChange += UnitListUIManager.Instance.UpdateUnitInfo;
                     }
                 }
             }

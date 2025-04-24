@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Assets.Items.Crafts;
+using Bots;
 using Items.Resource.BackPack;
 using UnityEngine;
 using static UnitItem;
@@ -25,6 +26,8 @@ namespace Town
         public int MaxUnits { get; private set; } = 0;
         public int UnitsCount => Units.Count;
 
+        public Bot Bot { get; set; }
+
         public TownItem(string name, Guid id, bool isUnitControlTown = true)
         {
             Name = name;
@@ -34,6 +37,10 @@ namespace Town
             {
                 this.SetAsPlayerTown();
                 this.NotifyUIChanged();
+            }
+            else
+            {
+                InitializeTownBot(this);
             }
 
             InitializeUnitSpawner(this);
@@ -107,6 +114,11 @@ namespace Town
                 }
 
                 this.NotifyUIChanged();
+            }
+
+            if (!building.IsBuilt)
+            {
+                BuildingTownOrder.CancelOrder(building);
             }
         }
         
@@ -240,12 +252,6 @@ namespace Town
                     totalCapacity += building.Backpack.MaxCapacity;
                 }
             }
-
-            if (TownHall != null && TownHall.Backpack != null)
-            {
-                totalCapacity += TownHall.Backpack.MaxCapacity;
-            }
-
             return totalCapacity;
         }
 
@@ -266,11 +272,23 @@ namespace Town
             TotalBackpack = result;
         }
 
+        private void InitializeTownBot(TownItem town)
+        {
+            if (Bot == null)
+            {
+                var spawnerObj = new GameObject($"{Name}_TownBot");
+                Bot = spawnerObj.AddComponent<Bot>();
+                Bot.transform.parent = TownRegistry.TownBotFolder.transform;
+            }
+
+            Bot.Initialize(town);
+        }
+
         private void InitializeUnitSpawner(TownItem town)
         {
             if (TownUnitSpawner == null)
             {
-                var spawnerObj = new GameObject($"{Name}UnitSpawner");
+                var spawnerObj = new GameObject($"{Name}_UnitSpawner");
                 TownUnitSpawner = spawnerObj.AddComponent<TownUnitSpawner>();
                 TownUnitSpawner.transform.parent = TownRegistry.TownSpawnerFolder.transform;
             }
