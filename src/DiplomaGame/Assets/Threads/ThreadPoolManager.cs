@@ -81,6 +81,26 @@ public class ThreadPoolManager : MonoBehaviour
         });
     }
 
+    public void QueueJobWithResult<T>(Func<T> backgroundJob, Action<T> mainThreadCallback)
+    {
+        QueueJob(() => {
+            T result = default;
+            try
+            {
+                result = backgroundJob.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Thread job exception: {e}");
+            }
+            finally
+            {
+                if (mainThreadCallback != null)
+                    ExecuteOnMainThread(() => mainThreadCallback(result));
+            }
+        });
+    }
+
     private void ThreadLoop()
     {
         while (isRunning)

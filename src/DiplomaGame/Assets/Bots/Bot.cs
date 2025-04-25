@@ -20,6 +20,11 @@ namespace Bots
 
         public void StartBot()
         {
+            if (!BotBrain.IsSortedSupplies)
+            {
+                BotBrain.SortNearestSupplies();
+            }
+
             BotTickRateSystem.Instance.OnTick += Think;
             UnitRegistry.OnUnitChangedCell += BotBrain.OnUnitChangedCellHandler;
         }

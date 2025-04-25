@@ -22,7 +22,7 @@ namespace Bots
         private List<UnitItem> Units => _bot.Town.Units;
         private List<BuildingItem> Buildings => _bot.Town.Buildings;
 
-        private bool _isSortedSupplies = false;
+        public bool IsSortedSupplies { get; set; } = false;
         private List<Guid> _suppliesKeys = new();
 
         private List<BuildingItem> NotBuildBuildings => _bot.Town.Buildings.FindAll(x => !x.IsBuilt);
@@ -47,16 +47,10 @@ namespace Bots
             _bot = bot;
             InitializeBotType();
             ConfigureBotParameters();
-            
         }
 
         public void Think()
         {
-            if (!_isSortedSupplies)
-            {
-                SortNearestSupplies();
-            }
-
             ProcessBuilding();
             AssignUnitRoles();
             ProcessUnits();
@@ -587,7 +581,7 @@ namespace Bots
             return Buildings.Exists(x => x.Building.BuildingType == type);
         }
 
-        private void SortNearestSupplies()
+        public void SortNearestSupplies()
         {
             if (_town.TownHall != null)
             {
@@ -598,7 +592,7 @@ namespace Bots
                     Vector2.Distance(currentPosition, suppliesDict.GetValue(guid).CenterCoords)).ToList();
 
                 _suppliesKeys = sortedKeys;
-                _isSortedSupplies = true;
+                IsSortedSupplies = true;
             }
         }
 

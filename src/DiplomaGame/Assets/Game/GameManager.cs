@@ -1,5 +1,6 @@
 ﻿using Biomes;
 using Supplies;
+using System.Collections;
 using System.Collections.Generic;
 using Town;
 using UnityEngine;
@@ -19,13 +20,7 @@ namespace Game
 
             LoadAllTextures();
             InitializeComponents();
-            GenerateBiomeMap();
-            GenerateSupplies();
-            DisplaySupplies();
-            DisplayTilemap();
-            SpawnTowns(20);
-            SpawnTownUnits(5);
-            StartAllBots();
+            StartCoroutine(InitializeGame());
         }
 
         private void InitializeComponents()
@@ -33,12 +28,31 @@ namespace Game
             TilemapManager.SetupTilemap();
         }
 
-        private void GenerateBiomeMap()
+        private IEnumerator InitializeGame()
+        {
+            yield return StartCoroutine(GenerateBiomeMap());
+
+            GenerateSupplies();
+            DisplaySupplies();
+            DisplayTilemap();
+            SpawnTowns(100);
+            SpawnTownUnits(5);
+            StartAllBots();
+        }
+
+        private IEnumerator GenerateBiomeMap()
         {
             var startTime = Time.realtimeSinceStartup;
-
             var seed = GameRandom.Seed;
-            _biomeMap = BiomeManager.GetBiomeMap(seed);
+            var isCompleted = false;
+
+            BiomeManager.GetBiomeMap(seed, (biomeMap) =>
+            {
+                _biomeMap = biomeMap;
+                isCompleted = true;
+            });
+
+            yield return new WaitUntil(() => isCompleted);
 
             var endTime = Time.realtimeSinceStartup;
             Debug.Log($"BiomeMap generation time: {(endTime - startTime) * 1000:F2}ms");

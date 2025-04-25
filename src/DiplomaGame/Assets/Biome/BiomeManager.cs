@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Biomes
 {
@@ -6,8 +7,16 @@ namespace Biomes
 	{
 		private static int[,] _biomeMap;
 
-		public static int[,] GetBiomeMap(int seed)
-		{
+        public static void GetBiomeMap(int seed, Action<int[,]> onCompleted)
+        {
+            ThreadPoolManager.Instance.QueueJobWithResult(
+                () => GenerateMap(seed),
+                result => onCompleted?.Invoke(result)
+            );
+        }
+
+        private static int[,] GenerateMap(int seed)
+        {
 			if (_biomeMap is null || _biomeMap.Length == 0)
 			{
 				var isBiomeMapValid = false;
@@ -37,7 +46,7 @@ namespace Biomes
                 }
             }
             return _biomeMap;
-		}
+        }
 	}
 }
 
