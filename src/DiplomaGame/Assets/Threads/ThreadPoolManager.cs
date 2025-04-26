@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Threading;
 using UnityEngine;
@@ -30,6 +31,8 @@ public class ThreadPoolManager : MonoBehaviour
     private int _activeJobs = 0;
     private ManualResetEventSlim _jobSignal = new(false);
     private Thread[] _threads;
+
+    public int ThreadCount => _threads.Length;
 
     private static object _lock = new();
 
@@ -64,6 +67,24 @@ public class ThreadPoolManager : MonoBehaviour
     {
         if (action == null) return;
         mainThreadActions.Enqueue(action);
+    }
+
+    public void ExecuteOnMainThreadWithResult<T>(Func<T> function, Action<T> onCompleted)
+    {
+        if (function == null || onCompleted == null) return;
+
+        mainThreadActions.Enqueue(() => {
+            try
+            {
+                var result = function();
+                onCompleted(result);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Main thread function exception: {e}");
+                onCompleted(default);
+            }
+        });
     }
 
     public void QueueJobWithCallback(Action backgroundJob, Action mainThreadCallback)
@@ -101,6 +122,49 @@ public class ThreadPoolManager : MonoBehaviour
         });
     }
 
+    public void StopAllThreads(Action onComplete = null)
+    {
+        StartCoroutine(StopAllThreadsCoroutine(onComplete));
+    }
+    
+    private IEnumerator StopAllThreadsCoroutine(Action onComplete)
+    {
+        isRunning = false;
+
+        while (_activeJobs > 0 || threadJobs.Count > 0)
+        {
+            yield return null;
+        }
+
+        _jobSignal.Set();
+
+        if (_threads != null)
+        {
+            foreach (var thread in _threads)
+            {
+                if (thread != null && thread.IsAlive)
+                {
+                    thread.Join();
+                }
+            }
+            _threads = null;
+        }
+
+        while (mainThreadActions.TryDequeue(out var action))
+        {
+            try
+            {
+                action.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Thread job exception: {e}");
+            }
+        }
+
+        onComplete?.Invoke();
+    }
+
     private void ThreadLoop()
     {
         while (isRunning)
@@ -132,13 +196,22 @@ public class ThreadPoolManager : MonoBehaviour
         }
     }
 
+    private float lastActionTime = 0f;
+    private const float actionInterval = 0.05f;
+
     private void Update()
     {
-        while (mainThreadActions.TryDequeue(out var action))
+        if (Time.time - lastActionTime < actionInterval)
+        {
+            return;
+        }
+
+        if (mainThreadActions.TryDequeue(out var action))
         {
             try
             {
                 action.Invoke();
+                lastActionTime = Time.time;
             }
             catch (Exception e)
             {
@@ -158,7 +231,7 @@ public class ThreadPoolManager : MonoBehaviour
             {
                 if (thread != null && thread.IsAlive)
                 {
-                    thread.Join(100);
+                    thread.Join(1000);
                 }
             }
         }

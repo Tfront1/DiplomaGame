@@ -8,6 +8,7 @@ using Town;
 using UnitAction;
 using static Building;
 using UnityEngine;
+using System.Threading;
 
 namespace Bots
 {
@@ -51,7 +52,20 @@ namespace Bots
 
         public void Think()
         {
-            ProcessBuilding();
+            var resetEvent = new ManualResetEventSlim(false);
+            ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+            {
+                try
+                {
+                    ProcessBuilding();
+                }
+                finally
+                {
+                    resetEvent.Set();
+                }
+            });
+            resetEvent.Wait();
+            
             AssignUnitRoles();
             ProcessUnits();
         }
@@ -176,7 +190,19 @@ namespace Bots
 
             foreach (var resourceGatherer in _resourceUnits)
             {
-                ProcessResourceGathererUnit(resourceGatherer);
+                var resetEvent = new ManualResetEventSlim(false);
+                ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                {
+                    try
+                    {
+                        ProcessResourceGathererUnit(resourceGatherer);
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
+                });
+                resetEvent.Wait();
             }
         }
 
@@ -216,7 +242,21 @@ namespace Bots
                 if (nearestEnemy != null)
                 {
                     var attackAction = new AttackUnitAction(warrior, nearestEnemy);
-                    UnitActionManager.Instance.ExecuteImmediately(attackAction);
+
+                    var resetEvent = new ManualResetEventSlim(false);
+                    ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                    {
+                        try
+                        {
+                            UnitActionManager.Instance.ExecuteImmediately(attackAction);
+                        }
+                        finally
+                        {
+                            resetEvent.Set();
+                        }
+                    });
+                    resetEvent.Wait();
+
                     UpdateUnitTask(warrior, BotTaskType.Attack, nearestEnemy);
                 }
             }
@@ -233,19 +273,43 @@ namespace Bots
 
                 if (!isAlreadyBuilding)
                 {
-                    if (targetBuilding != null && _town.BuildingTownOrder.AssignUnitToOrder(builder, targetBuilding))
+                    var resetEvent = new ManualResetEventSlim(false);
+                    ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
                     {
-                        UpdateUnitTask(builder, BotTaskType.Build, targetBuilding);
-                    }
-                    else
-                    {
-                        ProcessResourceGathererUnit(builder);
-                    }
+                        try
+                        {
+                            if (targetBuilding != null && _town.BuildingTownOrder.AssignUnitToOrder(builder, targetBuilding))
+                            {
+                                UpdateUnitTask(builder, BotTaskType.Build, targetBuilding);
+                            }
+                            else
+                            {
+                                ProcessResourceGathererUnit(builder);
+                            }
+                        }
+                        finally
+                        {
+                            resetEvent.Set();
+                        }
+                    });
+                    resetEvent.Wait();
                 }
             }
             else
             {
-                ProcessResourceGathererUnit(builder);
+                var resetEvent = new ManualResetEventSlim(false);
+                ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                {
+                    try
+                    {
+                        ProcessResourceGathererUnit(builder);
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
+                });
+                resetEvent.Wait();
             }
         }
 
@@ -260,19 +324,43 @@ namespace Bots
 
                 if (!isAlreadyCrafting)
                 {
-                    if (craftingBuilding.BuildingCraftingSystem.AssignUnitToCraft(crafter))
+                    var resetEvent = new ManualResetEventSlim(false);
+                    ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
                     {
-                        UpdateUnitTask(crafter, BotTaskType.Craft, craftingBuilding);
-                    }
-                    else
-                    {
-                        ProcessResourceGathererUnit(crafter);
-                    }
+                        try
+                        {
+                            if (craftingBuilding.BuildingCraftingSystem.AssignUnitToCraft(crafter))
+                            {
+                                UpdateUnitTask(crafter, BotTaskType.Craft, craftingBuilding);
+                            }
+                            else
+                            {
+                                ProcessResourceGathererUnit(crafter);
+                            }
+                        }
+                        finally
+                        {
+                            resetEvent.Set();
+                        }
+                    });
+                    resetEvent.Wait();
                 }
             }
             else
             {
-                ProcessResourceGathererUnit(crafter);
+                var resetEvent = new ManualResetEventSlim(false);
+                ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                {
+                    try
+                    {
+                        ProcessResourceGathererUnit(crafter);
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
+                });
+                resetEvent.Wait();
             }
         }
 
@@ -343,13 +431,26 @@ namespace Bots
                 .ToList();
 
             if (enemies.Count == 0) return null;
-            
-            enemies.Sort((a, b) =>
+
+            var resetEvent = new ManualResetEventSlim(false);
+            ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
             {
-                var distanceA = Vector2.Distance(unit.Coords, a.Coords);
-                var distanceB = Vector2.Distance(unit.Coords, b.Coords);
-                return distanceA.CompareTo(distanceB);
+                try
+                {
+                    enemies.Sort((a, b) =>
+                    {
+                        var distanceA = Vector2.Distance(unit.Coords, a.Coords);
+                        var distanceB = Vector2.Distance(unit.Coords, b.Coords);
+                        return distanceA.CompareTo(distanceB);
+                    });
+                }
+                finally
+                {
+                    resetEvent.Set();
+                }
             });
+
+            resetEvent.Wait();
 
             return enemies[0];
         }
@@ -583,6 +684,7 @@ namespace Bots
 
         public void SortNearestSupplies()
         {
+            
             if (_town.TownHall != null)
             {
                 var suppliesDict = ItemListRegistry.GetList<SupplyItem>();
@@ -594,6 +696,18 @@ namespace Bots
                 _suppliesKeys = sortedKeys;
                 IsSortedSupplies = true;
             }
+            
+            /*
+            if (_town.TownHall != null)
+            {
+                var suppliesDict = ItemListRegistry.GetList<SupplyItem>();
+
+                var sortedKeys = suppliesDict.Keys.ToList();
+
+                _suppliesKeys = sortedKeys;
+                IsSortedSupplies = true;
+            }
+            */
         }
 
         private void InitializeBotType()

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Threading.Tasks;
-using Town;
+﻿using Town;
 using UnityEngine;
 
 namespace Bots
@@ -20,38 +17,17 @@ namespace Bots
 
         public void StartBot()
         {
-            if (!BotBrain.IsSortedSupplies)
-            {
-                BotBrain.SortNearestSupplies();
-            }
-
-            BotTickRateSystem.Instance.OnTick += Think;
-            UnitRegistry.OnUnitChangedCell += BotBrain.OnUnitChangedCellHandler;
+            BotBrainManager.Instance.RegisterBot(BotBrain);
         }
 
         public void StopBot()
         {
-            BotTickRateSystem.Instance.OnTick -= Think;
-            UnitRegistry.OnUnitChangedCell -= BotBrain.OnUnitChangedCellHandler;
-        }
-        
-        private void Think(Task task)
-        {
-            CoroutineRunner.Instance.StartCoroutineWithId(Guid.NewGuid(), ToThink());
-        }
-
-        IEnumerator ToThink()
-        {
-            var randomDelay = UnityEngine.Random.Range(0f, 5f);
-
-            yield return new WaitForSeconds(randomDelay);
-
-            BotBrain.Think();
+            BotBrainManager.Instance.UnregisterBot(BotBrain);
         }
 
         private void OnDestroy()
         {
-            BotTickRateSystem.Instance.OnTick -= Think;
+            BotBrainManager.Instance.UnregisterBot(BotBrain);
         }
     }
 }

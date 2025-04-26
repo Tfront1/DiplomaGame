@@ -30,6 +30,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public UnitState State { get; set; } = UnitState.Idle;
 
+    private float _lastTimeGridCellUpdated = 0f;
+    private const float _timeToUpdateGridCell = 0.5f;
+
     public Guid GroupId { get; set; } = Guid.Empty;
     public bool IsInGroup { get; set; } = false;
     public bool CanGroup { get; set; } = false;
@@ -84,7 +87,11 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
         }
 
-        UnitRegistry.UpdateUnitGridCell(this, position);
+        if (Time.time - _lastTimeGridCellUpdated > _timeToUpdateGridCell)
+        {
+            _lastTimeGridCellUpdated = Time.time;
+            UnitRegistry.UpdateUnitGridCell(this, position);
+        }
 
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
@@ -100,7 +107,11 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
         }
 
-        UnitRegistry.UpdateUnitGridCell(this, position);
+        if (Time.time - _lastTimeGridCellUpdated > _timeToUpdateGridCell)
+        {
+            _lastTimeGridCellUpdated = Time.time;
+            UnitRegistry.UpdateUnitGridCell(this, position);
+        }
 
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
