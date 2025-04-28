@@ -260,14 +260,21 @@ public class BuildingTownOrder
     public Backpack GetAllNeedResources()
     {
         Backpack needBackpack = new(0);
+
         foreach (var order in _activeOrders)
         {
             var resources = order.Value.RequiredResources;
+            var deliveredResources = order.Value.DeliveredResources;
 
             foreach (var resource in resources)
             {
-                needBackpack.SetMaxCapacity(needBackpack.MaxCapacity + resource.Quantity);
-                needBackpack.AddItem(resource.BackpackItem, resource.Quantity);
+                var delivered = deliveredResources.Find(x => x.BackpackItem == resource.BackpackItem);
+                var deliveredQuantity = delivered?.Quantity ?? 0;
+
+                var remainingQuantity = Math.Max(0, resource.Quantity - deliveredQuantity);
+
+                needBackpack.SetMaxCapacity(needBackpack.MaxCapacity + remainingQuantity);
+                needBackpack.AddItem(resource.BackpackItem, remainingQuantity);
             }
         }
 

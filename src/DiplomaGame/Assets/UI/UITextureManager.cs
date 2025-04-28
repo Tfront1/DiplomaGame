@@ -192,4 +192,24 @@ public class UITextureManager
 
         return null;
     }
+
+    public Sprite GetItemSprite(int id, Type type)
+    {
+        if (type == typeof(WeaponElement))
+        {
+            return GetResourceSprite(WeaponConfig.WeaponElements.Find(x => x.Id == id));
+        }
+        if (type == typeof(ArmorElement))
+        {
+            return GetResourceSprite(ArmorConfig.ArmorElements.Find(x => x.Id == id));
+
+        }
+        if (type == typeof(AmmunitionElement))
+        {
+            return GetResourceSprite(AmmunitionConfig.AmmunitionElements.Find(x => x.Id == id));
+
+        }
+
+        return null;
+    }
 }

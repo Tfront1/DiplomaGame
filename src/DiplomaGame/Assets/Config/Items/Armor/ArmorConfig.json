@@ -2,22 +2,22 @@
   "Armors": [
     {
       "Id": 1,
-      "Name": "No armor",
+      "Name": "No Armor",
       "ArmorResistance": 0
     },
     {
       "Id": 2,
-      "Name": "Wood armor",
+      "Name": "Wooden Armor",
       "ArmorResistance": 4
     },
     {
       "Id": 3,
-      "Name": "Stone armor",
+      "Name": "Stone Armor",
       "ArmorResistance": 6
     },
     {
       "Id": 4,
-      "Name": "Iron armor",
+      "Name": "Iron Armor",
       "ArmorResistance": 10
     }
   ]

@@ -17,7 +17,6 @@ public class TestAction : MonoBehaviour
 
     public void Start()
     {
-        _town = TownRegistry.UserTown;
 
         _enemyTown = TownRegistry.TownList.Find(x => !x.IsUnitControlTown);
         /*
@@ -38,10 +37,12 @@ public class TestAction : MonoBehaviour
         //Spawn unit
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            _town = TownRegistry.UserTown;
+
             var clickPosition = UtilsClass.GetMouseWorldPosition();
             var unitItem = UnitManager.CreateUnit(clickPosition, 3, _town);
             
-            var rand = Random.Range(1, 2);
+            var rand = Random.Range(1, 3);
             var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
 
             unitItem.Backpack.FillWithSingleItem(res);
@@ -50,6 +51,8 @@ public class TestAction : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.W))
         {
+            _enemyTown = TownRegistry.TownList.Find(x => !x.IsUnitControlTown);
+
             var clickPosition = UtilsClass.GetMouseWorldPosition();
             UnitManager.CreateUnit(clickPosition, 3, _enemyTown);
             //SpawnUnit(_enemyTown);
@@ -210,7 +213,7 @@ public class TestAction : MonoBehaviour
 
             town.AddUnit(unitItem);
 
-            var rand = Random.Range(1, 2);
+            var rand = Random.Range(1, 3);
             var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
 
             unitItem.Backpack.FillWithSingleItem(res);

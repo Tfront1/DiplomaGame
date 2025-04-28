@@ -141,6 +141,50 @@ public class UnitEquipment
         }
     }
 
+    public bool CanEquip(IBackpackItem item, int quantity = 1)
+    {
+        if (item is WeaponElement weapon)
+        {
+            if (weapon.IsMainWeapon)
+                return weapon.Id != MainWeapon.Id;
+            else
+                return weapon.Id != SecondaryWeapon.Id;
+        }
+        if (item is ArmorElement armor)
+        {
+            return armor.Id != Armor.Id;
+        }
+        if (item is AmmunitionElement ammo)
+        {
+            if(_maxAmmunitionCount > Ammunition.Count + quantity)
+                return Ammunition.Count == 0 || ammo.Id != Ammunition.First().Id;
+        }
+
+        return false;
+    }
+
+    public bool HasSameItem(IBackpackItem item)
+    {
+        if (item is WeaponElement weapon)
+        {
+            if (weapon.IsMainWeapon)
+                return weapon.Id == MainWeapon.Id;
+            else
+                return weapon.Id == SecondaryWeapon.Id;
+        }
+        if (item is ArmorElement armor)
+        {
+            return armor.Id == Armor.Id;
+        }
+        if (item is AmmunitionElement ammo)
+        {
+            if (_maxAmmunitionCount > Ammunition.Count)
+                return Ammunition.Any(a => ammo.Id == a.Id);
+        }
+
+        return false;
+    }
+
     public void UnequipItem(EquipmentSlot slot)
     {
         switch (slot)

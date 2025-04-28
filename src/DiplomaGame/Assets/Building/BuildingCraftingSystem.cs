@@ -158,6 +158,20 @@ public class BuildingCraftingSystem
     private void CompleteCraft()
     {
         var craftedItem = ItemFactory.CreateItem(CurrentCraftingRecipe.ResultId, CurrentCraftingRecipe.ResultType);
+
+        if (!Building.HomeTown.IsUnitControlTown && Building.HomeTown.TownHall != null &&
+            Building.HomeTown.TownHall.Backpack != null && Building.HomeTown.TownHall.Backpack.IsFull())
+        {
+            var itemToRemove = Building.HomeTown.TownHall.Backpack.GetAllItems()
+             .OrderByDescending(item => item.Quantity)
+             .FirstOrDefault();
+
+            if (itemToRemove != null)
+            {
+                Building.HomeTown.TownHall.Backpack.RemoveItem(itemToRemove.Item, 1);
+            }
+        }
+
         if (BackpackTransfer.Instance.AddItemToTownHall(Building.HomeTown, craftedItem))
         {
             CurrentCraftingCount--;

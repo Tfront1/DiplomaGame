@@ -9,6 +9,11 @@ using UnitAction;
 using static Building;
 using UnityEngine;
 using System.Threading;
+using Assets.Items.Ammunition;
+using Assets.Items.Armor;
+using Assets.Items.Crafts;
+using Assets.Items.Weapon;
+using Items.Resource;
 
 namespace Bots
 {
@@ -36,8 +41,8 @@ namespace Bots
         private List<UnitItem> _builderUnits = new();
         private List<UnitItem> _crafterUnits = new();
         private List<UnitItem> _resourceUnits = new();
-        private List<UnitItem> _warriorUnits = new();
-
+        private List<UnitItem> _defenderUnits = new();
+        
         private HashSet<UnitItem> _enemyUnits = new();
 
         private Dictionary<UnitItem, BotTask> _unitAssignments = new();
@@ -65,7 +70,8 @@ namespace Bots
                 }
             });
             resetEvent.Wait();
-            
+
+            ProcessCrafting();
             AssignUnitRoles();
             ProcessUnits();
         }
@@ -89,15 +95,21 @@ namespace Bots
             _builderUnits.Clear();
             _crafterUnits.Clear();
             _resourceUnits.Clear();
-            _warriorUnits.Clear();
+            _defenderUnits.Clear();
 
             var availableUnits = new List<UnitItem>(Units);
-            var isUnderThreat = CheckForNearbyEnemies();
+            var unitsToEquip = UnitNeedWarItems();
 
+            if (unitsToEquip.Count > 0)
+            {
+                AssignUnitsToEquip(unitsToEquip, availableUnits);
+            }
+
+            var isUnderThreat = CheckForNearbyEnemies();
             if (isUnderThreat)
             {
                 var neededDefenders = (int)(UnitCount * 0.8f);
-                AssignUnitsWithPreferredRole(availableUnits, neededDefenders, BotTaskType.DefendTown, _warriorUnits);
+                AssignUnitsWithPreferredRole(availableUnits, neededDefenders, BotTaskType.DefendTown, _defenderUnits);
             }
 
             for (var i = 0; i < availableUnits.Count; i++)
@@ -171,9 +183,32 @@ namespace Bots
             }
         }
 
+        private void AssignUnitsToEquip(Dictionary<UnitItem, List<IBackpackItem>> units, List<UnitItem> availableUnits)
+        {
+            foreach (var unit in units)
+            {
+                availableUnits.Remove(unit.Key);
+                var equipAction = new EquipUnitAction(unit.Key, _town.TownHall, unit.Value.First());
+                var resetEvent = new ManualResetEventSlim(false);
+
+                ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                {
+                    try
+                    {
+                        UnitActionManager.Instance.ExecuteImmediately(equipAction);
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
+                });
+                resetEvent.Wait();
+            }
+        }
+
         private void ProcessUnits()
         {
-            foreach (var warrior in _warriorUnits)
+            foreach (var warrior in _defenderUnits)
             {
                 ProcessWarriorUnit(warrior);
             }
@@ -417,7 +452,7 @@ namespace Bots
                 }
             }
 
-            return ResourcesConfig.ResourceElements.First();
+            return null;
         }
 
         private UnitItem FindNearestEnemy(UnitItem unit)
@@ -497,6 +532,39 @@ namespace Bots
             }
 
             return null;
+        }
+        
+        private Dictionary<UnitItem, List<IBackpackItem>> UnitNeedWarItems()
+        {
+            Dictionary<UnitItem, List<IBackpackItem>> units = new();
+
+            if (_town.TownHall != null && _town.TownHall.Backpack != null)
+            {
+                var items = _town.TownHall.Backpack.GetDetailedItems();
+                foreach (var item in items)
+                {
+                    if (item.Key.GetType() != typeof(ResourceElement))
+                    {
+                        var itemCount = item.Value;
+
+                        foreach (var unit in Units)
+                        {
+                            if (itemCount > 0 && unit.UnitEquipment.CanEquip(item.Key) && !unit.UnitEquipment.HasSameItem(item.Key))
+                            {
+                                if (!units.ContainsKey(unit))
+                                {
+                                    units[unit] = new List<IBackpackItem>();
+                                }
+
+                                units[unit].Add(item.Key);
+                                itemCount--;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return units;
         }
 
         private bool CheckForNearbyEnemies()
@@ -591,7 +659,7 @@ namespace Bots
                 }
             }
 
-            if (!HasBuilding(BuildingTypes.Vault) && ResourcesHave.CurrentCapacity > ResourcesHave.MaxCapacity * 0.7f)
+            if (!HasBuilding(BuildingTypes.Vault) || ResourcesHave.CurrentCapacity > ResourcesHave.MaxCapacity * 0.7f)
             {
                 var vault = BuildingsConfig.Buildings.Find(x => x.BuildingType == BuildingTypes.Vault);
                 if (vault != null)
@@ -628,6 +696,120 @@ namespace Bots
             return resultBackpack;
         }
 
+        private void ProcessCrafting()
+        {
+            var craftingRecipe = CraftNeedForUnits();
+
+            if(craftingRecipe == null)
+                return;
+
+            foreach (var building in Buildings)
+            {
+                if (building.IsBuilt && craftingRecipe.WhereToCraftId == building.Building.Id)
+                {
+                    if (building.BuildingCraftingSystem != null && !building.BuildingCraftingSystem.IsCrafting)
+                    {
+                        var resetEvent = new ManualResetEventSlim(false);
+                        ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                        {
+                            try
+                            {
+                                building.BuildingCraftingSystem.StartCraft(craftingRecipe);
+                            }
+                            finally
+                            {
+                                resetEvent.Set();
+                            }
+                        });
+                        resetEvent.Wait();
+                    }
+                }
+            }
+        }
+
+        private CraftingRecipe CraftNeedForUnits()
+        {
+            var allCraftingBuildingsActive = true;
+            var hasCraftingBuildings = false;
+
+            foreach (var building in Buildings)
+            {
+                if (building.BuildingCraftingSystem != null)
+                {
+                    hasCraftingBuildings = true;
+                    if (!building.BuildingCraftingSystem.IsCrafting)
+                    {
+                        allCraftingBuildingsActive = false;
+                        break;
+                    }
+                }
+            }
+
+            if (hasCraftingBuildings && allCraftingBuildingsActive)
+            {
+                return null;
+            }
+
+            foreach (var unit in Units)
+            {
+                if (unit.UnitEquipment.MainWeapon.Id == 1)
+                {
+                    var rand = GameRandom.Random;
+                    var randomIndex = rand.Next(1, WeaponConfig.WeaponElements.Count);
+                    var itemToCraft = WeaponConfig.WeaponElements[randomIndex];
+
+                    var craftingRecipe = GetCraftingRecipe(itemToCraft, typeof(WeaponElement));
+
+                    if (craftingRecipe != null)
+                    {
+                        return craftingRecipe;
+                    }
+                }
+
+                if (unit.UnitEquipment.MainWeapon.Ammunition != null &&
+                    unit.UnitEquipment.Ammunition.Find(x =>
+                        x.Id == unit.UnitEquipment.MainWeapon
+                            .Ammunition.Id) == null)
+                {
+                    if (ResourcesHave.GetResourceQuantity(unit.UnitEquipment.MainWeapon.Ammunition) == 0)
+                    {
+                        var itemToCraft = unit.UnitEquipment.MainWeapon.Ammunition;
+                        var craftingRecipe = GetCraftingRecipe(itemToCraft, typeof(AmmunitionElement));
+
+                        if (craftingRecipe != null)
+                        {
+                            return craftingRecipe;
+                        }
+                    }
+                }
+
+                if (unit.UnitEquipment.Armor.Id == 1)
+                {
+                    var rand = GameRandom.Random;
+                    var randomIndex = rand.Next(1, ArmorConfig.ArmorElements.Count);
+                    var itemToCraft = ArmorConfig.ArmorElements[randomIndex];
+
+                    var craftingRecipe = GetCraftingRecipe(itemToCraft, typeof(ArmorElement));
+
+                    if (craftingRecipe != null)
+                    {
+                        return craftingRecipe;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private CraftingRecipe GetCraftingRecipe(IBackpackItem itemToCraft, Type craftType)
+        {
+            var craftingRecipe =
+                CraftingRecipesConfig.CraftingRecipes.Find(x =>
+                    x.ResultType == craftType && x.ResultId == itemToCraft.Id);
+
+            return craftingRecipe;
+        }
+
         private Backpack ResourcesNeedForCrafting()
         {
             Backpack resourcesNeed = new(0);
@@ -639,41 +821,21 @@ namespace Bots
                     var craftSystem = building.BuildingCraftingSystem;
                     var resources = craftSystem.GetRemainingResources();
 
+                    var deliveredResources = craftSystem.DeliveredResources;
+
                     foreach (var resource in resources)
                     {
-                        resourcesNeed.SetMaxCapacity(resourcesNeed.MaxCapacity + resource.Quantity);
-                        resourcesNeed.AddItem(resource.BackpackItem, resource.Quantity);
+                        var delivered = deliveredResources.Find(x => x.BackpackItem == resource.BackpackItem);
+                        var deliveredQuantity = delivered?.Quantity ?? 0;
+
+                        var remainingQuantity = Math.Max(0, resource.Quantity - deliveredQuantity);
+
+                        resourcesNeed.SetMaxCapacity(resourcesNeed.MaxCapacity + remainingQuantity);
+                        resourcesNeed.AddItem(resource.BackpackItem, remainingQuantity);
                     }
                 }
             }
-
-            var updatedResources = new Dictionary<IBackpackItem, int>();
-
-            foreach (var resource in resourcesNeed.GetDetailedItems())
-            {
-                var resourceHave = ResourcesHave.GetResourceQuantity(resource.Key);
-                var remainingNeeded = resource.Value - resourceHave;
-
-                if (remainingNeeded > 0)
-                {
-                    updatedResources[resource.Key] = remainingNeeded;
-                }
-            }
-
-            resourcesNeed.Clear();
-
-            var newMaxCapacity = 0;
-            foreach (var resource in updatedResources)
-            {
-                newMaxCapacity += resource.Value;
-            }
-            resourcesNeed.SetMaxCapacity(newMaxCapacity);
-
-            foreach (var resource in updatedResources)
-            {
-                resourcesNeed.AddItem(resource.Key, resource.Value);
-            }
-
+            
             return resourcesNeed;
         }
 
@@ -696,24 +858,11 @@ namespace Bots
                 _suppliesKeys = sortedKeys;
                 IsSortedSupplies = true;
             }
-            
-            /*
-            if (_town.TownHall != null)
-            {
-                var suppliesDict = ItemListRegistry.GetList<SupplyItem>();
-
-                var sortedKeys = suppliesDict.Keys.ToList();
-
-                _suppliesKeys = sortedKeys;
-                IsSortedSupplies = true;
-            }
-            */
         }
 
         private void InitializeBotType()
         {
             var allTypes = (BotTypes[])Enum.GetValues(typeof(BotTypes));
-
             _botType = allTypes[GameRandom.Random.Next(0, allTypes.Length)];
         }
 

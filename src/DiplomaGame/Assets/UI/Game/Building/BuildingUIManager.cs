@@ -221,6 +221,12 @@ public class BuildingUIManager : MonoBehaviour
 
     private void SpawnResourceRemovePanel(BuildingItem building, IBackpackItem itemToRemove)
     {
+        if (building.Backpack == null)
+            return;
+
+        if(!building.IsBuilt)
+            return;
+
         _resourceToRemove = itemToRemove;
 
         if (_resourceRemovePanel == null)
@@ -275,8 +281,11 @@ public class BuildingUIManager : MonoBehaviour
         if (_resourceToRemove == itemToRemove && _resourceRemovePanel != null)
         {
             _resourceRemovePanel.transform.position = _buildingResourceItems[itemToRemove].transform.position;
-            _resourceRemoveSlider.maxValue = building.Backpack.GetResourceQuantity(itemToRemove);
-            _resourceRemoveField.text = ((int)_resourceRemoveSlider.value).ToString();
+            if (building.Backpack != null)
+            {
+                _resourceRemoveSlider.maxValue = building.Backpack.GetResourceQuantity(itemToRemove);
+                _resourceRemoveField.text = ((int)_resourceRemoveSlider.value).ToString();
+            }
         }
     }
 

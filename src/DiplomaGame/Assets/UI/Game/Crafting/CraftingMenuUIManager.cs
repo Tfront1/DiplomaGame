@@ -154,6 +154,8 @@ public class CraftingMenuUIManager : MonoBehaviour
         buildingItemObj.gameObject.SetActive(true);
 
         var craftingImage = buildingItemObj.transform.Find("CraftingImage").GetComponent<Image>();
+        craftingImage.sprite = UITextureManager.Instance.GetItemSprite(recipe.ResultId, recipe.ResultType);
+
         var craftingText = buildingItemObj.transform.Find("CraftingText").GetComponent<TextMeshProUGUI>();
 
         var craftButton = buildingItemObj.transform.Find("CraftingButton").GetComponent<Button>();

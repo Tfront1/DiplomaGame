@@ -84,31 +84,31 @@
       "Folder": "Items/Armor/",
       "Textures": [
         {
-          "Name": "GoldArmor",
+          "Name": "Gold Armor",
           "Path": "GoldArmor.png"
         },
         {
-          "Name": "GoldIronArmor",
+          "Name": "Gold Iron Armor",
           "Path": "GoldIronArmor.png"
         },
         {
-          "Name": "IronArmor",
+          "Name": "Iron Armor",
           "Path": "IronArmor.png"
         },
         {
-          "Name": "StoneArmor",
+          "Name": "Stone Armor",
           "Path": "StoneArmor.png"
         },
         {
-          "Name": "StrongGoldIronArmor",
+          "Name": "Strong Gold Iron Armor",
           "Path": "StrongGoldIronArmor.png"
         },
         {
-          "Name": "StrongIronArmor",
+          "Name": "Strong Iron Armor",
           "Path": "StrongIronArmor.png"
         },
         {
-          "Name": "WoodenArmor",
+          "Name": "Wooden Armor",
           "Path": "WoodenArmor.png"
         }
       ]
@@ -117,23 +117,23 @@
       "Folder": "Items/Equipment/",
       "Textures": [
         {
-          "Name": "GoldArrow",
+          "Name": "Gold Arrow",
           "Path": "GoldArrow.png"
         },
         {
-          "Name": "IronArrow",
+          "Name": "Iron Arrow",
           "Path": "IronArrow.png"
         },
         {
-          "Name": "SharpWoodenArrow",
+          "Name": "Sharp Wooden Arrow",
           "Path": "SharpWoodenArrow.png"
         },
         {
-          "Name": "StoneArrow",
+          "Name": "Stone Arrow",
           "Path": "StoneArrow.png"
         },
         {
-          "Name": "WoodenArrow",
+          "Name": "Wooden Arrow",
           "Path": "WoodenArrow.png"
         }
       ]
@@ -142,79 +142,79 @@
       "Folder": "Items/Weapon/",
       "Textures": [
         {
-          "Name": "GoldHammer",
+          "Name": "Gold Hammer",
           "Path": "GoldHammer.png"
         },
         {
-          "Name": "GoldIronAxe",
+          "Name": "Gold Iron Axe",
           "Path": "GoldIronAxe.png"
         },
         {
-          "Name": "GoldIronSword",
+          "Name": "Gold Iron Sword",
           "Path": "GoldIronSword.png"
         },
         {
-          "Name": "GoldSword",
+          "Name": "Gold Sword",
           "Path": "GoldSword.png"
         },
         {
-          "Name": "IronAxe",
+          "Name": "Iron Axe",
           "Path": "IronAxe.png"
         },
         {
-          "Name": "IronGoldHammer",
+          "Name": "Iron Gold Hammer",
           "Path": "IronGoldHammer.png"
         },
         {
-          "Name": "IronHammer",
+          "Name": "Iron Hammer",
           "Path": "IronHammer.png"
         },
         {
-          "Name": "IronSword",
+          "Name": "Iron Sword",
           "Path": "IronSword.png"
         },
         {
-          "Name": "StoneAxe",
+          "Name": "Stone Axe",
           "Path": "StoneAxe.png"
         },
         {
-          "Name": "StoneHammer",
+          "Name": "Stone Hammer",
           "Path": "StoneHammer.png"
         },
         {
-          "Name": "StoneIronAxe",
+          "Name": "Stone Iron Axe",
           "Path": "StoneIronAxe.png"
         },
         {
-          "Name": "StoneIronHammer",
+          "Name": "Stone Iron Hammer",
           "Path": "StoneIronHammer.png"
         },
         {
-          "Name": "StoneSword",
+          "Name": "Stone Sword",
           "Path": "StoneSword.png"
         },
         {
-          "Name": "StrongIronSword",
+          "Name": "Strong Iron Sword",
           "Path": "StrongIronSword.png"
         },
         {
-          "Name": "StrongWoodenBow",
+          "Name": "Strong Wooden Bow",
           "Path": "StrongWoodenBow.png"
         },
         {
-          "Name": "WoodenAxe",
+          "Name": "Wooden Axe",
           "Path": "WoodenAxe.png"
         },
         {
-          "Name": "WoodenBow",
+          "Name": "Wooden Bow",
           "Path": "WoodenBow.png"
         },
         {
-          "Name": "WoodenHammer",
+          "Name": "Wooden Hammer",
           "Path": "WoodenHammer.png"
         },
         {
-          "Name": "WoodenStoneBow",
+          "Name": "Wooden Stone Bow",
           "Path": "WoodenStoneBow.png"
         },
         {
@@ -222,7 +222,7 @@
           "Path": "WoodenSword.png"
         },
         {
-          "Name": "WoodGoldStoneBow",
+          "Name": "Wood Gold Stone Bow",
           "Path": "WoodGoldStoneBow.png"
         }
       ]
