@@ -53,6 +53,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute attack building action.");
+                CompleteAction();
                 return;
             }
 

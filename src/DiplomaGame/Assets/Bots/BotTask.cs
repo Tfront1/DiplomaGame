@@ -13,6 +13,7 @@
         GatherResource,
         DefendTown,
         Attack,
+        Duel,
         BringBackResources
     }
 }

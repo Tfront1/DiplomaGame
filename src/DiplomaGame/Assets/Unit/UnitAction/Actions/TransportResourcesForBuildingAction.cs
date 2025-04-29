@@ -33,6 +33,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute moving resources for building. No resources");
+                CompleteAction();
                 return;
             }
 

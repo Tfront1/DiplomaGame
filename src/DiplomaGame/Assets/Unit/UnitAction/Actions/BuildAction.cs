@@ -28,6 +28,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute building.");
+                CompleteAction();
                 return;
             }
 

@@ -27,7 +27,7 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
     public event EventHandler<SupplyUIToChangeEventArgs> UIToChange;
     public event EventHandler<SupplyDestroyedEventArgs> OnDestroyed;
 
-    private bool _isDestroyed = false;
+    public bool IsDestroyed { get; private set; }= false;
     private readonly object _resourceLock = new();
 
     public static SupplyItem Create(Vector2Int position, Guid guid, Supply supply,
@@ -116,14 +116,14 @@ public class SupplyItem : MonoBehaviour, IItemListObject, ISelectable
 
     public void Destroy()
     {
-        if (!_isDestroyed)
+        if (!IsDestroyed)
         {
             Backpack?.Clear();
 
             OnDestroyed?.Invoke(this, new SupplyDestroyedEventArgs(this));
             Destroy(SupplyGameObject);
 
-            _isDestroyed = true;
+            IsDestroyed = true;
         }
     }
 

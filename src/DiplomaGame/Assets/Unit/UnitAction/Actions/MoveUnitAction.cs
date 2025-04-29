@@ -40,6 +40,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.LogWarning($"Unit {_unit.Unit.Name} can't move to position {_targetPosition}");
+                CompleteAction();
                 return;
             }
 

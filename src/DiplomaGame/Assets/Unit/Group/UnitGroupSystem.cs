@@ -195,6 +195,7 @@ public class UnitGroupSystem
                     foreach (var otherUnit in _optimisedSpatialGrid[townId][neighborCell])
                     {
                         if (otherUnit.Id == unit.Id) continue;
+                        if(otherUnit.IsDestroyed) continue;
 
                         var distance = CalculateDistanceFromCenters(unit, otherUnit);
 

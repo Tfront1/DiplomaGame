@@ -130,7 +130,8 @@ namespace StateMachine
         {
             foreach (var item in SelectedItems)
             {
-                item.OnDeselect();
+                if(!item.IsDestroyed)
+                    item.OnDeselect();
             }
             SelectedItems.Clear();
         }

@@ -23,6 +23,7 @@ namespace UnitAction
         {
             if (!CanExecute())
             {
+                CompleteAction();
                 return;
             }
 

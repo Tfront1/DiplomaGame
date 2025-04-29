@@ -30,9 +30,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public UnitState State { get; set; } = UnitState.Idle;
 
-    private float _lastTimeGridCellUpdated = 0f;
-    private const float _timeToUpdateGridCell = 0.5f;
-
     public Guid GroupId { get; set; } = Guid.Empty;
     public bool IsInGroup { get; set; } = false;
     public bool CanGroup { get; set; } = false;
@@ -87,12 +84,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
         }
 
-        if (Time.time - _lastTimeGridCellUpdated > _timeToUpdateGridCell)
-        {
-            _lastTimeGridCellUpdated = Time.time;
-            UnitRegistry.UpdateUnitGridCell(this, position);
-        }
-
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
         UnitGameObject.transform.position = new Vector3(position.x, position.y, zPos);
 
@@ -105,12 +96,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
         {
             _lastTimePositionEventInvoked = Time.time;
             OnPositionChanged?.Invoke(this, new UnitPositionChangedArgs(this, UnitGameObject.transform.position, position));
-        }
-
-        if (Time.time - _lastTimeGridCellUpdated > _timeToUpdateGridCell)
-        {
-            _lastTimeGridCellUpdated = Time.time;
-            UnitRegistry.UpdateUnitGridCell(this, position);
         }
 
         var zPos = (MapConfig.MapHeight * MapConfig.CellSize - UnitGameObject.transform.position.y) * -0.001f;
@@ -164,7 +149,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     {
         SelectionIndicator.SetActive(false);
         SpriteRenderer.enabled = false;
-        Collider.enabled = false;
     }
 
     public void ShowUnit()
@@ -181,7 +165,6 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
             }
         }
         SpriteRenderer.enabled = true;
-        Collider.enabled = true;
     }
 
     public void ApplyDamage(float damage)
@@ -204,7 +187,10 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
     {
         if (!IsDestroyed)
         {
+            IsDestroyed = true;
+
             UnitRegistry.RemoveUnit(this);
+            UnitGroupManager.Instance.RemoveUnitTracking(this);
             UnitActionManager.Instance.InterruptCurrentAction(this);
 
             TickRateSystem.Instance.OnTick -= Stats.Update;
@@ -212,13 +198,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
             Backpack.BackpackChanged -= OnBackpackChanged;
 
-            UnitGroupManager.Instance.RemoveUnitTracking(this);
-
             OnUnitDied();
 
             Destroy(UnitGameObject);
-
-            IsDestroyed = true;
         }
     }
 

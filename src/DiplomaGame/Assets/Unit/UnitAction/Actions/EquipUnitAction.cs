@@ -46,6 +46,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute equipment.");
+                CompleteAction();
                 return;
             }
 

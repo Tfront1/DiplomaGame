@@ -34,6 +34,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute collect resources. Unit backpack is full or supply don`t have any resource to collect");
+                CompleteAction();
                 return;
             }
 

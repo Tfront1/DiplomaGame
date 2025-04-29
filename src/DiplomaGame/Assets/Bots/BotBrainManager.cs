@@ -39,8 +39,6 @@ namespace Bots
                         botBrain.SortNearestSupplies();
                     }
 
-                    UnitRegistry.OnUnitChangedCell += botBrain.OnUnitChangedCellHandler;
-
                     if (!_isProcessing)
                     {
                         StartProcessing();
@@ -55,8 +53,6 @@ namespace Bots
             {
                 if (_activeBots.Remove(botBrain))
                 {
-                    UnitRegistry.OnUnitChangedCell -= botBrain.OnUnitChangedCellHandler;
-
                     if (_activeBots.Count == 0)
                     {
                         StopProcessing();
@@ -170,10 +166,6 @@ namespace Bots
         {
             lock (_lock)
             {
-                foreach (var bot in _activeBots)
-                {
-                    UnitRegistry.OnUnitChangedCell -= bot.OnUnitChangedCellHandler;
-                }
                 _activeBots.Clear();
             }
             StopProcessing();

@@ -48,6 +48,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute attack unit action.");
+                CompleteAction();
                 return;
             }
 

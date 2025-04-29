@@ -52,19 +52,16 @@ public class UnitActionManager
         // If unit isn't busy and action can execute, run it immediately
         if (!_currentActions.ContainsKey(unitGuid))
         {
-            if (action.CanExecute())
+            action.OnActionCompleted += HandleActionCompleted;
+            _currentActions[unitGuid] = action;
+
+            if (_isPaused)
             {
-                action.OnActionCompleted += HandleActionCompleted;
-                _currentActions[unitGuid] = action;
-
-                if (_isPaused)
-                {
-                    action.Pause();
-                }
-
-                action.Execute();
-                return;
+                action.Pause();
             }
+
+            action.Execute();
+            return;
         }
 
         // Otherwise, add to queue for later execution

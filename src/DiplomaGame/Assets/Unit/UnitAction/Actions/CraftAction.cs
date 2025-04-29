@@ -32,6 +32,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute crafting.");
+                CompleteAction();
                 return;
             }
 

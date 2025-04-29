@@ -238,8 +238,19 @@ public class PathFinder
     {
         if (Physics2D.OverlapPoint(start, _obstacleMask))
         {
-            Debug.LogWarning("Start point inside of a collision");
-            return null;
+            var obstacleCollider = Physics2D.OverlapPoint(start, _obstacleMask);
+            if (obstacleCollider != null)
+            {
+                var bounds = obstacleCollider.bounds;
+
+                var closestPoint = GetClosestPointOnEdge2D(start, bounds);
+
+                start = closestPoint;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         var path = new List<Vector2> { start };

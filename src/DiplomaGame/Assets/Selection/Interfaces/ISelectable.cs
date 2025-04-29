@@ -2,6 +2,7 @@
 {
     public interface ISelectable
     {
+        bool IsDestroyed { get; }
         void OnSelect();
         void OnDeselect();
     }

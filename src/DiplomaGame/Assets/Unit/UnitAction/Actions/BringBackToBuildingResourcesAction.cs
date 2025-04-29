@@ -30,6 +30,7 @@ namespace UnitAction
             if (!CanExecute())
             {
                 Debug.Log("Can`t execute bring back resources. Unit don`t have any resources or storages is full");
+                CompleteAction();
                 return;
             }
 
