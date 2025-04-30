@@ -24,7 +24,7 @@ namespace Bots
         private readonly List<BotBrain> _activeBots = new();
         private readonly object _lock = new();
         private bool _isProcessing = false;
-        private float _thinkInterval = 5f;
+        private float _thinkInterval = 1f;
         private Coroutine _processingCoroutine;
 
         public void RegisterBot(BotBrain botBrain)
@@ -37,6 +37,11 @@ namespace Bots
                     if (!botBrain.IsSortedSupplies)
                     {
                         botBrain.SortNearestSupplies();
+                    }
+
+                    if (!botBrain.IsSortedEnemyTowns)
+                    {
+                        botBrain.SortNearestEnemyTowns();
                     }
 
                     if (!_isProcessing)

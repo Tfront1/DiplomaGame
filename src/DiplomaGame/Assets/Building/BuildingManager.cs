@@ -710,7 +710,7 @@ public class BuildingManager : MonoBehaviour
         copyConstruction.HeightCell = building.HeightCell;
         copyConstruction.WidthCell = building.WidthCell;
         copyConstruction.BuildingType = construction.BuildingType;
-        copyConstruction.MaxHP = construction.MaxHP;
+        copyConstruction.MaxHP = building.MaxHP / 10;
 
         return copyConstruction;
     }

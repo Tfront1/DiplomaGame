@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Assets.Items.Interfaces;
 using TMPro;
+using Town;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -298,10 +299,13 @@ public class UnitUIManager : MonoBehaviour
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
 
-        resourceGO.GetComponent<Button>().onClick.AddListener(() =>
+        if (_currentUnit.HomeTown.Id == TownRegistry.UserTown.Id)
         {
-            _currentUnit.UnitEquipment.TryAutoEquip(resourceItem);
-        });
+            resourceGO.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                _currentUnit.UnitEquipment.TryAutoEquip(resourceItem);
+            });
+        }
     }
 
     private void RemoveResourceFromPanel(IBackpackItem resourceItem)
@@ -331,10 +335,13 @@ public class UnitUIManager : MonoBehaviour
         );
         if (equipment.MainWeapon.Id != 1)
         {
-            _unitMainWeaponButton.onClick.AddListener(() =>
+            if (_currentUnit.HomeTown.Id == TownRegistry.UserTown.Id)
             {
-                equipment.UnequipItem(UnitEquipment.EquipmentSlot.MainWeapon);
-            });
+                _unitMainWeaponButton.onClick.AddListener(() =>
+                {
+                    equipment.UnequipItem(UnitEquipment.EquipmentSlot.MainWeapon);
+                });
+            }
         }
         else
         {
@@ -355,10 +362,13 @@ public class UnitUIManager : MonoBehaviour
         );
         if (equipment.SecondaryWeapon.Id != 1)
         {
-            _unitSecondaryWeaponButton.onClick.AddListener(() =>
+            if (_currentUnit.HomeTown.Id == TownRegistry.UserTown.Id)
             {
-                equipment.UnequipItem(UnitEquipment.EquipmentSlot.SecondaryWeapon);
-            });
+                _unitSecondaryWeaponButton.onClick.AddListener(() =>
+                {
+                    equipment.UnequipItem(UnitEquipment.EquipmentSlot.SecondaryWeapon);
+                });
+            }
         }
         else
         {
@@ -373,10 +383,13 @@ public class UnitUIManager : MonoBehaviour
         );
         if (equipment.Armor.Id != 1)
         {
-            _unitArmorButton.onClick.AddListener(() =>
+            if (_currentUnit.HomeTown.Id == TownRegistry.UserTown.Id)
             {
-                equipment.UnequipItem(UnitEquipment.EquipmentSlot.Armor);
-            });
+                _unitArmorButton.onClick.AddListener(() =>
+                {
+                    equipment.UnequipItem(UnitEquipment.EquipmentSlot.Armor);
+                });
+            }
         }
         else
         {
@@ -404,10 +417,13 @@ public class UnitUIManager : MonoBehaviour
         }
         if (equipment.Ammunition != null && equipment.Ammunition.Count > 0)
         {
-            _unitAmmoButton.onClick.AddListener(() =>
+            if (_currentUnit.HomeTown.Id == TownRegistry.UserTown.Id)
             {
-                equipment.UnequipItem(UnitEquipment.EquipmentSlot.Ammunition);
-            });
+                _unitAmmoButton.onClick.AddListener(() =>
+                {
+                    equipment.UnequipItem(UnitEquipment.EquipmentSlot.Ammunition);
+                });
+            }
         }
         else
         {

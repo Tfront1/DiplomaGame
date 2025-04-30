@@ -122,6 +122,12 @@ public class UnitListUIManager : MonoBehaviour
     
     public void UpdateUnitList(List<UnitItem> units)
     {
+        if (units.Count == 0)
+        {
+            HideUnitList();
+            return;
+        }
+
         _units = units;
 
         var unitsToRemove = new List<UnitItem>();
@@ -262,6 +268,12 @@ public class UnitListUIManager : MonoBehaviour
 
     public void ShowUnitList()
     {
+        if (_units.Count == 0)
+        {
+            HideUnitList();
+            return;
+        }
+
         _unitListPanel.SetActive(true);
         foreach (var unitUi in _unitUIElements)
         {

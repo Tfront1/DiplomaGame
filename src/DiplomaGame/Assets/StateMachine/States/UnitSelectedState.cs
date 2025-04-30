@@ -3,6 +3,7 @@ using System.Linq;
 using GameUtilities.Utils;
 using Selection;
 using Selection.Interfaces;
+using Town;
 using UnitAction;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -37,18 +38,22 @@ namespace StateMachine.States
             else
             {
                 _units = SelectorFactory.GetUnitItems(_stateMachine.SelectedItems);
-                if (_units.Count == _stateMachine.SelectedItems.Count)
+
+                var removedUnits = _units.Where(x => x.HomeTown.Id != TownRegistry.UserTown.Id).ToList();
+                removedUnits.ForEach(x => _stateMachine.DeselectItem(x));
+
+                _units.RemoveAll(x => x.HomeTown.Id != TownRegistry.UserTown.Id); _stateMachine.SelectedItems.Clear();
+                _units.ForEach(x => _stateMachine.SelectedItems.Add(x));
+
+                UnitListUIManager.Instance.UpdateUnitList(_units);
+                UnitListUIManager.Instance.ShowUnitList();
+
+                UnitUIManager.Instance.HideUnitInfo();
+
+                foreach (var unit in _units)
                 {
-                    UnitListUIManager.Instance.UpdateUnitList(_units);
-                    UnitListUIManager.Instance.ShowUnitList();
-
-                    UnitUIManager.Instance.HideUnitInfo();
-
-                    foreach (var unit in _units)
-                    {
-                        unit.OnDied += OnUnitDied;
-                        unit.UIToChange += UnitListUIManager.Instance.UpdateUnitInfo;
-                    }
+                    unit.OnDied += OnUnitDied;
+                    unit.UIToChange += UnitListUIManager.Instance.UpdateUnitInfo;
                 }
             }
         }
@@ -87,17 +92,25 @@ namespace StateMachine.States
                 ? SelectorFactory.GetUnitItem(_stateMachine.SelectedItems.First())
                 : null;
 
-            if (singleUnit == null && selectedUnits.Count == 0)
+            if (selectedUnits.Count == 0 || (singleUnit != null && singleUnit.HomeTown.Id != TownRegistry.UserTown.Id))
             {
                 return;
             }
 
-            if (singleUnit != null && singleUnit.IsInGroup)
+            if (singleUnit != null)
             {
-                var group = GroupManager.Instance.GetGroup(singleUnit.GroupId);
-                if (group != null)
+                if (singleUnit.HomeTown.Id != TownRegistry.UserTown.Id)
                 {
-                    group.RemoveUnitFromGroup(singleUnit);
+                    return;
+                }
+
+                if (singleUnit.IsInGroup)
+                {
+                    var group = GroupManager.Instance.GetGroup(singleUnit.GroupId);
+                    if (group != null)
+                    {
+                        group.RemoveUnitFromGroup(singleUnit);
+                    }
                 }
             }
 
@@ -121,7 +134,7 @@ namespace StateMachine.States
                 }
             }
 
-            if (singleUnit == null && selectedUnits.Count > 1)
+            if (selectedUnits.Count > 1)
             {
                 singleUnit = selectedUnits.First();
             }
@@ -134,11 +147,10 @@ namespace StateMachine.States
 
                     if (_stateMachine.SelectedItems.Count == 1)
                     {
-                        if (singleUnit != null)
-                        {
-                            var moveAction = new MoveUnitAction(singleUnit, position);
-                            UnitActionManager.Instance.ExecuteImmediately(moveAction);
-                        }
+                        
+                        var moveAction = new MoveUnitAction(singleUnit, position);
+                        UnitActionManager.Instance.ExecuteImmediately(moveAction);
+                        
                     }
                     else
                     {
@@ -164,11 +176,8 @@ namespace StateMachine.States
                     {
                         if (_stateMachine.SelectedItems.Count == 1)
                         {
-                            if (singleUnit != null)
-                            {
-                                var moveAction = new MoveUnitAction(singleUnit, position);
-                                UnitActionManager.Instance.ExecuteImmediately(moveAction);
-                            }
+                            var moveAction = new MoveUnitAction(singleUnit, position);
+                            UnitActionManager.Instance.ExecuteImmediately(moveAction);
                         }
                         else
                         {
@@ -185,7 +194,7 @@ namespace StateMachine.States
                     else
                     {
                         var targetUnits = SelectorFactory.GetUnitItems(target.Item1).ToList();
-                        var randomSelectedUnits = selectedUnits.OrderBy(x => Random.value).ToList();
+                        var randomSelectedUnits = selectedUnits.OrderBy(_ => Random.value).ToList();
 
                         foreach (var unit in randomSelectedUnits)
                         {
@@ -202,11 +211,8 @@ namespace StateMachine.States
 
                 case SelectedStates.BuildingSelect:
 
-                    if (singleUnit != null)
-                    {
-                        var building = SelectorFactory.GetBuildingItem(target.Item1.First());
-                        building.BuildingController.OpenActionPanel(selectedUnits);
-                    }
+                    var building = SelectorFactory.GetBuildingItem(target.Item1.First());
+                    building.BuildingController.OpenActionPanel(selectedUnits);
                         
                     Debug.Log("Units interacting with building");
                     break;
@@ -231,11 +237,12 @@ namespace StateMachine.States
 
         private void OnUnitDied(object sender, UnitItem.UnitDiedEventArgs args)
         {
-            if (_unit == null)
+            if (_unit == null && (_units == null || _units.Count == 0))
             {
                 Exit();
                 return;
             }
+
             var unit = args.Unit;
             _stateMachine.SelectedItems.Remove(unit);
             _units.Remove(unit);

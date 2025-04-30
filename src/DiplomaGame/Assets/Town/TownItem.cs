@@ -28,11 +28,13 @@ namespace Town
 
         public Bot Bot { get; set; }
 
+        public bool IsDestroyed { get; set; }
         public TownItem(string name, Guid id, bool isUnitControlTown = true)
         {
             Name = name;
             Id = id;
             IsUnitControlTown = isUnitControlTown;
+            IsDestroyed = false;
             if (IsUnitControlTown)
             {
                 this.SetAsPlayerTown();

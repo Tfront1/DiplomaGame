@@ -147,7 +147,10 @@ namespace StateMachine
         {
             foreach (var item in items)
             {
-                item.OnSelect();
+                if (!item.IsDestroyed)
+                {
+                    item.OnSelect();
+                }
             }
         }
 

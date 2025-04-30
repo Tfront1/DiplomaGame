@@ -32,11 +32,17 @@ namespace Bots
         public bool IsSortedSupplies { get; set; } = false;
         private List<Guid> _suppliesKeys = new();
 
+        public bool IsSortedEnemyTowns { get; set; } = false;
+        private List<Guid> _enemyTownKeys = new();
+
         private List<BuildingItem> NotBuildBuildings => _bot.Town.Buildings.FindAll(x => !x.IsBuilt);
         private Backpack ResourcesHave => _bot.Town.TotalBackpack;
         
         private int _townDangerRadius = 15;
         private int _unitDangerRadius = 15;
+        private float _chanceToAttackEnemy = 0.5f;
+
+        private bool _isInWar = false;
 
         private List<BuildingTypes> _buildingPriorities = new();
         
@@ -45,6 +51,9 @@ namespace Bots
         private List<UnitItem> _resourceUnits = new();
         private List<UnitItem> _defenderUnits = new();
         private List<UnitItem> _duelUnits = new();
+        private List<UnitItem> _warriorUnits = new();
+
+        private TownItem _enemyTownToAttack;
 
         private HashSet<UnitItem> _townEnemyUnits = new();
         private Dictionary<UnitItem, UnitItem> _unitEnemies = new();
@@ -104,6 +113,7 @@ namespace Bots
             _resourceUnits.Clear();
             _defenderUnits.Clear();
             _duelUnits.Clear();
+            _warriorUnits.Clear();
 
             var availableUnits = new List<UnitItem>(Units);
 
@@ -134,6 +144,12 @@ namespace Bots
                     availableUnits.Remove(availableUnits[i]);
                     i--;
                 }
+            }
+
+            var needToAttackEnemyTown = CheckForAttackEnemyTown(availableUnits.Count);
+            if (needToAttackEnemyTown)
+            {
+                AssignUnitsWithPreferredRole(availableUnits, availableUnits.Count, BotTaskType.Attack, _warriorUnits);
             }
 
             var buildingsInProgress = NotBuildBuildings.Count;
@@ -238,6 +254,11 @@ namespace Bots
             foreach (var duelUnit in _duelUnits)
             {
                 ProcessDuelUnit(duelUnit);
+            }
+
+            foreach (var warriors in _warriorUnits)
+            {
+                ProcessWarriorUnit(warriors);
             }
 
             foreach (var builder in _builderUnits)
@@ -345,6 +366,38 @@ namespace Bots
                 resetEvent.Wait();
 
                 UpdateUnitTask(duelUnit, BotTaskType.Attack, enemy);
+            }
+        }
+
+        private void ProcessWarriorUnit(UnitItem warrior)
+        {
+            if (!_enemyTownToAttack.IsDestroyed)
+            {
+                var buildingToAttack =
+                    _enemyTownToAttack.Buildings.Find(x => x.Building.BuildingType == BuildingTypes.Vault);
+                if (buildingToAttack == null)
+                {
+                    buildingToAttack =
+                        _enemyTownToAttack.Buildings.Find(x => x.Building.BuildingType == BuildingTypes.TownHall);
+                }
+
+                var attackBuildingAction = new AttackBuildingAction(warrior, buildingToAttack);
+
+                var resetEvent = new ManualResetEventSlim(false);
+                ThreadPoolManager.Instance.ExecuteOnMainThread(() =>
+                {
+                    try
+                    {
+                        UnitActionManager.Instance.ExecuteImmediately(attackBuildingAction);
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
+                });
+                resetEvent.Wait();
+
+                UpdateUnitTask(warrior, BotTaskType.Attack, buildingToAttack);
             }
         }
 
@@ -663,6 +716,7 @@ namespace Bots
         private void CheckForDuels()
         {
             var unitsCopy = new List<UnitItem>(Units);
+            _unitEnemies.Clear();
 
             foreach (var unit in unitsCopy)
             {
@@ -671,7 +725,6 @@ namespace Bots
                 {
                     try
                     {
-                        _unitEnemies.Clear();
                         var enemies = FindEnemies(unit.Coords, _unitDangerRadius);
                         if (enemies.Count > 0)
                         {
@@ -706,6 +759,41 @@ namespace Bots
             }
 
             return enemies;
+        }
+
+        private bool CheckForAttackEnemyTown(int availableUnitsCount)
+        {
+            if (_enemyTownKeys.Count == 0)
+                return false;
+
+            var unitsCopy = Units.ToList();
+            var allBackpacksAlmostFull = unitsCopy.All(unit =>
+            {
+                var backpackPercentage = unit.Backpack.GetFillPercentage();
+
+                return backpackPercentage > 0.8f;
+            });
+
+            if (allBackpacksAlmostFull)
+            {
+                _isInWar = false;
+                return false;
+            }
+
+            var enemyTown = TownRegistry.TownList.Find(x => x.Id == _enemyTownKeys.First() && !x.IsDestroyed);
+
+            if (enemyTown.Units.Count <= availableUnitsCount)
+            {
+                if (_isInWar || GameRandom.Random.NextDouble() < _chanceToAttackEnemy)
+                {
+                    _enemyTownToAttack = enemyTown;
+                    _isInWar = true;
+                    return true;
+                }
+            }
+
+            _isInWar = false;
+            return false;
         }
 
         private void ProcessBuilding()
@@ -999,7 +1087,6 @@ namespace Bots
 
         public void SortNearestSupplies()
         {
-            
             if (_town.TownHall != null)
             {
                 var suppliesDict = ItemListRegistry.GetList<SupplyItem>();
@@ -1010,6 +1097,24 @@ namespace Bots
 
                 _suppliesKeys = sortedKeys;
                 IsSortedSupplies = true;
+            }
+        }
+
+        public void SortNearestEnemyTowns()
+        {
+            if (_town.TownHall != null)
+            {
+                var enemyTowns = TownRegistry.TownList.ToList();
+                var currentPosition = _town.TownHall.CenterCoords;
+
+                var sortedTownIds = enemyTowns
+                    .Where(townItem => townItem.Id != _town.Id)
+                    .OrderBy(townItem => Vector2.Distance(currentPosition, townItem.TownHall.CenterCoords))
+                    .Select(townItem => townItem.Id)
+                    .ToList();
+
+                _enemyTownKeys = sortedTownIds;
+                IsSortedEnemyTowns = true;
             }
         }
 
@@ -1026,16 +1131,19 @@ namespace Bots
                 case BotTypes.Aggressive:
                     _townDangerRadius = 20;
                     _unitDangerRadius = 8;
+                    _chanceToAttackEnemy = 0.3f;
                     break;
 
                 case BotTypes.Balanced:
                     _townDangerRadius = 15;
                     _unitDangerRadius = 6;
+                    _chanceToAttackEnemy = 0.2f;
                     break;
 
                 case BotTypes.Passive:
                     _townDangerRadius = 10;
                     _unitDangerRadius = 4;
+                    _chanceToAttackEnemy = 0.1f;
                     break;
             }
 

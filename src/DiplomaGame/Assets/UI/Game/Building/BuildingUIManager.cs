@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Assets.Items.Interfaces;
+using Town;
 
 public class BuildingUIManager : MonoBehaviour
 {
@@ -203,7 +204,10 @@ public class BuildingUIManager : MonoBehaviour
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_resourcePanel as RectTransform);
 
-        resourceGO.GetComponent<Button>().onClick.AddListener(() => SpawnResourceRemovePanel(_currentBuilding, resourceItem));
+        if (_currentBuilding.HomeTown.Id == TownRegistry.UserTown.Id)
+        {
+            resourceGO.GetComponent<Button>().onClick.AddListener(() => SpawnResourceRemovePanel(_currentBuilding, resourceItem));
+        }
     }
 
     private void RemoveResourceFromPanel(IBackpackItem resource)
@@ -325,7 +329,14 @@ public class BuildingUIManager : MonoBehaviour
     {
         if (_currentBuilding == building)
         {
-            UpdateHealthBar(building.HP, building.Building.MaxHP);
+            if (building.IsBuilt)
+            {
+                UpdateHealthBar(building.HP, building.Building.MaxHP);
+            }
+            else
+            {
+                UpdateHealthBar(building.HP, building.Construction.MaxHP);
+            }
             UpdateBackpackUI(building.Backpack);
             UpdateBuildingResourcesInfo(building);
         }
@@ -334,6 +345,13 @@ public class BuildingUIManager : MonoBehaviour
     private void UpdateBuildingResourcesInfo(BuildingItem building)
     {
         ResetUIElements();
+        if (_currentBuilding.HomeTown.Id == TownRegistry.UserTown.Id)
+        {
+            if (IsBuiltBuildingWithResources(building))
+            {
+                ShowStoredResourcesInfo(building);
+            }
+        }
 
         if (IsUnbuiltBuildingWithResources(building))
         {
@@ -405,16 +423,19 @@ public class BuildingUIManager : MonoBehaviour
             UpdateBackpackUI(requiredResources);
         }
 
-        _action1Button.gameObject.SetActive(true);
-
-        _action1Button.onClick.RemoveAllListeners();
-
-        _action1Button.onClick.AddListener(() =>
+        if (_currentBuilding.HomeTown.Id == TownRegistry.UserTown.Id)
         {
-            building.BuildingCraftingSystem.StopCraft();
-        });
+            _action1Button.gameObject.SetActive(true);
 
-        _action1Image.sprite = UITextureManager.Instance.Sprites["General/Close"];
+            _action1Button.onClick.RemoveAllListeners();
+
+            _action1Button.onClick.AddListener(() =>
+            {
+                building.BuildingCraftingSystem.StopCraft();
+            });
+
+            _action1Image.sprite = UITextureManager.Instance.Sprites["General/Close"];
+        }
     }
 
     private bool IsBuiltBuildingWithCrafts(BuildingItem building)
@@ -424,16 +445,19 @@ public class BuildingUIManager : MonoBehaviour
 
     private void ShowCraftingOptions(BuildingItem building)
     {
-        _action1Button.gameObject.SetActive(true);
-
-        _action1Button.onClick.RemoveAllListeners();
-
-        _action1Button.onClick.AddListener(() =>
+        if (_currentBuilding.HomeTown.Id == TownRegistry.UserTown.Id)
         {
-            CraftingMenuUIManager.Instance.ShowBuildingCrafts(building);
-        });
+            _action1Button.gameObject.SetActive(true);
 
-        _action1Image.sprite = UITextureManager.Instance.GetActionSprite("Craft");
+            _action1Button.onClick.RemoveAllListeners();
+
+            _action1Button.onClick.AddListener(() =>
+            {
+                CraftingMenuUIManager.Instance.ShowBuildingCrafts(building);
+            });
+
+            _action1Image.sprite = UITextureManager.Instance.GetActionSprite("Craft");
+        }
 
         if (IsBuiltBuildingWithResources(building))
         {

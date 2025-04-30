@@ -78,6 +78,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public void SetPosition(Vector2 position)
     {
+        if(IsDestroyed)
+            return;
+
         if (Time.time - _lastTimePositionEventInvoked > _timeToInvokePositionEvent)
         {
             _lastTimePositionEventInvoked = Time.time;
@@ -92,6 +95,9 @@ public class UnitItem : MonoBehaviour, ISelectable, IUnit
 
     public void SetPositionWithGroup(Vector2 position)
     {
+        if (IsDestroyed)
+            return;
+
         if (Time.time - _lastTimePositionEventInvoked > _timeToInvokePositionEvent)
         {
             _lastTimePositionEventInvoked = Time.time;
