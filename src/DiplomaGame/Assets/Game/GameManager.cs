@@ -2,6 +2,7 @@
 using Supplies;
 using System.Collections;
 using System.Collections.Generic;
+using FogOfWar;
 using Town;
 using UnityEngine;
 
@@ -35,9 +36,10 @@ namespace Game
             GenerateSupplies();
             DisplaySupplies();
             DisplayTilemap();
-            SpawnTowns(100);
+            SpawnTowns(2);
             SpawnTownUnits(5);
-            StartAllBots();
+            //StartAllBots();
+            InitializeFogOfWar();
         }
 
         private IEnumerator GenerateBiomeMap()
@@ -100,8 +102,13 @@ namespace Game
         private void SpawnTowns(int count)
         {
             TownSpawner.SpawnTowns(count, 20, "UserTestTown");
+            /*
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
+            */
+
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.TownList.Find(x => x.IsUnitControlTown == false).TownHall.CenterCoords));
         }
 
         private void LoadAllTextures()
@@ -129,6 +136,11 @@ namespace Game
             {
                 town.TownUnitSpawner.SpawnStartUnits(startUnits);
             }
+        }
+
+        private void InitializeFogOfWar()
+        {
+            FogOfWarDisplay.Instance.StartFog();
         }
     }
 }

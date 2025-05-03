@@ -29,6 +29,7 @@ public class ConfigManager : MonoBehaviour
 
         ConfigLoader.LoadCraftingRecipesConfig();
 
-        ConfigLoader.LoadUITexturesConfig();
+        ConfigLoader.LoadUITexturesConfig(); 
+        //ConfigLoader.LoadForOfWarTexturesConfig();
     }
 }

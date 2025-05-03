@@ -17,4 +17,5 @@ public static class ConfigPaths
     public static string WeaponsConfigPath { get; set; }
     public static string ArmorsConfigPath { get; set; }
     public static string UITexturesPath { get; set; }
+    public static string FogOfWarTexturesPath { get; set; }
 }

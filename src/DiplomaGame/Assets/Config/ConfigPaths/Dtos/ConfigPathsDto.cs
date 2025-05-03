@@ -18,5 +18,6 @@ public class ConfigPathsDto
     public string WeaponsConfigPath;
     public string ArmorsConfigPath;
     public string UITexturesPath;
+    public string FogOfWarTexturesPath;
 }
 

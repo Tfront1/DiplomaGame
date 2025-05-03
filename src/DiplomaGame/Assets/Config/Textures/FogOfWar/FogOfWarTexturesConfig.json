@@ -1,0 +1,34 @@
+﻿{
+  "TexturesFolderPath": "Assets/Textures/FogOfWar",
+  "BackgroundTexture": {
+    "Id": 1,
+    "FileName": "background.png"
+  },
+  "CloutTextures": [
+    {
+      "Id": 2,
+      "FileName": "cloud1.png"
+    },
+    {
+      "Id": 3,
+      "FileName": "cloud2.png"
+    },
+    {
+      "Id": 4,
+      "FileName": "cloud3.png"
+    },
+    {
+      "Id": 5,
+      "FileName": "cloud4.png"
+    },
+    {
+      "Id": 6,
+      "FileName": "cloud5.png"
+    },
+    {
+      "Id": 7,
+      "FileName": "cloud6.png"
+    }
+  ]
+
+}

@@ -15,5 +15,6 @@
   "CraftingRecipesConfigPath": "Assets/Config/Items/CraftingRecipes/CraftingRecipesConfig.json",
   "WeaponsConfigPath": "Assets/Config/Items/Weapons/WeaponConfig.json",
   "ArmorsConfigPath": "Assets/Config/Items/Armor/ArmorConfig.json",
-  "UITexturesPath": "Assets/Config/Textures/UI/UITexturesConfig.json"
+  "UITexturesPath": "Assets/Config/Textures/UI/UITexturesConfig.json",
+  "FogOfWarTexturesPath": "Assets/Config/Textures/Game/Fog/FogOfWarTexturesConfig.json"
 }

@@ -27,6 +27,7 @@ public static partial class ConfigLoader
         ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
         ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
         ConfigPaths.UITexturesPath = configPathsDto.UITexturesPath;
+        ConfigPaths.FogOfWarTexturesPath = configPathsDto.FogOfWarTexturesPath;
 
         Debug.Log("Config paths loaded");
 	}
