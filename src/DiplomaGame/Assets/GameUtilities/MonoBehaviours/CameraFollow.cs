@@ -120,6 +120,7 @@ namespace GameUtilities.MonoBehaviours
             return myCamera.ScreenToWorldPoint(coords);
         }
     }
+
     public class CameraMoveEventArgs : EventArgs
     {
         public Vector3 OldPosition { get; private set; }

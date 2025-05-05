@@ -51,16 +51,8 @@ Shader "Custom/FogOfWarMaterial"
             fixed4 frag (v2f i) : SV_Target
             {
                 float fogValue = tex2D(_FogTex, i.uv).r;
-
-                if (fogValue >= 0.7)
-                {
-                    return _FogColor;
-                }
-                else
-                {
-                    float alpha = fogValue;
-                    return fixed4(_FogColor.rgb, alpha);
-                }
+                float alpha = fogValue;
+                return fixed4(_FogColor.rgb, alpha);
             }
             ENDCG
         }

@@ -85,7 +85,7 @@ Shader "Hidden/FogOfWar"
                 return o;
             }
             
-            sampler2D _MainTex;
+            sampler2D _CurrentVisibilityTex;
             float4 _PlayerPos;
             float _VisionRadius;
             
@@ -93,11 +93,10 @@ Shader "Hidden/FogOfWar"
             {
                 float dist = distance(i.uv, _PlayerPos.xy);
                 
-                float visibility = 1.0 - smoothstep(_VisionRadius * 0.8, _VisionRadius, dist);
-                
-                float existingVisibility = tex2D(_MainTex, i.uv).r;
-                
-                return saturate(max(existingVisibility, visibility));
+                float visibility = 1.0 - smoothstep(_VisionRadius * 0.8, _VisionRadius, dist).r;
+                float existingVisibility = tex2D(_CurrentVisibilityTex, i.uv).r;
+
+                return fixed4(saturate(max(visibility, existingVisibility)), 0, 0, 1);
             }
             ENDCG
         }
@@ -151,6 +150,6 @@ Shader "Hidden/FogOfWar"
                 return fixed4(currentFog, 0, 0, 1);
             }
             ENDCG
-        }    
+        }
     }
 }

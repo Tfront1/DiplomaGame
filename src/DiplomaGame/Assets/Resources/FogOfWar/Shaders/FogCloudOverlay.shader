@@ -58,7 +58,7 @@ Shader "Custom/FogCloudOverlay"
                 float noise = tex2D(_MainTex, uv).r;
                 float fog = tex2D(_FogTex, i.uv).r;
 
-                if( fog < 0.1)
+                if(fog < 0.1)
                 {
                     return float4(0, 0, 0, 0);
                 }

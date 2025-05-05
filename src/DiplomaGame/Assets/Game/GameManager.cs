@@ -140,7 +140,13 @@ namespace Game
 
         private void InitializeFogOfWar()
         {
-            FogOfWarDisplay.Instance.StartFog();
+            var startTime = Time.realtimeSinceStartup;
+
+            FogOfWarDisplay.Instance.StartFog(MapConfig.MapWidth, MapConfig.MapHeight,
+                new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY));
+
+            var endTime = Time.realtimeSinceStartup;
+            Debug.Log($"Fog of war display time: {(endTime - startTime) * 1000:F2}ms");
         }
     }
 }
