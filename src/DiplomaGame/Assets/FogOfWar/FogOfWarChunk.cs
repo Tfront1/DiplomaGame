@@ -7,13 +7,11 @@ namespace FogOfWar
 {
     public class FogOfWarChunk : MonoBehaviour
     {
-        private Vector3 chunkWorldPosition;
-        private Vector3 fogScale;
-        private int chunkWidth;
-        private int chunkHeight;
-        private Vector2 _fogDirection;
-
-        private float _visionRadius = 5f;
+        public Vector3 chunkWorldPosition;
+        public Vector3 fogScale;
+        public int chunkWidth;
+        public int chunkHeight;
+        public Vector2 _fogDirection;
 
         private Material fogMaterial;
         private RenderTexture fogRenderTexture;
@@ -22,27 +20,33 @@ namespace FogOfWar
         private SpriteRenderer fogSpriteRenderer;
         private RenderTexture currentVisibilityTexture;
 
+        private GameObject highGameObject;
         private RenderTexture highLayer = null;
         private SpriteRenderer highFogSpriteRenderer;
+        private Sprite highFogSprite;
         private Material highMaterial;
         private Texture2D highTexture;
 
+        private GameObject midGameObject;
         private RenderTexture midLayer = null;
         private SpriteRenderer midFogSpriteRenderer;
+        private Sprite midFogSprite;
         private Material midMaterial;
         private Texture2D midTexture;
 
+        private GameObject botGameObject;
         private RenderTexture botLayer = null;
         private SpriteRenderer botFogSpriteRenderer;
+        private Sprite botFogSprite;
         private Material botMaterial;
         private Texture2D botTexture;
 
         private Material fogCloudMaterial;
 
         private HashSet<UnitItem> _units = new();
+        private HashSet<BuildingItem> _buildings = new();
 
-        public void StartFog(Vector3 coords, Vector3 scale, int width, int height,
-            Texture2D noise1, Texture2D noise2, Texture2D noise3, Vector2 direction)
+        public void SetupFog(Vector3 coords, Vector3 scale, int width, int height, Vector2 direction)
         {
             chunkWorldPosition = coords;
             fogScale = scale;
@@ -50,14 +54,62 @@ namespace FogOfWar
             chunkHeight = height;
             _fogDirection = direction;
 
+            InitializeResources();
+        }
+        
+        public void StartFog(Texture2D noise1, Texture2D noise2, Texture2D noise3)
+        {
+            gameObject.SetActive(true);
+
             botTexture = noise1;
             midTexture = noise2;
             highTexture = noise3;
 
-            InitializeResources();
             SetupVariables();
             SetupFogDisplay();
             SetupFogLayers();
+
+            highGameObject?.SetActive(true);
+            midGameObject?.SetActive(true);
+            botGameObject?.SetActive(true);
+
+        }
+
+        public void StopFog()
+        {
+            _units.Clear();
+            _buildings.Clear();
+
+            if (fogSpriteRenderer != null)
+            {
+                fogSpriteRenderer.material = null;
+            }
+
+            if (highFogSpriteRenderer != null)
+            {
+                highFogSpriteRenderer.material = null;
+                highGameObject?.SetActive(false);
+            }
+
+            if (midFogSpriteRenderer != null)
+            {
+                midFogSpriteRenderer.material = null;
+                midGameObject?.SetActive(false);
+            }
+
+            if (botFogSpriteRenderer != null)
+            {
+                botFogSpriteRenderer.material = null;
+                botGameObject?.SetActive(false);
+            }
+
+            ReleaseRenderTexture(ref fogRenderTexture);
+            ReleaseRenderTexture(ref currentVisibilityTexture);
+            ReleaseRenderTexture(ref highLayer);
+            ReleaseRenderTexture(ref midLayer);
+            ReleaseRenderTexture(ref botLayer);
+
+            gameObject.SetActive(false);
         }
 
         public void UpdateUnitData(UnitItem unit)
@@ -182,19 +234,39 @@ namespace FogOfWar
 
         private void SetupFogLayers()
         {
-            var highFogObject = CreateFogLayerObject("HighLayer");
-            highFogSpriteRenderer = highFogObject.GetComponent<SpriteRenderer>();
-            SetupSpriteRenderer(highFogSpriteRenderer, highLayer, highTexture, 4, new Color(0.3f, 0.3f, 0.3f, 1f));
+            if (highGameObject == null)
+            {
+                highGameObject = CreateFogLayerObject("HighLayer");
+            }
+            if (highFogSpriteRenderer == null)
+            {
+                highFogSpriteRenderer = highGameObject.GetComponent<SpriteRenderer>();
+
+            }
+            SetupSpriteRenderer(highFogSpriteRenderer, ref highLayer, ref highFogSprite, highTexture,  4, new Color(0.3f, 0.3f, 0.3f, 1f));
             highMaterial = highFogSpriteRenderer.material;
 
-            var midFogObject = CreateFogLayerObject("MidLayer");
-            midFogSpriteRenderer = midFogObject.GetComponent<SpriteRenderer>();
-            SetupSpriteRenderer(midFogSpriteRenderer, midLayer, midTexture, 3, new Color(0.2f, 0.2f, 0.2f, 1f));
+            if (midGameObject == null)
+            {
+                midGameObject = CreateFogLayerObject("MidLayer");
+            }
+            if (midFogSpriteRenderer == null)
+            {
+                midFogSpriteRenderer = midGameObject.GetComponent<SpriteRenderer>();
+
+            }
+            SetupSpriteRenderer(midFogSpriteRenderer, ref midLayer, ref midFogSprite, midTexture, 3, new Color(0.2f, 0.2f, 0.2f, 1f));
             midMaterial = midFogSpriteRenderer.material;
 
-            var botFogObject = CreateFogLayerObject("BotLayer");
-            botFogSpriteRenderer = botFogObject.GetComponent<SpriteRenderer>();
-            SetupSpriteRenderer(botFogSpriteRenderer, botLayer, botTexture, 2, new Color(0.1f, 0.1f, 0.1f, 1f));
+            if (botGameObject == null)
+            {
+                botGameObject = CreateFogLayerObject("BotLayer");
+            }
+            if (botFogSpriteRenderer == null)
+            {
+                botFogSpriteRenderer = botGameObject.GetComponent<SpriteRenderer>();
+            }
+            SetupSpriteRenderer(botFogSpriteRenderer, ref botLayer, ref botFogSprite, botTexture, 2, new Color(0.1f, 0.1f, 0.1f, 1f));
             botMaterial = botFogSpriteRenderer.material;
         }
 
@@ -202,17 +274,18 @@ namespace FogOfWar
         {
             var fogObject = new GameObject(nameGO);
 
-            fogObject.transform.SetParent(this.transform);
+            fogObject.transform.SetParent(transform);
 
             fogObject.AddComponent<SpriteRenderer>();
 
-            fogObject.transform.localScale = new Vector3(0.1f, 0.1f, 1);
-            fogObject.transform.localPosition = new Vector3(0, 0, 0);
+            var scaleX = 100f / (chunkWidth * MapConfig.CellSize);
+            var scaleY = 100f / (chunkHeight * MapConfig.CellSize);
+            fogObject.transform.localScale = new Vector3(scaleX, scaleY, 1); fogObject.transform.localPosition = new Vector3(0, 0, 0);
 
             return fogObject;
         }
 
-        private void SetupSpriteRenderer(SpriteRenderer spriteRenderer, RenderTexture renderTexture, Texture2D texture, int sortOrder, Color layerColor)
+        private void SetupSpriteRenderer(SpriteRenderer spriteRenderer, ref RenderTexture renderTexture, ref Sprite sprite, Texture2D texture, int sortOrder, Color layerColor)
         {
             if (renderTexture == null)
             {
@@ -224,15 +297,18 @@ namespace FogOfWar
                 var copyMat = new Material(Shader.Find("Hidden/CopyRedChannel"));
                 Graphics.Blit(texture, renderTexture, copyMat);
             }
-            
-            var newSprite = Sprite.Create(
-                texture,
-                new Rect(0, 0, texture.width, texture.height),
-                new Vector2(0.5f, 0.5f),
-                100.0f
-            );
 
-            spriteRenderer.sprite = newSprite;
+            if (sprite == null)
+            {
+                sprite = Sprite.Create(
+                    texture,
+                    new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f),
+                    100.0f
+                );
+            }
+
+            spriteRenderer.sprite = sprite;
 
             spriteRenderer.sortingOrder = sortOrder;
 
@@ -261,9 +337,10 @@ namespace FogOfWar
                 return;
             }
 
+            var unitVisionRadius = unit.Unit.VisionRadius;
 
             var playerPos = WorldToUV(unit.UnitGameObject.transform.position);
-            var visionRadius = _visionRadius * MapConfig.CellSize / (chunkWidth * MapConfig.CellSize);
+            var visionRadius = unitVisionRadius * MapConfig.CellSize / (chunkWidth * MapConfig.CellSize);
 
             if (playerPos.x + visionRadius < 0 || playerPos.x - visionRadius > 1 ||
                 playerPos.y + visionRadius < 0 || playerPos.y - visionRadius > 1)
@@ -291,24 +368,100 @@ namespace FogOfWar
 
             Graphics.Blit(temp, temp2);
 
-            CreateUnitsVisibilityTexture(temp2);
+            CreateVisibilityTexture(temp2);
 
             RenderTexture.ReleaseTemporary(temp);
             RenderTexture.ReleaseTemporary(temp2);
         }
 
-        public void CreateUnitsVisibilityTexture(RenderTexture unitsTexture)
+        public void CreateVisibilityTexture(RenderTexture unitsTexture)
         {
             fogBlendMaterial.SetTexture("_CurrentVisibilityTex", currentVisibilityTexture);
             ClearCurrentVisibility();
+
             foreach (var unit in _units)
             {
                 var playerPos = WorldToUV(unit.UnitGameObject.transform.position);
+                var visionRadius = unit.Unit.VisionRadius * MapConfig.CellSize / (chunkWidth * MapConfig.CellSize);
 
                 fogBlendMaterial.SetVector("_PlayerPos", new Vector4(playerPos.x, playerPos.y, 0, 0));
+                fogBlendMaterial.SetFloat("_VisionRadius", visionRadius);
 
                 Graphics.Blit(currentVisibilityTexture, unitsTexture, fogBlendMaterial, 1);
                 Graphics.Blit(unitsTexture, currentVisibilityTexture);
+            }
+
+            foreach (var building in _buildings)
+            {
+                var buildingPos = WorldToUV(building.BuildingGameObject.transform.position);
+                var visionRadius = building.Building.VisionRadius * MapConfig.CellSize / (chunkWidth * MapConfig.CellSize);
+
+                fogBlendMaterial.SetVector("_PlayerPos", new Vector4(buildingPos.x, buildingPos.y, 0, 0));
+                fogBlendMaterial.SetFloat("_VisionRadius", visionRadius);
+
+                Graphics.Blit(currentVisibilityTexture, unitsTexture, fogBlendMaterial, 1);
+                Graphics.Blit(unitsTexture, currentVisibilityTexture);
+            }
+        }
+
+        public void UpdateBuildingData(BuildingItem building)
+        {
+            if (building == null || building.BuildingGameObject == null)
+            {
+                if (_buildings.Contains(building))
+                    _buildings.Remove(building);
+                return;
+            }
+
+            var buildingVisionRadius = building.Building.VisionRadius;
+
+            var buildingPos = WorldToUV(building.BuildingGameObject.transform.position);
+            var visionRadius = buildingVisionRadius * MapConfig.CellSize / (chunkWidth * MapConfig.CellSize);
+
+            if (buildingPos.x + visionRadius < 0 || buildingPos.x - visionRadius > 1 ||
+                buildingPos.y + visionRadius < 0 || buildingPos.y - visionRadius > 1)
+            {
+                return;
+            }
+
+            _buildings.Add(building);
+
+            fogBlendMaterial.SetVector("_PlayerPos", new Vector4(buildingPos.x, buildingPos.y, 0, 0));
+            fogBlendMaterial.SetFloat("_VisionRadius", visionRadius);
+
+            var temp = RenderTexture.GetTemporary(chunkWidth * (int)MapConfig.CellSize,
+                chunkHeight * (int)MapConfig.CellSize,
+                0,
+                RenderTextureFormat.R16);
+
+            var temp2 = RenderTexture.GetTemporary(chunkWidth * (int)MapConfig.CellSize,
+                chunkHeight * (int)MapConfig.CellSize,
+                0,
+                RenderTextureFormat.R16);
+
+            Graphics.Blit(fogRenderTexture, temp, fogBlendMaterial, 0);
+            Graphics.Blit(temp, fogRenderTexture);
+
+            Graphics.Blit(temp, temp2);
+
+            UpdateCurrentVisibilityWithBuildings(temp2);
+
+            RenderTexture.ReleaseTemporary(temp);
+            RenderTexture.ReleaseTemporary(temp2);
+        }
+
+        private void UpdateCurrentVisibilityWithBuildings(RenderTexture buildingsTexture)
+        {
+            fogBlendMaterial.SetTexture("_CurrentVisibilityTex", currentVisibilityTexture);
+
+            foreach (var building in _buildings)
+            {
+                var buildingPos = WorldToUV(building.BuildingGameObject.transform.position);
+
+                fogBlendMaterial.SetVector("_PlayerPos", new Vector4(buildingPos.x, buildingPos.y, 0, 0));
+
+                Graphics.Blit(currentVisibilityTexture, buildingsTexture, fogBlendMaterial, 1);
+                Graphics.Blit(buildingsTexture, currentVisibilityTexture);
             }
         }
 
@@ -346,37 +499,38 @@ namespace FogOfWar
             return new Vector2(normalizedX, normalizedY);
         }
 
+        private void ReleaseRenderTexture(ref RenderTexture texture)
+        {
+            if (texture != null)
+            {
+                texture.Release();
+                Destroy(texture);
+                texture = null;
+            }
+        }
+
         private void OnDestroy()
         {
-            if (fogRenderTexture != null)
-            {
-                fogRenderTexture.Release();
-                Destroy(fogRenderTexture);
-            }
+            _units.Clear();
+            _buildings.Clear();
 
-            if (currentVisibilityTexture != null)
-            {
-                currentVisibilityTexture.Release();
-                Destroy(currentVisibilityTexture);
-            }
+            if (fogMaterial != null)
+                fogMaterial.SetTexture("_FogTex", null);
 
-            if (highLayer != null)
-            {
-                highLayer.Release();
-                Destroy(highLayer);
-            }
+            if (highMaterial != null)
+                highMaterial.SetTexture("_MainTex", null);
 
-            if (midLayer != null)
-            {
-                midLayer.Release();
-                Destroy(midLayer);
-            }
+            if (midMaterial != null)
+                midMaterial.SetTexture("_MainTex", null);
 
-            if (botLayer != null)
-            {
-                botLayer.Release();
-                Destroy(botLayer);
-            }
+            if (botMaterial != null)
+                botMaterial.SetTexture("_MainTex", null);
+
+            ReleaseRenderTexture(ref fogRenderTexture);
+            ReleaseRenderTexture(ref currentVisibilityTexture);
+            ReleaseRenderTexture(ref highLayer);
+            ReleaseRenderTexture(ref midLayer);
+            ReleaseRenderTexture(ref botLayer);
         }
     }
 }

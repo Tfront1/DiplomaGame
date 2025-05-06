@@ -10,7 +10,8 @@
       "BuildingType": "Construction",
       "BackpackCapacity": 1,
       "HasCrafts": false,
-      "MaxResidents": 0
+      "MaxResidents": 0,
+      "VisionRadius": 10
     },
     {
       "Id": 2,
@@ -22,7 +23,8 @@
       "BuildingType": "TownHall",
       "BackpackCapacity": 2000,
       "HasCrafts": false,
-      "MaxResidents": 10
+      "MaxResidents": 10,
+      "VisionRadius": 15
     },
     {
       "Id": 3,
@@ -34,7 +36,8 @@
       "BuildingType": "Fence",
       "BackpackCapacity": 0,
       "HasCrafts": false,
-      "MaxResidents": 0
+      "MaxResidents": 0,
+      "VisionRadius": 2
     },
     {
       "Id": 4,
@@ -46,7 +49,8 @@
       "BuildingType": "Vault",
       "BackpackCapacity": 2000,
       "HasCrafts": false,
-      "MaxResidents": 0
+      "MaxResidents": 0,
+      "VisionRadius": 10
     },
     {
       "Id": 5,
@@ -58,7 +62,8 @@
       "BuildingType": "Blacksmith",
       "BackpackCapacity": 0,
       "HasCrafts": true,
-      "MaxResidents": 5
+      "MaxResidents": 5,
+      "VisionRadius": 10
     }
   ]
 }

@@ -8,4 +8,5 @@ public class UnitDto
     public float SizeX;
     public float SizeY;
     public float Speed;
+    public float VisionRadius;
 }

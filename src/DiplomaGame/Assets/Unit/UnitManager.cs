@@ -15,7 +15,7 @@ public class UnitManager
     private static Dictionary<string, List<Sprite>> _animationCache = new();
     private static Dictionary<UnitItem, Coroutine> _activeAnimations = new();
 
-    private static float _unitSize = 30f;
+    private static float _unitSize => MapConfig.CellSize * 3;
 
     public static void InitializeCaches()
     {

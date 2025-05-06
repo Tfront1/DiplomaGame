@@ -125,9 +125,8 @@ public class CameraManager : MonoBehaviour
             var mouseDelta = currentMousePosition - _lastMousePosition;
 
             var moveDirection = new Vector3(mouseDelta.x, mouseDelta.y, 0).normalized;
-            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / CameraConfig.MiddleMouseSpeed / 2;
 
-
+            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / 2;
             var toAddPosition = moveDirection * CameraConfig.MiddleMouseSpeed * Time.deltaTime * distance;
 
             _targetPosition += toAddPosition;
@@ -143,7 +142,7 @@ public class CameraManager : MonoBehaviour
 
         if (CheckCameraMapBordersCollision(newZoom))
         {
-            _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom);
+            _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom) * 5;
             NormalizeCameraMapPosition();
             _currentZoom = newZoom;
         }

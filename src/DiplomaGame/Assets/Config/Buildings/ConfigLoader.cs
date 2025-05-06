@@ -50,7 +50,8 @@ public static partial class ConfigLoader
 			BuildingType = GetBuildingType(x.BuildingType),
             BackpackCapacity = x.BackpackCapacity,
 			HasCrafts = x.HasCrafts,
-			MaxResidents = x.MaxResidents
+			MaxResidents = x.MaxResidents,
+			VisionRadius = x.VisionRadius
 		}));
 
         Debug.Log("Buildings config loaded");

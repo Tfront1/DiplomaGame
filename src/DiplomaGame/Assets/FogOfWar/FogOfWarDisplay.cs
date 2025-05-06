@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using GameUtilities.MonoBehaviours;
+using System.Collections.Generic;
 using System.IO;
 using Town;
 using UnityEngine;
@@ -7,14 +8,16 @@ namespace FogOfWar
 {
     public class FogOfWarDisplay : MonoBehaviour
     {
-        private int chunkSize = 100;
+        private int chunkSize = 50;
 
         private int mapWidth;
         private int mapHeight;
         private Vector3 mapOrigin;
 
         private Dictionary<Vector2Int, FogOfWarChunk> chunks = new();
+        private Dictionary<Vector2Int, FogOfWarChunk> activeChunks = new();
         private Dictionary<UnitItem, Vector3> lastUnitPositions = new();
+        private Dictionary<BuildingItem, Vector3> lastBuildingPositions = new();
 
         private static FogOfWarDisplay _instance;
         private static readonly object _lock = new();
@@ -30,6 +33,8 @@ namespace FogOfWar
         private const string FOG_CLOUD_PATH = "FogOfWar/Materials/FogCloudOverlay";
 
         private Dictionary<(Vector2Int, float), Texture2D> _noiseTextureCache = new();
+        private Dictionary<Vector2Int, float> neighborChunks = new();
+        private float neighborChunkTimeout = 10.0f;
 
         public static FogOfWarDisplay Instance
         {
@@ -69,6 +74,7 @@ namespace FogOfWar
             mapOrigin = origin;
 
             CreateChunks();
+            CameraManager.SubscribeToCameraMove(OnCameraMove);
         }
 
         private void CreateChunks()
@@ -115,17 +121,37 @@ namespace FogOfWar
 
             var chunkComponent = chunkObject.AddComponent<FogOfWarChunk>();
 
-            var perlinTextureWidth = width * (int)MapConfig.CellSize;
-            var perlinTextureHeight = width * (int)MapConfig.CellSize;
+            chunkComponent.SetupFog(position, scale, width, height, direction);
+
+            chunks.Add(chunkCoords, chunkComponent);
+        }
+
+        private void ActivateChunk(FogOfWarChunk chunk)
+        {
+            var perlinTextureWidth = chunk.chunkWidth * (int)MapConfig.CellSize;
+            var perlinTextureHeight = chunk.chunkHeight * (int)MapConfig.CellSize;
 
             var noiseTexture1 = GetOrCreatePerlinNoiseTexture(perlinTextureWidth, perlinTextureHeight, 1f);
             var noiseTexture2 = GetOrCreatePerlinNoiseTexture(perlinTextureWidth, perlinTextureWidth, 2f);
             var noiseTexture3 = GetOrCreatePerlinNoiseTexture(perlinTextureWidth, perlinTextureWidth, 3f);
 
-            chunkComponent.StartFog(position, scale, width, height, noiseTexture1, noiseTexture2, noiseTexture3, direction);
+            chunk.StartFog(noiseTexture1, noiseTexture2, noiseTexture3);
+            var units = TownRegistry.UserTown.Units;
+            foreach (var unit in units)
+            {
+                chunk.UpdateUnitData(unit);
+            }
 
-            chunks.Add(chunkCoords, chunkComponent);
-            chunkObject.SetActive(true);
+            var buildings = TownRegistry.UserTown.Buildings;
+            foreach (var building in buildings)
+            {
+                chunk.UpdateBuildingData(building);
+            }
+        }
+
+        private void DeactivateChunk(FogOfWarChunk chunk)
+        {
+            chunk.StopFog();
         }
 
         private void Update()
@@ -144,7 +170,7 @@ namespace FogOfWar
                     if (!lastUnitPositions.ContainsKey(unit) ||
                         Vector3.Distance(lastUnitPositions[unit], unit.UnitGameObject.transform.position) > 1.0f)
                     {
-                        foreach (var chunk in chunks)
+                        foreach (var chunk in activeChunks)
                         {
                             if (chunk.Value.isActiveAndEnabled)
                             {
@@ -156,10 +182,36 @@ namespace FogOfWar
                     }
                 }
             }
-            
-            foreach (var chunk in chunks)
+
+            var buildings = TownRegistry.UserTown.Buildings;
+            foreach (var building in buildings)
             {
-                //chunk.Value.UpdateFadeFog(toClearCurrentVisibleFog);
+                if (building.IsDestroyed && lastBuildingPositions.ContainsKey(building))
+                {
+                    lastBuildingPositions.Remove(building);
+                    toClearCurrentVisibleFog = true;
+                }
+                else
+                {
+                    if (!lastBuildingPositions.ContainsKey(building) ||
+                        Vector3.Distance(lastBuildingPositions[building], building.BuildingGameObject.transform.position) > 1.0f)
+                    {
+                        foreach (var chunk in activeChunks)
+                        {
+                            if (chunk.Value.isActiveAndEnabled)
+                            {
+                                chunk.Value.UpdateBuildingData(building);
+                            }
+                        }
+
+                        lastBuildingPositions[building] = building.BuildingGameObject.transform.position;
+                    }
+                }
+            }
+
+            foreach (var chunk in activeChunks)
+            {
+                chunk.Value.UpdateFadeFog(toClearCurrentVisibleFog);
             }
         }
 
@@ -192,6 +244,204 @@ namespace FogOfWar
                 Debug.LogWarning("No fog of war sprite at: Resources/" + FOG_SPRITE_PATH);
                 return;
             }
+        }
+
+        private bool IsChunkVisible(Vector2Int chunkCoord, Vector3 bottomLeft, Vector3 topRight)
+        {
+            var chunk = chunks[chunkCoord];
+            var chunkPosition = chunk.transform.position;
+
+            var chunkLeft = chunkPosition.x - chunk.chunkWidth * MapConfig.CellSize / 2f;
+            var chunkRight = chunkPosition.x + chunk.chunkWidth * MapConfig.CellSize / 2f;
+            var chunkBottom = chunkPosition.y - chunk.chunkHeight * MapConfig.CellSize / 2f;
+            var chunkTop = chunkPosition.y + chunk.chunkHeight * MapConfig.CellSize / 2f;
+
+            if (chunkRight < bottomLeft.x || chunkLeft > topRight.x ||
+                chunkTop < bottomLeft.y || chunkBottom > topRight.y)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool HasUnitsOrBuildingsInChunk(Vector2Int chunkCoords, List<UnitItem> units, List<BuildingItem> buildings)
+        {
+            var chunk = chunks[chunkCoords];
+            var chunkPosition = chunk.transform.position;
+            var chunkLeft = chunkPosition.x - chunk.chunkWidth * MapConfig.CellSize / 2f;
+            var chunkRight = chunkPosition.x + chunk.chunkWidth * MapConfig.CellSize / 2f;
+            var chunkBottom = chunkPosition.y - chunk.chunkHeight * MapConfig.CellSize / 2f;
+            var chunkTop = chunkPosition.y + chunk.chunkHeight * MapConfig.CellSize / 2f;
+
+            foreach (var unit in units)
+            {
+                var unitVisionRadius = unit.Unit.VisionRadius * MapConfig.CellSize;
+
+                var closestX = Mathf.Max(chunkLeft, Mathf.Min(unit.Coords.x, chunkRight));
+                var closestY = Mathf.Max(chunkBottom, Mathf.Min(unit.Coords.y, chunkTop));
+
+                var distance = Vector2.Distance(new Vector2(closestX, closestY), unit.Coords);
+
+                if (distance <= unitVisionRadius)
+                {
+                    return true;
+                }
+            }
+
+            foreach (var building in buildings)
+            {
+                var buildingVisionRadius = building.Building.VisionRadius * MapConfig.CellSize;
+
+                var closestX = Mathf.Max(chunkLeft, Mathf.Min(building.BuildingGameObject.transform.position.x, chunkRight));
+                var closestY = Mathf.Max(chunkBottom, Mathf.Min(building.BuildingGameObject.transform.position.y, chunkTop));
+
+                var distance = Vector2.Distance(
+                    new Vector2(closestX, closestY),
+                    new Vector2(building.BuildingGameObject.transform.position.x, building.BuildingGameObject.transform.position.y));
+
+                if (distance <= buildingVisionRadius)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void UpdateChunksVisibility(Vector3 bottomLeft, Vector3 topRight)
+        {
+            var activeUnits = TownRegistry.UserTown.Units;
+            var activeBuildings = TownRegistry.UserTown.Buildings;
+
+            var currentTime = Time.time;
+            var expiredNeighbors = new List<Vector2Int>();
+
+            foreach (var kvp in neighborChunks)
+            {
+                if (activeChunks.ContainsKey(kvp.Key))
+                {
+                    if (kvp.Value + neighborChunkTimeout < currentTime)
+                    {
+                        var isVisible = IsChunkVisible(kvp.Key, bottomLeft, topRight);
+                        if (!isVisible)
+                        {
+                            var hasUnitsOrBuildings = HasUnitsOrBuildingsInChunk(kvp.Key, activeUnits, activeBuildings);
+                            if (!hasUnitsOrBuildings)
+                            {
+                                expiredNeighbors.Add(kvp.Key);
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var chunkCoords in expiredNeighbors)
+            {
+                chunks.TryGetValue(chunkCoords, out var chunkComponent);
+                DeactivateChunk(chunkComponent);
+                activeChunks.Remove(chunkCoords);
+                neighborChunks.Remove(chunkCoords);
+            }
+
+            var minChunkX = Mathf.FloorToInt((bottomLeft.x - mapOrigin.x) / (chunkSize * MapConfig.CellSize));
+            var maxChunkX = Mathf.CeilToInt((topRight.x - mapOrigin.x) / (chunkSize * MapConfig.CellSize));
+            var minChunkY = Mathf.FloorToInt((bottomLeft.y - mapOrigin.y) / (chunkSize * MapConfig.CellSize));
+            var maxChunkY = Mathf.CeilToInt((topRight.y - mapOrigin.y) / (chunkSize * MapConfig.CellSize));
+
+            minChunkX = Mathf.Max(0, minChunkX);
+            maxChunkX = Mathf.Min(Mathf.CeilToInt((float)mapWidth / chunkSize) - 1, maxChunkX);
+            minChunkY = Mathf.Max(0, minChunkY);
+            maxChunkY = Mathf.Min(Mathf.CeilToInt((float)mapHeight / chunkSize) - 1, maxChunkY);
+
+            var chunksToActivate = new HashSet<Vector2Int>();
+
+            for (var y = minChunkY; y <= maxChunkY; y++)
+            {
+                for (var x = minChunkX; x <= maxChunkX; x++)
+                {
+                    var chunkCoords = new Vector2Int(x, y);
+
+                    var isVisible = IsChunkVisible(chunkCoords, bottomLeft, topRight);
+                    if (isVisible)
+                    {
+                        chunksToActivate.Add(chunkCoords);
+                        AddNeighborChunks(chunkCoords, chunksToActivate);
+                    }
+                    else
+                    {
+                        var hasUnitsOrBuildings = HasUnitsOrBuildingsInChunk(chunkCoords, activeUnits, activeBuildings);
+                        if (hasUnitsOrBuildings)
+                        {
+                            chunksToActivate.Add(chunkCoords);
+                            AddNeighborChunks(chunkCoords, chunksToActivate);
+                        }
+                    }
+                }
+            }
+
+            foreach (var chunkCoords in chunksToActivate)
+            {
+                if (chunks.TryGetValue(chunkCoords, out var chunkComponent) && !activeChunks.ContainsKey(chunkCoords))
+                {
+                    if (activeChunks.TryAdd(chunkCoords, chunkComponent))
+                    {
+                        ActivateChunk(chunkComponent);
+                        neighborChunks.Add(chunkCoords, currentTime);
+                    }
+                }
+            }
+        }
+
+        private void AddNeighborChunks(Vector2Int chunkCoords, HashSet<Vector2Int> chunksToActivate)
+        {
+            var firstLevelOffsets = new[]
+            {
+                new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
+                new Vector2Int(-1, 0),                         new Vector2Int(1, 0),
+                new Vector2Int(-1, 1),  new Vector2Int(0, 1),  new Vector2Int(1, 1)
+            };
+
+            var secondLevelOffsets = new[]
+            {
+                new Vector2Int(-2, -2), new Vector2Int(-1, -2), new Vector2Int(0, -2), new Vector2Int(1, -2), new Vector2Int(2, -2),
+                new Vector2Int(-2, -1),                                                                        new Vector2Int(2, -1),
+                new Vector2Int(-2, 0),                                                                         new Vector2Int(2, 0),
+                new Vector2Int(-2, 1),                                                                         new Vector2Int(2, 1),
+                new Vector2Int(-2, 2),  new Vector2Int(-1, 2),  new Vector2Int(0, 2),  new Vector2Int(1, 2),  new Vector2Int(2, 2)
+            };
+
+            foreach (var offset in firstLevelOffsets)
+            {
+                var neighborCoords = new Vector2Int(chunkCoords.x + offset.x, chunkCoords.y + offset.y);
+
+                if (IsValidChunkCoords(neighborCoords))
+                {
+                    if (chunks.ContainsKey(neighborCoords))
+                    {
+                        chunksToActivate.Add(neighborCoords);
+                    }
+                }
+            }
+
+            foreach (var offset in secondLevelOffsets)
+            {
+                var neighborCoords = new Vector2Int(chunkCoords.x + offset.x, chunkCoords.y + offset.y);
+
+                if (IsValidChunkCoords(neighborCoords))
+                {
+                    if (chunks.ContainsKey(neighborCoords))
+                    {
+                        chunksToActivate.Add(neighborCoords);
+                    }
+                }
+            }
+        }
+
+        private bool IsValidChunkCoords(Vector2Int coords)
+        {
+            return coords.x >= 0 && coords.x < mapWidth &&
+                   coords.y >= 0 && coords.y < mapHeight;
         }
 
         private Texture2D GetOrCreatePerlinNoiseTexture(int width, int height, float scale)
@@ -250,6 +500,16 @@ namespace FogOfWar
             return new Vector2(Random.Range(min, max), Random.Range(min, max));
         }
 
+        private void OnCameraMove(CameraMoveEventArgs args)
+        {
+            UpdateChunksVisibility(args.BottomLeft, args.TopRight);
+        }
+
+        private void OnDestroy()
+        {
+            CameraManager.UnsubscribeFromCameraMove(OnCameraMove);
+        }
+
         private void SaveTextureToPNG(Texture2D texture, string fileName)
         {
             try
@@ -273,9 +533,5 @@ namespace FogOfWar
                 Debug.LogError("Помилка при збереженні текстури: " + e.Message);
             }
         }
-
-        
-
-        
     }
 }

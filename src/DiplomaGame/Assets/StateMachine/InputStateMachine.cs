@@ -163,6 +163,7 @@ namespace StateMachine
                 var canvasObj = new GameObject("SelectionCanvas");
                 canvas = canvasObj.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.WorldSpace;
+                canvas.sortingOrder = 30;
                 canvasObj.AddComponent<CanvasScaler>();
                 canvasObj.AddComponent<GraphicRaycaster>();
             }

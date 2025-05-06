@@ -102,13 +102,13 @@ namespace Game
         private void SpawnTowns(int count)
         {
             TownSpawner.SpawnTowns(count, 20, "UserTestTown");
-            /*
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
-            */
-
+            
+            /*
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.TownList.Find(x => x.IsUnitControlTown == false).TownHall.CenterCoords));
+            */
         }
 
         private void LoadAllTextures()

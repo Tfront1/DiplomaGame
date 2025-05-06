@@ -14,6 +14,7 @@ public class Building
     public int BuildingCraftId { get; set; }
     public List<int> CraftsIds { get; set; } = new();
 	public int MaxResidents { get; set; }
+    public float VisionRadius { get; set; }
 
     public enum BuildingTypes
     {

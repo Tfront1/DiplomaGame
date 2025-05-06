@@ -1,7 +1,7 @@
 ﻿{
-	"MapWidth": 100.0,
-	"MapHeight": 100.0,
+	"MapWidth": 300.0,
+	"MapHeight": 300.0,
 	"MapStartPointX": 0.0,
 	"MapStartPointY": 0.0,
-	"CellSize": 10.0
+	"CellSize": 2.0
 }

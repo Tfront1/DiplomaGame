@@ -11,4 +11,5 @@ public class BuildingDto
     public int BackpackCapacity;
     public bool HasCrafts;
     public int MaxResidents;
+    public float VisionRadius;
 }

@@ -5,11 +5,10 @@ public class UnitCounterDisplay : MonoBehaviour
 {
     private TextMeshPro _textComponent;
     private GameObject _textObject;
-    private int _currentCount = 0;
 
     private Vector3 _textOffset = new(0.1f, 0.2f, 0);
     private Color _textColor = Color.white;
-    private float _textSize = 30.0f;
+    private float _textSize = 3.0f;
 
     private void Awake()
     {
@@ -34,8 +33,6 @@ public class UnitCounterDisplay : MonoBehaviour
 
     public void UpdateCount(int count)
     {
-        _currentCount = count;
-
         if (count <= 1)
         {
             _textObject.SetActive(false);

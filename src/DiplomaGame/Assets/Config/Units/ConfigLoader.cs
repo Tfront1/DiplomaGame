@@ -45,7 +45,8 @@ public static partial class ConfigLoader
             Name = x.Name,
             Texture = x.Texture,
             Size = new Vector2(x.SizeX, x.SizeY),
-            Speed = x.Speed
+            Speed = x.Speed,
+            VisionRadius = x.VisionRadius
         }));
 
         Debug.Log("Units config loaded");
