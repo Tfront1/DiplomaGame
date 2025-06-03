@@ -8,7 +8,6 @@ using Town;
 using UnityEngine;
 using UnityEngine.UI;
 using static Items.Resource.BackPack.Backpack;
-using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 {
@@ -381,46 +380,43 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         {
             Destroy(_progressBarObject);
         }
-
         var _progressBarPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/ProgressBarPrefab");
         _progressBarPrefab = _progressBarPrefab.transform.Find("Canvas").gameObject;
-
         _progressBarObject = Instantiate(_progressBarPrefab, transform);
         _progressBarObject.name = "ProgressBar";
         _progressSlider = _progressBarObject.transform.Find("Slider").GetComponent<Slider>();
 
         var yOffset = 0.5f;
-        var buildingHeight = 0f;
-        var buildingWidth = 0f;
-        var spriteRenderer = BuildingGameObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null)
-        {
-            buildingWidth = spriteRenderer.bounds.size.x;
-            buildingHeight = spriteRenderer.bounds.size.y;
-        }
 
-        var localScaleX = 1 / BuildingGameObject.transform.localScale.x / 3;
-        var localScaleY = 1 / BuildingGameObject.transform.localScale.y / 3;
+        var buildingWidth = Building.WidthCell * MapConfig.CellSize;
+        var buildingHeight = Building.HeightCell * MapConfig.CellSize;
 
-        _progressSlider.transform.localScale = new Vector3(localScaleX, localScaleY, BuildingGameObject.transform.localScale.z);
-
-        _progressSlider.transform.position = new Vector3(
-            BuildingGameObject.transform.position.x + buildingWidth / 2,
-            BuildingGameObject.transform.position.y + buildingHeight + yOffset,
-            BuildingGameObject.transform.position.z
+        _progressBarObject.transform.localPosition = new Vector3(
+            (SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit).x / 2,
+            (SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit).y / 2f + yOffset,
+            0
         );
 
-        var sliderRect = _progressSlider.GetComponent<RectTransform>();
-        if (sliderRect != null)
+        var progressBarRect = _progressSlider.GetComponent<RectTransform>();
+        if (progressBarRect != null)
         {
-            var sliderWidth = Building.WidthCell * MapConfig.CellSize * 3f;
-            sliderRect.sizeDelta = new Vector2(sliderWidth, sliderRect.sizeDelta.y);
+            progressBarRect.sizeDelta = new Vector2((buildingWidth * 100f) / MapConfig.CellSize / 2f, MapConfig.CellSize * 10f);
+
+            progressBarRect.localScale = Vector3.one;
+        }
+
+        var canvas = _progressBarObject.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.worldCamera = Camera.main;
+
+            _progressBarObject.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
         }
 
         _progressBarObject.layer = LayerMask.NameToLayer("GameplayUI");
         _progressBarObject.SetActive(false);
     }
-
     public class BuildingDestroyedEventArgs : EventArgs
     {
         public BuildingItem BuildingItem { get; }

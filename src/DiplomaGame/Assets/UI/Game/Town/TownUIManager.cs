@@ -247,6 +247,7 @@ public class TownUIManager : MonoBehaviour
         {
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
+            CameraManager.Instance.SetCameraZoom(CameraConfig.MinZoom);
         }
     }
 

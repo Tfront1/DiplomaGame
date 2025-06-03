@@ -308,6 +308,14 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    public void SetCameraZoom(float zoom)
+    {
+        NormalizeCameraMapPosition();
+
+        _currentZoom = zoom;
+        cameraFollow.SetCameraZoom(_currentZoom);
+    }
+
     private void UpdateCameraData()
     {
         NormalizeCameraMapPosition();

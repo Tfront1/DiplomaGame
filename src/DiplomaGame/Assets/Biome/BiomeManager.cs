@@ -22,7 +22,7 @@ namespace Biomes
 				var isBiomeMapValid = false;
 				var generateCount = 0;
                 
-                //while (!isBiomeMapValid)
+                while (!isBiomeMapValid)
 				{
                     _biomeMap = BiomeMapGenerator.GenerateBiomeMap(
 						mapWidth: MapConfig.MapWidth,

@@ -139,6 +139,7 @@ namespace BuildingAction
             if (iconComponent != null)
             {
                 iconComponent.sprite = UITextureManager.Instance.GetBuildingActionSprite(actionType);
+                actionItem.localScale = new Vector3(MapConfig.CellSize, MapConfig.CellSize);
             }
             
 

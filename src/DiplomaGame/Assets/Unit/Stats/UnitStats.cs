@@ -1,4 +1,6 @@
-﻿public class UnitStats
+﻿using System;
+
+public class UnitStats
 {
     public Health Health { get; }
     public Armor Armor { get; }
@@ -19,6 +21,8 @@
 
     public void Update(float deltaTime)
     {
+        var t1 = Stamina.CurrentValue;
+
         Stamina.Update(deltaTime);
         //Hunger.Update(deltaTime);
 
@@ -30,7 +34,10 @@
         {
             Stamina.StartRegeneration();
         }
-
-        OnUpdate?.Invoke();
+        
+        if (Math.Abs(t1 - Stamina.CurrentValue) > 0.0001f)
+        {
+            OnUpdate?.Invoke();
+        }
     }
 }
