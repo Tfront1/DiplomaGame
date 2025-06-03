@@ -8,6 +8,7 @@ using Town;
 using UnityEngine;
 using UnityEngine.UI;
 using static Items.Resource.BackPack.Backpack;
+using static TMPro.SpriteAssetUtilities.TexturePacker_JsonArray;
 
 public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
 {
@@ -265,6 +266,8 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         {
             Destroy(SelectionIndicator);
         }
+        var spriteSize = SpriteRenderer.sprite.rect.size / SpriteRenderer.sprite.pixelsPerUnit;
+
         SelectionIndicator = new GameObject("SelectionIndicator");
         SelectionIndicator.transform.SetParent(transform);
         SelectionIndicator.transform.localPosition = Vector3.zero;
@@ -274,6 +277,11 @@ public class BuildingItem : MonoBehaviour, IItemListObject, ISelectable
         indicatorRenderer.color = new Color(0, 1, 0, 0.6f);
         indicatorRenderer.sortingOrder = GetComponent<SpriteRenderer>().sortingOrder - 1;
         SelectionIndicator.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+
+        var offset = new Vector3(spriteSize.x * 0.5f, spriteSize.y * 0.5f, 0);
+        var locPosX = -(offset * (1.2f - 1.0f)).x;
+        var locPosY = -(offset * (1.2f - 1.0f)).y;
+        SelectionIndicator.transform.localPosition = new Vector3(locPosX, locPosY, offset.z);
 
         SelectionIndicator.SetActive(false);
     }

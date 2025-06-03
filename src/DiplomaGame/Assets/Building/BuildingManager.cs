@@ -134,7 +134,6 @@ public class BuildingManager : MonoBehaviour
         townItem.AddBuilding(buildingItem);
         TeleportUnitsToEdgeOfTheBuilding(buildingItem);
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(buildingItem.gameObject.GetComponent<RectTransform>());
         buildingItem.BuildingController.BuildingActionUI.UpdateUIScale();
 
         return true;

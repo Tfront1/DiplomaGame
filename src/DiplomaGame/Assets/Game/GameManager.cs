@@ -36,10 +36,10 @@ namespace Game
             GenerateSupplies();
             DisplaySupplies();
             DisplayTilemap();
-            SpawnTowns(2);
-            SpawnTownUnits(5);
-            //StartAllBots();
-            InitializeFogOfWar();
+            SpawnTowns(5);
+            SpawnTownUnits(3);
+            StartAllBots();
+            //InitializeFogOfWar();
         }
 
         private IEnumerator GenerateBiomeMap()

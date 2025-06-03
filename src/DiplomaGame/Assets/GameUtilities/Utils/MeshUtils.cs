@@ -148,10 +148,14 @@ namespace GameUtilities.Utils
                 vertices[vIndex3] = pos + GetQuaternionEuler(rot - 0) * baseSize;
             }
 
-            uvs[vIndex0] = new Vector2(uv00.x, uv11.y);
-            uvs[vIndex1] = new Vector2(uv00.x, uv00.y);
-            uvs[vIndex2] = new Vector2(uv11.x, uv00.y);
-            uvs[vIndex3] = new Vector2(uv11.x, uv11.y);
+            var texelSize = 1.0f / TilemapTexturesManager.Instance.CombinedTextureWidth;
+            var adjustedUV00 = new Vector2(uv00.x + texelSize, uv00.y + texelSize);
+            var adjustedUV11 = new Vector2(uv11.x - texelSize, uv11.y - texelSize);
+
+            uvs[vIndex0] = new Vector2(adjustedUV00.x, adjustedUV11.y);
+            uvs[vIndex1] = new Vector2(adjustedUV00.x, adjustedUV00.y);
+            uvs[vIndex2] = new Vector2(adjustedUV11.x, adjustedUV00.y);
+            uvs[vIndex3] = new Vector2(adjustedUV11.x, adjustedUV11.y);
 
             var tIndex = index * 6;
             triangles[tIndex + 0] = vIndex0;

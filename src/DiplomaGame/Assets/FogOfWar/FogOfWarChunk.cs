@@ -319,7 +319,7 @@ namespace FogOfWar
             material.SetColor("_FogColor", layerColor);
 
             material.SetVector("_LayerSpeed", _fogDirection);
-            material.SetFloat("_TimeScale", 0.03f);
+            material.SetFloat("_TimeScale", 0.01f);
 
             spriteRenderer.material = material;
 

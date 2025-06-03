@@ -1131,19 +1131,19 @@ namespace Bots
                 case BotTypes.Aggressive:
                     _townDangerRadius = 20;
                     _unitDangerRadius = 8;
-                    _chanceToAttackEnemy = 0.3f;
+                    _chanceToAttackEnemy = 0.05f;
                     break;
 
                 case BotTypes.Balanced:
                     _townDangerRadius = 15;
                     _unitDangerRadius = 6;
-                    _chanceToAttackEnemy = 0.2f;
+                    _chanceToAttackEnemy = 0.03f;
                     break;
 
                 case BotTypes.Passive:
                     _townDangerRadius = 10;
                     _unitDangerRadius = 4;
-                    _chanceToAttackEnemy = 0.1f;
+                    _chanceToAttackEnemy = 0.01f;
                     break;
             }
 
