@@ -35,7 +35,6 @@ public class ContextPanel : MonoBehaviour
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             if (_contextPrefab == null)
                 _contextPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Context/ContextTextPrefab");

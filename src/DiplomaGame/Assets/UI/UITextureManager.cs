@@ -15,6 +15,7 @@ public class UITextureManager
     private static readonly object _lock = new();
 
     public Dictionary<string, Sprite> Sprites { get; set; }
+    public static bool IsLoadedAllTextures { get; set; } = false;
 
     private UITextureManager()
     {
@@ -40,6 +41,7 @@ public class UITextureManager
 
     public static void LoadAllTextures()
     {
+        IsLoadedAllTextures = true;
         Instance.Sprites = new Dictionary<string, Sprite>();
 
         UITexturesConfig.Textures.ForEach(textureFolder =>

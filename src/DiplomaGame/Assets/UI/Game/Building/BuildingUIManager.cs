@@ -72,7 +72,6 @@ public class BuildingUIManager : MonoBehaviour
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             if (_buildingPrefab == null)
                 _buildingPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingUIPrefab");

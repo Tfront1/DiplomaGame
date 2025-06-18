@@ -1,5 +1,6 @@
 ﻿using Items.Resource.BackPack;
 using System.Collections.Generic;
+using Assets.Items.Interfaces;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +15,7 @@ public class SupplyUIManager : MonoBehaviour
     private TextMeshProUGUI _supplyBackpackCountText;
     private Transform _supplyResourcePanel;
 
-    private Dictionary<int, GameObject> _playerResourceItems = new();
+    private Dictionary<IBackpackItem, GameObject> _playerResourceItems = new();
 
     private Canvas _mainCanvas;
     private SupplyItem _currentSupply;
@@ -53,7 +54,6 @@ public class SupplyUIManager : MonoBehaviour
                 _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab");
 
             _instance = this;
-            DontDestroyOnLoad(gameObject);
             InitializeUI();
             InitializeResourceDisplay();
             HideSupplyInfo();
@@ -101,37 +101,35 @@ public class SupplyUIManager : MonoBehaviour
         {
             _supplyBackpackCountText.text = $"{backpack.CurrentCapacity} / {backpack.MaxCapacity}";
 
-            var resourcesToRemove = new HashSet<int>(_playerResourceItems.Keys);
+            var resourcesToRemove = new HashSet<IBackpackItem>(_playerResourceItems.Keys);
 
             foreach (var (key, quantity) in backpack.GetDetailedItems())
             {
-                var resourceId = key.Id;
-
-                resourcesToRemove.Remove(resourceId);
+                resourcesToRemove.Remove(key);
 
                 if (quantity <= 0)
                 {
-                    RemoveResourceFromPanel(resourceId);
+                    RemoveResourceFromPanel(key);
                 }
-                else if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+                else if (_playerResourceItems.TryGetValue(key, out var resourceItem))
                 {
                     var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
                     resourceText.text = quantity.ToString();
                 }
                 else
                 {
-                    AddResourceToPanel(resourceId, quantity);
+                    AddResourceToPanel(key, quantity);
                 }
             }
 
-            foreach (var resourceId in resourcesToRemove)
+            foreach (var resource in resourcesToRemove)
             {
-                RemoveResourceFromPanel(resourceId);
+                RemoveResourceFromPanel(resource);
             }
         }
     }
 
-    private void AddResourceToPanel(int resourceId, int quantity)
+    private void AddResourceToPanel(IBackpackItem item, int quantity)
     {
         if (quantity <= 0)
             return;
@@ -149,21 +147,21 @@ public class SupplyUIManager : MonoBehaviour
         }
 
         var resourceText = resourceItem.GetComponentInChildren<TextMeshProUGUI>();
-        var resourceImage = resourceItem.GetComponentInChildren<Image>();
-        //resourceImage.sprite = ResourceManager.Instance.GetResourceSprite(resourceId);
+        var resourceImage = resourceItem.transform.Find("ResourceImage").GetComponent<Image>();
+        resourceImage.sprite = UITextureManager.Instance.GetResourceSprite(item);
 
-        _playerResourceItems[resourceId] = resourceItem;
+        _playerResourceItems[item] = resourceItem;
         resourceText.text = quantity.ToString();
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_supplyResourcePanel as RectTransform);
     }
 
-    private void RemoveResourceFromPanel(int resourceId)
+    private void RemoveResourceFromPanel(IBackpackItem item)
     {
-        if (_playerResourceItems.TryGetValue(resourceId, out var resourceItem))
+        if (_playerResourceItems.TryGetValue(item, out var resourceItem))
         {
             Destroy(resourceItem);
-            _playerResourceItems.Remove(resourceId);
+            _playerResourceItems.Remove(item);
         }
     }
 
@@ -186,7 +184,7 @@ public class SupplyUIManager : MonoBehaviour
             {
                 if (resource.Value > 0)
                 {
-                    AddResourceToPanel(resource.Key.Id, resource.Value);
+                    AddResourceToPanel(resource.Key, resource.Value);
                 }
             }
         }

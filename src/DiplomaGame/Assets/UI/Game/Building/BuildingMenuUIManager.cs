@@ -52,7 +52,6 @@ public class BuildingMenuUIManager : MonoBehaviour
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             if (_buildingButtonPrefab == null)
                 _buildingButtonPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Building/BuildingButtonPrefab");

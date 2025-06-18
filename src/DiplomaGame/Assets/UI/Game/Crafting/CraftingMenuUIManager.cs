@@ -47,7 +47,6 @@ public class CraftingMenuUIManager : MonoBehaviour
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             if (_craftingMenuPrefab == null)
                 _craftingMenuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Crafting/CraftingMenuPrefab");

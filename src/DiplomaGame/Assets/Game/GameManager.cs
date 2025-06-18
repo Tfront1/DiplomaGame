@@ -1,10 +1,13 @@
-﻿using Biomes;
+﻿using System;
+using Biomes;
 using Supplies;
 using System.Collections;
 using System.Collections.Generic;
 using FogOfWar;
+using TMPro;
 using Town;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Game
 {
@@ -14,12 +17,15 @@ namespace Game
         private (int[,], Dictionary<(int, int), int>) _supplyData;
         private bool _displayAllTiles = false;
 
+        private GameObject _loadingPanel;
+        private Slider _progressBar;
+        private TextMeshProUGUI _loadingInfoText;
+
         void Start()
         {
-            // Debug
-            GameRandom.SetSeed(new System.Random().Next(1000000, 10000000));
+            GameRandom.SetSeed(MainMenuUI.Seed);
 
-            LoadAllTextures();
+            InitializeLoadingProgressBar();
             InitializeComponents();
             StartCoroutine(InitializeGame());
         }
@@ -31,15 +37,68 @@ namespace Game
 
         private IEnumerator InitializeGame()
         {
-            yield return StartCoroutine(GenerateBiomeMap());
+            var totalSteps = 4; // LoadTextures, GenerateBiome, GenerateSupplies, DisplaySupplies, DisplayTilemap
+            if (MainMenuUI.EnableBots)
+                totalSteps += 3; // SpawnTowns, SpawnUnits, StartBots
+            else
+                totalSteps += 1; // SpawnTowns
+            if (MainMenuUI.EnableFog)
+                totalSteps += 1; // InitializeFog
 
-            GenerateSupplies();
-            DisplaySupplies();
-            DisplayTilemap();
-            SpawnTowns(5);
-            SpawnTownUnits(3);
-            StartAllBots();
-            //InitializeFogOfWar();
+            var progressPerStep = 100f / totalSteps;
+
+            yield return StartCoroutine(ExecuteWithProgress("Loading textures...", progressPerStep,
+                LoadAllTextures));
+
+            yield return StartCoroutine(ExecuteCoroutineWithProgress("Generating biome map...", progressPerStep,
+                GenerateBiomeMap));
+
+            yield return StartCoroutine(ExecuteWithProgress("Generating supplies...", progressPerStep,
+                GenerateSupplies));
+
+            yield return StartCoroutine(ExecuteWithProgress("Displaying supplies...", progressPerStep,
+                DisplaySupplies));
+
+            yield return StartCoroutine(ExecuteWithProgress("Displaying tilemap...", progressPerStep,
+                DisplayTilemap));
+
+            if (MainMenuUI.EnableBots)
+            {
+                yield return StartCoroutine(ExecuteWithProgress("Spawning towns...", progressPerStep,
+                    () => SpawnTowns(3)));
+
+                yield return StartCoroutine(ExecuteWithProgress("Spawning units...", progressPerStep,
+                    () => SpawnTownUnits(3)));
+
+                yield return StartCoroutine(ExecuteWithProgress("Starting bots...", progressPerStep,
+                    StartAllBots));
+            }
+            else
+            {
+                yield return StartCoroutine(ExecuteWithProgress("Spawning town...", progressPerStep,
+                    () => SpawnTowns(1)));
+            }
+
+            if (MainMenuUI.EnableFog)
+            {
+                yield return StartCoroutine(ExecuteWithProgress("Initializing fog of war...", progressPerStep,
+                    InitializeFogOfWar));
+            }
+        }
+
+        private IEnumerator ExecuteWithProgress(string infoText, float progressToAdd, Action action)
+        {
+            SetLoadingInfoText(infoText);
+            action.Invoke();
+            AddLoadingProgress(progressToAdd);
+            yield return null;
+        }
+
+        private IEnumerator ExecuteCoroutineWithProgress(string infoText, float progressToAdd, Func<IEnumerator> coroutineFunc)
+        {
+            SetLoadingInfoText(infoText);
+            yield return StartCoroutine(coroutineFunc.Invoke());
+            AddLoadingProgress(progressToAdd);
         }
 
         private IEnumerator GenerateBiomeMap()
@@ -101,7 +160,14 @@ namespace Game
 
         private void SpawnTowns(int count)
         {
-            TownSpawner.SpawnTowns(count, 20, "UserTestTown");
+            if (!MainMenuUI.TownName.Equals(""))
+            {
+                TownSpawner.SpawnTowns(count, 20, MainMenuUI.TownName);
+            }
+            else
+            {
+                TownSpawner.SpawnTowns(count, 20, "UserTestTown");
+            }
             CameraManager.Instance.SetCameraPositionToMove(
                 GridService.GetWorldPosition(TownRegistry.UserTown.TownHall.CenterCoords));
             
@@ -113,10 +179,25 @@ namespace Game
 
         private void LoadAllTextures()
         {
-            UITextureManager.LoadAllTextures();
-            BuildingManager.InitializeCaches();
-            SupplyManager.InitializeCaches();
-            UnitManager.InitializeCaches();
+            if (!UITextureManager.IsLoadedAllTextures)
+            {
+                UITextureManager.LoadAllTextures();
+            }
+
+            if (!BuildingManager.IsInitializedCaches)
+            {
+                BuildingManager.InitializeCaches();
+            }
+
+            if (!SupplyManager.IsInitializedCaches)
+            {
+                SupplyManager.InitializeCaches();
+            }
+
+            if (!UnitManager.IsLoadedCaches)
+            {
+                UnitManager.InitializeCaches();
+            }
         }
 
         private void StartAllBots()
@@ -147,6 +228,39 @@ namespace Game
 
             var endTime = Time.realtimeSinceStartup;
             Debug.Log($"Fog of war display time: {(endTime - startTime) * 1000:F2}ms");
+        }
+
+        private void InitializeLoadingProgressBar()
+        {
+            var mainCanvas = MainCanvasUI.MainCanvas;
+            var loadingPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Loading/LoadingProgressBar");
+
+            var loadingPanel = loadingPrefab.transform.Find("Canvas/Panel");
+            _loadingPanel = Instantiate(loadingPanel.gameObject, mainCanvas.transform);
+            _loadingPanel.name = "BuildingInfoPanel";
+
+            _progressBar = _loadingPanel.transform.Find("ProgressBar").GetComponent<Slider>();
+            _loadingInfoText = _loadingPanel.transform.Find("InfoText").GetComponent<TextMeshProUGUI>();
+        }
+
+        private void AddLoadingProgress(float number)
+        {
+            _progressBar.value += number;
+            if (Math.Abs(_progressBar.maxValue - _progressBar.value) < 0.01)
+            {
+                StartCoroutine(DestroyLoadingPanelWithDelay());
+            }
+        }
+
+        private void SetLoadingInfoText(string text)
+        {
+            _loadingInfoText.text = text;
+        }
+
+        private IEnumerator DestroyLoadingPanelWithDelay()
+        {
+            yield return new WaitForSeconds(1f);
+            Destroy(_loadingPanel);
         }
     }
 }

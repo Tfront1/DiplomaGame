@@ -54,7 +54,6 @@ public class UnitListUIManager : MonoBehaviour
         else
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             if (_unitListUIPrefab == null)
                 _unitListUIPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Unit/UnitListUIPrefab");

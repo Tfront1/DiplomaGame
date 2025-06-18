@@ -2,6 +2,7 @@
 using TMPro;
 using System.Collections.Generic;
 using Assets.Items.Interfaces;
+using Bots;
 using Town;
 using UnityEngine;
 
@@ -28,6 +29,10 @@ public class TownUIManager : MonoBehaviour
     private Image _resourcesImage;
 
     private Image _menuImage;
+    private GameObject _menuPrefab;
+    private Transform _menuPanel;
+    private Button _resumeButton;
+    private Button _exitButton;
 
     private TextMeshProUGUI _playerTownNameText;
     private TextMeshProUGUI _playerUnitsCountText;
@@ -48,6 +53,9 @@ public class TownUIManager : MonoBehaviour
         if (_resourceItemPrefab == null)
             _resourceItemPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Resource/ResourceUIPrefab"); 
 
+        if(_menuPrefab == null)
+            _menuPrefab = Resources.Load<GameObject>("UI/Game/Prefabs/Town/MenuPrefab");
+
         CreateUI();
     }
 
@@ -57,6 +65,7 @@ public class TownUIManager : MonoBehaviour
 
         var topBarPrefab = _townUIPrefab.transform.Find("Canvas/Background");
         var scrollViewPrefab = _townUIPrefab.transform.Find("Canvas/ScrollView");
+        var menuPrefab = _menuPrefab.transform.Find("Canvas/BlurPanel");
 
         var topBar = Instantiate(topBarPrefab, _mainCanvas.transform);
         topBar.name = "TownTopBar";
@@ -87,7 +96,15 @@ public class TownUIManager : MonoBehaviour
         _menuImage = background.transform.Find("MenuImage").GetComponent<Image>();
         _menuImage.sprite = UITextureManager.Instance.Sprites["Town/Settings"];
         var menuButton = _menuImage.GetComponent<Button>();
-        
+        menuButton.onClick.AddListener(OpenMenuPanel);
+        _menuPanel = Instantiate(menuPrefab, _mainCanvas.transform);
+        _resumeButton = _menuPanel.Find("MenuPanel/ButtonsPanel/ResumeButton").GetComponent<Button>();
+        _exitButton = _menuPanel.Find("MenuPanel/ButtonsPanel/ExitButton").GetComponent<Button>();
+        _menuPanel.gameObject.SetActive(false);
+
+        _resumeButton.onClick.AddListener(CloseMenuPanel);
+        _exitButton.onClick.AddListener(Exit);
+
         _resourcesPanel = _scrollView.transform.Find("Viewport/Panel");
 
         var layoutElement = _resourcesPanel.GetComponent<LayoutElement>();
@@ -259,5 +276,32 @@ public class TownUIManager : MonoBehaviour
     private void ToggleResourcesPanel(Transform panel)
     {
         panel.gameObject.SetActive(!panel.gameObject.activeSelf);
+    }
+
+    private void OpenMenuPanel()
+    {
+        TickRateSystem.Instance.StopTicking();
+        UnitActionManager.Instance.PauseAllActions();
+        BotBrainManager.Instance.PauseBots();
+        CameraManager.Instance.enabled = false;
+        _menuPanel.gameObject.SetActive(true);
+    }
+
+    private void CloseMenuPanel()
+    {
+        TickRateSystem.Instance.StartTicking();
+        UnitActionManager.Instance.ResumeAllActions();
+        BotBrainManager.Instance.ResumeBots();
+        CameraManager.Instance.enabled = true;
+        _menuPanel.gameObject.SetActive(false);
+    }
+
+    private void Exit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }
