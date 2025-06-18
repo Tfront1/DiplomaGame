@@ -8,6 +8,8 @@ using System.IO;
 
 public class UnitManager
 {
+    public static bool IsLoadedCaches { get; set; } = false;
+
     private static GameObject _unitFolder = null;
 
     private static Dictionary<TownItem, GameObject> _townUnitFolder = new();
@@ -19,6 +21,7 @@ public class UnitManager
 
     public static void InitializeCaches()
     {
+        IsLoadedCaches = true;
         _spriteCache.Clear();
         _animationCache.Clear();
 

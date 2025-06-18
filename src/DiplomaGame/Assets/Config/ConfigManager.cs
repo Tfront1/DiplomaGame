@@ -3,33 +3,39 @@ using UnityEngine;
 public class ConfigManager : MonoBehaviour
 {
     private string _configPathsPath = "Assets/Config/ConfigPaths/ConfigPaths.json";
+    private static bool _configsLoaded = false;
 
     void Awake()
     {
-		ConfigLoader.LoadConfigPaths(_configPathsPath);
+        if (!_configsLoaded)
+        {
+            ConfigLoader.LoadConfigPaths(_configPathsPath);
 
-		ConfigLoader.LoadCameraConfig();
-		ConfigLoader.LoadMapConfig();
-        ConfigLoader.LoadTerrainTexturesConfig();
-		ConfigLoader.LoadInputSystemConfig();
+            ConfigLoader.LoadCameraConfig();
+            ConfigLoader.LoadMapConfig();
+            ConfigLoader.LoadTerrainTexturesConfig();
+            ConfigLoader.LoadInputSystemConfig();
 
-        ConfigLoader.LoadResourceItemsConfig();
-        ConfigLoader.LoadWeaponsConfig();
-        ConfigLoader.LoadArmorsConfig();
+            ConfigLoader.LoadResourceItemsConfig();
+            ConfigLoader.LoadWeaponsConfig();
+            ConfigLoader.LoadArmorsConfig();
 
-        ConfigLoader.LoadSuppliesConfig();
-        ConfigLoader.LoadBuildingsConfig();
-        ConfigLoader.LoadBiomesConfig();
-        ConfigLoader.LoadBiomeSuppliesConfig();
-        ConfigLoader.LoadSupplyTexturesConfig();
-        ConfigLoader.LoadBuildingTexturesConfig();
+            ConfigLoader.LoadSuppliesConfig();
+            ConfigLoader.LoadBuildingsConfig();
+            ConfigLoader.LoadBiomesConfig();
+            ConfigLoader.LoadBiomeSuppliesConfig();
+            ConfigLoader.LoadSupplyTexturesConfig();
+            ConfigLoader.LoadBuildingTexturesConfig();
 
-        ConfigLoader.LoadUnitsConfig();
-        ConfigLoader.LoadUnitTexturesConfig();
+            ConfigLoader.LoadUnitsConfig();
+            ConfigLoader.LoadUnitTexturesConfig();
 
-        ConfigLoader.LoadCraftingRecipesConfig();
+            ConfigLoader.LoadCraftingRecipesConfig();
 
-        ConfigLoader.LoadUITexturesConfig(); 
-        //ConfigLoader.LoadForOfWarTexturesConfig();
+            ConfigLoader.LoadUITexturesConfig();
+            //ConfigLoader.LoadForOfWarTexturesConfig();
+
+            _configsLoaded = true;
+        }
     }
 }

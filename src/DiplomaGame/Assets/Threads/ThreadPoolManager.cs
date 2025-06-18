@@ -18,7 +18,6 @@ public class ThreadPoolManager : MonoBehaviour
                 {
                     var go = new GameObject("ThreadPoolManager");
                     _instance = go.AddComponent<ThreadPoolManager>();
-                    DontDestroyOnLoad(go);
                 }
                 return _instance;
             }
@@ -38,7 +37,6 @@ public class ThreadPoolManager : MonoBehaviour
 
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
 
         var threadCount = Mathf.Max(1, SystemInfo.processorCount - 1);
         _threads = new Thread[threadCount];

@@ -36,7 +36,6 @@ namespace Selection
             }
 
             _instance = this;
-            DontDestroyOnLoad(gameObject);
             _selectableLayerMask = LayerMask.GetMask("Units", "Objects");
         }
 

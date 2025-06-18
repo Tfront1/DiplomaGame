@@ -782,7 +782,7 @@ namespace Bots
 
             var enemyTown = TownRegistry.TownList.Find(x => x.Id == _enemyTownKeys.First() && !x.IsDestroyed);
 
-            if (enemyTown.Units.Count <= availableUnitsCount)
+            if (enemyTown.Units.Count < availableUnitsCount)
             {
                 if (_isInWar || GameRandom.Random.NextDouble() < _chanceToAttackEnemy)
                 {

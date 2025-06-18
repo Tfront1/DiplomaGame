@@ -15,7 +15,6 @@ namespace Bots
                 {
                     var go = new GameObject("BotBrainManager");
                     _instance = go.AddComponent<BotBrainManager>();
-                    DontDestroyOnLoad(go);
                 }
                 return _instance;
             }
@@ -24,8 +23,26 @@ namespace Bots
         private readonly List<BotBrain> _activeBots = new();
         private readonly object _lock = new();
         private bool _isProcessing = false;
+        private bool _isPaused = false;
         private float _thinkInterval = 1f;
         private Coroutine _processingCoroutine;
+
+        public void PauseBots()
+        {
+            _isPaused = true;
+        }
+
+        public void ResumeBots()
+        {
+            _isPaused = false;
+        }
+
+        public void TogglePause()
+        {
+            _isPaused = !_isPaused;
+        }
+
+        public bool IsPaused => _isPaused;
 
         public void RegisterBot(BotBrain botBrain)
         {
@@ -90,6 +107,12 @@ namespace Bots
         {
             while (_isProcessing)
             {
+                if (_isPaused)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    continue;
+                }
+
                 List<BotBrain> botsToProcess = null;
                 lock (_lock)
                 {
@@ -120,7 +143,7 @@ namespace Bots
                             {
                                 for (var j = startIndex; j < endIndex; j++)
                                 {
-                                    if (!_isProcessing) break;
+                                    if (!_isProcessing || _isPaused) break;
                                     if (botsToProcess[j] != null)
                                     {
                                         botsToProcess[j].Think();

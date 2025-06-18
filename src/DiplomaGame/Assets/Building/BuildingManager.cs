@@ -4,7 +4,6 @@ using System.Linq;
 using Items.Resource.BackPack;
 using Town;
 using UnityEngine;
-using UnityEngine.UI;
 using Random = UnityEngine.Random;
 using Vector2 = UnityEngine.Vector2;
 
@@ -35,7 +34,7 @@ public class BuildingManager : MonoBehaviour
     /// </summary>
     private static Transform _buildingFolder;
 
-    private static bool _isInitializedCaches = false;
+    public static bool IsInitializedCaches { get; set; } = false;
 
     private static ItemList<BuildingItem> _buildingItemList;
     private static MapGrid<BuildingGridObject> _grid;
@@ -81,12 +80,12 @@ public class BuildingManager : MonoBehaviour
             }
         }
 
-        _isInitializedCaches = true; 
+        IsInitializedCaches = true; 
     }
 
     public static bool BuildWithFoundation(Vector2Int gridPosition, Building building, TownItem townItem)
     {
-        if (!_isInitializedCaches)
+        if (!IsInitializedCaches)
         {
             InitializeCaches();
         }
@@ -141,7 +140,7 @@ public class BuildingManager : MonoBehaviour
 
     public static bool BuildInstantly(Vector2Int gridPosition, Building building, TownItem townItem)
     {
-        if (!_isInitializedCaches)
+        if (!IsInitializedCaches)
         {
             InitializeCaches();
         }
@@ -240,7 +239,7 @@ public class BuildingManager : MonoBehaviour
 
     public static void PrePlacementBuilding(Building building, TownItem town)
     {
-        if (!_isInitializedCaches)
+        if (!IsInitializedCaches)
         {
             InitializeCaches();
         }

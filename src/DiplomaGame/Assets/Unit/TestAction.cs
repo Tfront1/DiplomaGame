@@ -3,6 +3,7 @@ using GameUtilities.Utils;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 using Town;
 using Random = UnityEngine.Random;
 
@@ -57,7 +58,18 @@ public class TestAction : MonoBehaviour
             UnitManager.CreateUnit(clickPosition, 3, _enemyTown);
             //SpawnUnit(_enemyTown);
         }
-
+        else if (Input.GetKeyDown(KeyCode.A))
+        {
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.TownList.First(x => !x.IsUnitControlTown).TownHall
+                    .CenterCoords));
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.TownList.Last(x => !x.IsUnitControlTown).TownHall
+                    .CenterCoords));
+        }
         /*
         if (Input.GetKeyDown(KeyCode.R))
         {

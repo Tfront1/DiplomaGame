@@ -9,6 +9,8 @@ namespace Supplies
 {
     public class SupplyManager : MonoBehaviour
     {
+        public static bool IsInitializedCaches { get; set; } = false;
+
         /// <summary>
         /// How much percent would be minimum offset
         /// </summary>
@@ -44,8 +46,6 @@ namespace Supplies
         /// </summary>
         private static Transform _suppliesFolder;
 
-        private static bool _isInitializedCaches = false;
-
         private static Random _random = new();
 
         private static ItemList<SupplyItem> _supplyItemList;
@@ -70,7 +70,7 @@ namespace Supplies
             _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
             _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
 
-            _isInitializedCaches = true;
+            IsInitializedCaches = true;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace Supplies
         /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
         public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts)
         {
-            if (!_isInitializedCaches)
+            if (!IsInitializedCaches)
             {
                 InitializeCaches();
             }

@@ -35,7 +35,6 @@ public class GroupManager : MonoBehaviour
         }
 
         _instance = this;
-        DontDestroyOnLoad(gameObject);
         Initialize();
     }
 

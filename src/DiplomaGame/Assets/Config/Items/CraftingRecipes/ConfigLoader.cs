@@ -100,6 +100,7 @@ public static partial class ConfigLoader
             }
         });
 
+        CraftingRecipesConfig.CraftingRecipesDictionary.Clear();
         CraftingRecipesConfig.CraftingRecipesDictionary = CraftingRecipesConfig.CraftingRecipes
             .ToDictionary(recipe => recipe.Id);
 

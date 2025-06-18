@@ -33,7 +33,6 @@ public class UnitGroupManager : MonoBehaviour
                 {
                     var managerObject = new GameObject("TownUnitPositionManager");
                     _instance = managerObject.AddComponent<UnitGroupManager>();
-                    DontDestroyOnLoad(managerObject);
                 }
             }
             return _instance;
@@ -49,7 +48,6 @@ public class UnitGroupManager : MonoBehaviour
         }
 
         _instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void Start()

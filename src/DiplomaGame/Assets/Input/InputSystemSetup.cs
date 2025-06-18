@@ -18,7 +18,6 @@ public class InputSystemSetup : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
 
         InitializeInputActionAsset();
         SetupEventSystem();

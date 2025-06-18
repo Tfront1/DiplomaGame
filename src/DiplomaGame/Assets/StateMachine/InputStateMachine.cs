@@ -64,7 +64,6 @@ namespace StateMachine
             }
 
             _instance = this;
-            DontDestroyOnLoad(gameObject);
 
             InitializeStates();
 

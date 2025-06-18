@@ -13,7 +13,6 @@ public class TickRateSystem : MonoBehaviour
             {
                 var go = new GameObject("TickRateSystem");
                 _instance = go.AddComponent<TickRateSystem>();
-                DontDestroyOnLoad(go);
             }
             return _instance;
         }
@@ -34,7 +33,6 @@ public class TickRateSystem : MonoBehaviour
         }
 
         _instance = this;
-        DontDestroyOnLoad(gameObject);
 
         StartTicking();
     }
