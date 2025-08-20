@@ -2,56 +2,60 @@
 using System.Collections;
 using UnityEngine;
 
-public class WaitUnitAction : BaseUnitAction
+namespace UnitAction
 {
-    private float _msToWait;
-
-    public WaitUnitAction(UnitItem unit, float msToWait) : base(unit)
+    public class WaitUnitAction : BaseUnitAction
     {
-        _msToWait = msToWait;
-    }
+        private float _msToWait;
 
-    public override bool CanExecute()
-    {
-        //ToDo: Add cases when unit can`t wait
-        return true;
-    }
-
-    public override void Execute()
-    {
-        if (!CanExecute())
+        public WaitUnitAction(UnitItem unit, float msToWait) : base(unit)
         {
-            return;
+            _msToWait = msToWait;
         }
 
-        _idAction = Guid.NewGuid();
-        CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Wait(_msToWait));
-    }
-
-    private IEnumerator Wait(float msToWait)
-    {
-        var secondsToWait = msToWait / 1000f;
-
-        var startTime = Time.time;
-        var pausedTime = 0f;
-
-        while (Time.time - startTime - pausedTime < secondsToWait)
+        public override bool CanExecute()
         {
-            if (IsStopped)
-            {
-                yield break;
-            }
-
-            if (IsPaused)
-            {
-                var timeWhenPaused = Time.time;
-                yield return new WaitUntil(() => !IsPaused);
-                pausedTime += (Time.time - timeWhenPaused);
-            }
-
-            yield return null;
+            //ToDo: Add cases when unit can`t wait
+            return true;
         }
 
-        CompleteAction();
+        public override void Execute()
+        {
+            if (!CanExecute())
+            {
+                CompleteAction();
+                return;
+            }
+
+            _idAction = Guid.NewGuid();
+            CoroutineRunner.Instance.StartCoroutineWithId(_idAction, Wait(_msToWait));
+        }
+
+        private IEnumerator Wait(float msToWait)
+        {
+            var secondsToWait = msToWait / 1000f;
+
+            var startTime = Time.time;
+            var pausedTime = 0f;
+
+            while (Time.time - startTime - pausedTime < secondsToWait)
+            {
+                if (IsStopped)
+                {
+                    yield break;
+                }
+
+                if (IsPaused)
+                {
+                    var timeWhenPaused = Time.time;
+                    yield return new WaitUntil(() => !IsPaused);
+                    pausedTime += (Time.time - timeWhenPaused);
+                }
+
+                yield return null;
+            }
+
+            CompleteAction();
+        }
     }
 }

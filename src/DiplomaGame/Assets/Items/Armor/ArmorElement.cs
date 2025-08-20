@@ -1,5 +1,4 @@
-﻿using Assets.Items.Crafts;
-using Assets.Items.Interfaces;
+﻿using Assets.Items.Interfaces;
 
 namespace Assets.Items.Armor
 {
@@ -8,8 +7,5 @@ namespace Assets.Items.Armor
         public int Id { get; set; }
         public string Name { get; set; }
         public float ArmorResistance { get; set; }
-        public CraftingRecipe CraftingRecipe { get; set; }
-        public float Durability { get; set; }
-        public float Weight { get; set; }
     }
 }

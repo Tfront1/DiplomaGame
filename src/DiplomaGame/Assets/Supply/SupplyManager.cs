@@ -7,8 +7,10 @@ using Random = System.Random;
 
 namespace Supplies
 {
-    internal class SupplyManager : MonoBehaviour
+    public class SupplyManager : MonoBehaviour
     {
+        public static bool IsInitializedCaches { get; set; } = false;
+
         /// <summary>
         /// How much percent would be minimum offset
         /// </summary>
@@ -46,24 +48,17 @@ namespace Supplies
 
         private static Random _random = new();
 
+        private static ItemList<SupplyItem> _supplyItemList;
+
+        private static MapGrid<SupplyGridObject> _grid;
+
         /// <summary>
         /// Initializes supply caches with data from configs
         /// </summary>
         public static void InitializeCaches()
         {
-            _suppliesCache = SuppliesConfig.Supplies.ToDictionary(s => s.Id);
-            _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
-            _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
-        }
-
-        /// <summary>
-        /// Displays supplies on the map based on provided grid data
-        /// </summary>
-        /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
-        /// <param name="supplyItemsList">List of supplies items</param>
-        public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts, ItemList<SupplyItem> supplyItemsList)
-        {
-            var grid = new MapGrid<SupplyGridObject>(
+            _supplyItemList = new ItemList<SupplyItem>();
+            _grid = new MapGrid<SupplyGridObject>(
                 MapConfig.MapWidth,
                 MapConfig.MapHeight,
                 MapConfig.CellSize,
@@ -71,8 +66,24 @@ namespace Supplies
                 (g, x, y) => new SupplyGridObject(g, x, y)
             );
 
-            InitializeCaches();
-            
+            _suppliesCache = SuppliesConfig.Supplies.ToDictionary(s => s.Id);
+            _texturesCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId, t => t.Texture);
+            _supplyTextureConfigCache = SupplyTexturesConfig.SupplyTextures.ToDictionary(t => t.SupplyId);
+
+            IsInitializedCaches = true;
+        }
+
+        /// <summary>
+        /// Displays supplies on the map based on provided grid data
+        /// </summary>
+        /// <param name="supplyInts">Dictionary of supply position and type of supply</param>
+        public static void DisplaySupplyMap(Dictionary<(int, int), int> supplyInts)
+        {
+            if (!IsInitializedCaches)
+            {
+                InitializeCaches();
+            }
+
             foreach (var (position, supplyId) in supplyInts)
             {
                 var x = position.Item1;
@@ -85,7 +96,7 @@ namespace Supplies
                 var supplyTexture = _supplyTextureConfigCache[supplyId];
                 var supply = _suppliesCache[supplyId];
 
-                GridRegistry.UpsertGrid(grid);
+                GridRegistry.UpsertGrid(_grid);
 
                 if (!GridService.CanPlaceAtPosition(
                         gridPosition,
@@ -110,11 +121,32 @@ namespace Supplies
                 SetSupplyPosition(newSupplyObject, gridPosition, texture, supplyTexture);
                 SetupSupplyCollider(newSupplyObject, gridPosition, texture, supply, supplyTexture);
 
-                AddSupplyToList(gridPosition, supplyGuid, supplyItemsList, supply, newSupplyObject);
-                PlaceSupplyInGrid(gridPosition, supplyGuid, grid, supply);
+                AddSupplyToList(gridPosition, supplyGuid, _supplyItemList, supply, newSupplyObject);
+                PlaceSupplyInGrid(gridPosition, supplyGuid, _grid, supply);
 
-                ItemListRegistry.UpsertList(supplyItemsList);
+                ItemListRegistry.UpsertList(_supplyItemList);
             }
+        }
+
+        public static bool RemoveSupply(Vector2Int gridPosition)
+        {
+            var supplyId = _grid.GetGridObject(gridPosition);
+            if (supplyId == null)
+            {
+                return false;
+            }
+
+            var supplyItem = _supplyItemList.GetValue(supplyId.Guid);
+            if (supplyItem == null)
+            {
+                return false;
+            }
+
+            RemoveSupplyFromGrid(gridPosition, _grid, supplyItem.Supply);
+            RemoveSupplyFromList(supplyItem.Id, _supplyItemList);
+            supplyItem.Destroy();
+
+            return true;
         }
 
         /// <summary>
@@ -215,14 +247,31 @@ namespace Supplies
                 }
             }
         }
-        
+
+        private static void RemoveSupplyFromGrid(Vector2Int gridPosition,
+            MapGrid<SupplyGridObject> grid, Supply supply)
+        {
+            for (var x = gridPosition.x; x < gridPosition.x + supply.WidthCell; x++)
+            {
+                for (var y = gridPosition.y; y < gridPosition.y + supply.HeightCell; y++)
+                {
+                    grid.RemoveGridObject(x, y);
+                }
+            }
+        }
+
         private static void AddSupplyToList(Vector2Int gridPosition, Guid supplyGuid, ItemList<SupplyItem> supplyItemList, Supply supply, GameObject supplyGameObject)
         {
             //ToDo: Seed config
             var supplyResourceCount = _random.Next(SuppliesConfig.MinSupplyResources, SuppliesConfig.MaxSupplyResources);
             var backpack = new Backpack(supplyResourceCount);
-            var supplyItem = new SupplyItem(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
+            var supplyItem = SupplyItem.Create(gridPosition, supplyGuid, supply, supplyGameObject, backpack);
             supplyItemList.Add(supplyItem);
+        }
+
+        private static void RemoveSupplyFromList(Guid supplyGuid, ItemList<SupplyItem> supplyItemList)
+        {
+            supplyItemList.Remove(supplyGuid);
         }
 
         /// <summary>

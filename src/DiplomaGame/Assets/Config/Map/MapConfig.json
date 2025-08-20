@@ -3,5 +3,5 @@
 	"MapHeight": 2000.0,
 	"MapStartPointX": 0.0,
 	"MapStartPointY": 0.0,
-	"CellSize": 10.0
+	"CellSize": 2.0
 }

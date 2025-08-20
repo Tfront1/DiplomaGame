@@ -6,6 +6,7 @@
         {
           "name": "CameraMiddleMouseMovement",
           "type": "Button",
+          "interactions": "",
           "expectedControlType": "",
           "bindings": [
             {
@@ -17,6 +18,7 @@
         {
           "name": "MouseScroll",
           "type": "Value",
+          "interactions": "",
           "expectedControlType": "Vector2",
           "bindings": [
             {
@@ -28,10 +30,35 @@
         {
           "name": "MousePosition",
           "type": "Value",
+          "interactions": "",
           "expectedControlType": "Vector2",
           "bindings": [
             {
               "path": "<Mouse>/position",
+              "group": "Keyboard&Mouse"
+            }
+          ]
+        },
+        {
+          "name": "MouseLeftHold",
+          "type": "Button",
+          "interactions": "hold(duration=0.1,pressPoint=1.0)",
+          "expectedControlType": "Button",
+          "bindings": [
+            {
+              "path": "<Mouse>/leftButton",
+              "group": "Keyboard&Mouse"
+            }
+          ]
+        },
+        {
+          "name": "MouseRightClick",
+          "type": "Value",
+          "interactions": "press",
+          "expectedControlType": "float",
+          "bindings": [
+            {
+              "path": "<Mouse>/rightButton",
               "group": "Keyboard&Mouse"
             }
           ]

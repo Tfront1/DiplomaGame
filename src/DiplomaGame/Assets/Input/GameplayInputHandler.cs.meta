@@ -5,7 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - _inputActions: {fileID: -944628639613478452, guid: 9a1b7cf2dde407c42935282fb38636c2, type: 3}
-  executionOrder: 0
+  executionOrder: -5
   icon: {instanceID: 0}
   userData: 
   assetBundleName: 

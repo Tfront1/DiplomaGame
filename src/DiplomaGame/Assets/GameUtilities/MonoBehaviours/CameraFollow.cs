@@ -13,23 +13,23 @@ namespace GameUtilities.MonoBehaviours
         public static CameraFollow Instance { get; private set; }
 
         [SerializeField] private float distanceCof = 1.001f;
-        [SerializeField] private float cameraMoveSpeed = 20f;
-        [SerializeField] private float cameraZoomSpeed = 10f;
+        [SerializeField] private float cameraMoveSpeed = 2f;
+        [SerializeField] private float cameraZoomSpeed = 1f;
         
-        private Camera myCamera;
+        private static Camera myCamera;
         private Func<Vector3> GetCameraFollowPositionFunc;
         private Func<float> GetCameraZoomFunc;
 
         public event Action<CameraMoveEventArgs> OnCameraMoved;
         private Vector3 _lastPosition;
-        private float _moveThreshold = 10f;
+        private float _moveThreshold = 20f;
 
         public void Setup(Func<Vector3> GetCameraFollowPositionFunc, Func<float> GetCameraZoomFunc, bool teleportToFollowPosition, bool instantZoom) {
             this.GetCameraFollowPositionFunc = GetCameraFollowPositionFunc;
             this.GetCameraZoomFunc = GetCameraZoomFunc;
 
             if (teleportToFollowPosition) {
-                Vector3 cameraFollowPosition = GetCameraFollowPositionFunc();
+                var cameraFollowPosition = GetCameraFollowPositionFunc();
                 cameraFollowPosition.z = transform.position.z;
                 transform.position = cameraFollowPosition;
             }
@@ -76,16 +76,16 @@ namespace GameUtilities.MonoBehaviours
 
         private void HandleMovement() {
             if (GetCameraFollowPositionFunc == null) return;
-            Vector3 cameraFollowPosition = GetCameraFollowPositionFunc();
+            var cameraFollowPosition = GetCameraFollowPositionFunc();
             cameraFollowPosition.z = transform.position.z;
 
-            Vector3 cameraMoveDir = (cameraFollowPosition - transform.position).normalized;
-            float distance = Vector3.Distance(cameraFollowPosition, transform.position) / distanceCof;
+            var cameraMoveDir = (cameraFollowPosition - transform.position).normalized;
+            var distance = Vector3.Distance(cameraFollowPosition, transform.position) / distanceCof;
 
             if (distance > 0) {
-                Vector3 newCameraPosition = transform.position + cameraMoveDir * distance * cameraMoveSpeed * Time.deltaTime;
+                var newCameraPosition = transform.position + cameraMoveDir * distance * cameraMoveSpeed * Time.deltaTime;
 
-                float distanceAfterMoving = Vector3.Distance(newCameraPosition, cameraFollowPosition);
+                var distanceAfterMoving = Vector3.Distance(newCameraPosition, cameraFollowPosition);
 
                 if (distanceAfterMoving > distance) {
                     // Overshot the target
@@ -98,9 +98,9 @@ namespace GameUtilities.MonoBehaviours
 
         private void HandleZoom() {
             if (GetCameraZoomFunc == null) return;
-            float cameraZoom = GetCameraZoomFunc();
+            var cameraZoom = GetCameraZoomFunc();
 
-            float cameraZoomDifference = cameraZoom - myCamera.orthographicSize;
+            var cameraZoomDifference = cameraZoom - myCamera.orthographicSize;
 
             myCamera.orthographicSize += cameraZoomDifference * cameraZoomSpeed * Time.deltaTime;
 
@@ -115,8 +115,12 @@ namespace GameUtilities.MonoBehaviours
             }
         }
 
-        
+        public static Vector2 GetWorldPosition(Vector2 coords)
+        {
+            return myCamera.ScreenToWorldPoint(coords);
+        }
     }
+
     public class CameraMoveEventArgs : EventArgs
     {
         public Vector3 OldPosition { get; private set; }

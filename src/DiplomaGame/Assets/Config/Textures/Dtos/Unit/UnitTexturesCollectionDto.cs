@@ -4,5 +4,5 @@
 public class UnitTexturesCollectionDto
 {
     public string TexturesPath;
-    public List<UnitActionDto> UnitsGroup;
+    public List<UnitActionDto> UnitsGroups;
 }

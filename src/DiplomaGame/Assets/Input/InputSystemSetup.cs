@@ -1,31 +1,34 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 
 public class InputSystemSetup : MonoBehaviour
 {
-    public static InputSystemSetup _instance { get; private set; }
+    public static InputSystemSetup Instance { get; private set; }
 
-    public InputActionAsset _inputActionAsset { get; private set; }
+    public InputActionAsset InputActionAsset { get; private set; }
     
     private void Awake()
     {
-        if (_instance != null && _instance != this)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
+        Instance = this;
 
         InitializeInputActionAsset();
+        SetupEventSystem();
+        SetupUIInputActions();
     }
 
     private void InitializeInputActionAsset()
     {
-        if (_inputActionAsset == null)
+        if (InputActionAsset == null)
         {
-            _inputActionAsset = ScriptableObject.CreateInstance<InputActionAsset>();
+            InputActionAsset = ScriptableObject.CreateInstance<InputActionAsset>();
 
             SetupInputActionAsset();
         }
@@ -39,11 +42,16 @@ public class InputSystemSetup : MonoBehaviour
     {
         foreach (var actionMapConfig in InputSystemConfig.ActionMap)
         {
-            var actionMap = _inputActionAsset.AddActionMap(actionMapConfig.MapName);
+            var actionMap = InputActionAsset.AddActionMap(actionMapConfig.MapName);
 
             foreach (var actionConfig in actionMapConfig.Actions)
             {
-                var action = actionMap.AddAction(actionConfig.ActionName, (InputActionType)System.Enum.Parse(typeof(InputActionType), actionConfig.ActionType));
+                var actionType = (InputActionType)System.Enum.Parse(typeof(InputActionType), actionConfig.ActionType);
+                var interactions = !string.IsNullOrEmpty(actionConfig.Interactions) ? actionConfig.Interactions : null;
+
+                var action = actionMap.AddAction(name: actionConfig.ActionName,
+                    type: actionType,
+                    interactions: interactions);
 
                 if (!string.IsNullOrEmpty(actionConfig.ExpectedControlType))
                 {
@@ -56,6 +64,72 @@ public class InputSystemSetup : MonoBehaviour
                         .WithGroup(bindingConfig.BindingGroup);
                 }
             }
+        }
+    }
+
+    private void SetupEventSystem()
+    {
+        if (EventSystem.current == null)
+        {
+            var eventSystemObj = new GameObject("EventSystem");
+            var eventSystem = eventSystemObj.AddComponent<EventSystem>();
+
+            var inputModule = eventSystemObj.AddComponent<InputSystemUIInputModule>();
+
+            inputModule.actionsAsset = InputActionAsset;
+        }
+        else
+        {
+
+            var inputModule = EventSystem.current.GetComponent<InputSystemUIInputModule>();
+            if (inputModule == null)
+            {
+                inputModule = EventSystem.current.gameObject.AddComponent<InputSystemUIInputModule>();
+            }
+
+            inputModule.actionsAsset = InputActionAsset;
+        }
+    }
+
+    private void SetupUIInputActions()
+    {
+        var inputActions = Instance.InputActionAsset;
+        var uiMap = inputActions.FindActionMap("UI");
+        if (uiMap == null)
+        {
+            uiMap = inputActions.AddActionMap("UI");
+
+            var pointAction = uiMap.AddAction("Point", InputActionType.PassThrough);
+            pointAction.AddBinding("<Mouse>/position");
+            pointAction.AddBinding("<Pen>/position");
+            pointAction.AddBinding("<Touchscreen>/touch*/position");
+
+            var clickAction = uiMap.AddAction("LeftClick", InputActionType.PassThrough);
+            clickAction.AddBinding("<Mouse>/leftButton");
+            clickAction.AddBinding("<Pen>/tip");
+            clickAction.AddBinding("<Touchscreen>/touch*/press");
+
+            var rightClickAction = uiMap.AddAction("RightClick", InputActionType.PassThrough);
+            rightClickAction.AddBinding("<Mouse>/rightButton");
+
+            var scrollAction = uiMap.AddAction("Scroll", InputActionType.PassThrough);
+            scrollAction.AddBinding("<Mouse>/scroll");
+
+            var shiftAction = uiMap.AddAction("Shift", InputActionType.Button);
+            shiftAction.AddBinding("<Keyboard>/leftShift");
+            shiftAction.AddBinding("<Keyboard>/rightShift");
+
+            uiMap.Enable();
+        }
+
+        var inputModule = EventSystem.current?.GetComponent<InputSystemUIInputModule>();
+        if (inputModule != null)
+        {
+            inputModule.point = InputActionReference.Create(uiMap.FindAction("Point"));
+            inputModule.leftClick = InputActionReference.Create(uiMap.FindAction("LeftClick"));
+            inputModule.rightClick = InputActionReference.Create(uiMap.FindAction("RightClick"));
+
+            inputModule.scrollWheel = InputActionReference.Create(uiMap.FindAction("Scroll"));
         }
     }
 }

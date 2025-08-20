@@ -5,6 +5,7 @@ public class ConfigPathsDto
 	public string MapConfigPath;
 	public string TerrainTexturesPath;
     public string SupplyTexturesPath;
+    public string BuildingTexturesPath;
     public string InputSystemPath;
 	public string BiomesConfigPath;
     public string SuppliesConfigPath;
@@ -12,6 +13,11 @@ public class ConfigPathsDto
     public string BuildingsConfigPath;
     public string UnitsConfigPath;
     public string UnitsTexturesPath;
-    public string ResourceItemsConfig;
+    public string ResourceItemsConfigPath;
+    public string CraftingRecipesConfigPath;
+    public string WeaponsConfigPath;
+    public string ArmorsConfigPath;
+    public string UITexturesPath;
+    public string FogOfWarTexturesPath;
 }
 

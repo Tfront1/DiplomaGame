@@ -4,6 +4,6 @@ public interface IUnit
 {
     float X { get; }
     float Y { get; }
-    Guid Guid { get; }
-    Guid GetGuid();
+    Guid Id { get; }
+    Guid GetId();
 }

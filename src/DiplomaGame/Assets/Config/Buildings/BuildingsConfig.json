@@ -2,42 +2,68 @@
   "Buildings": [
     {
       "Id": 1,
-      "Name": "B1",
+      "Name": "Construction",
       "WidthCell": 1,
       "HeightCell": 1,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 2,
-      "Scale": 0.8,
-      "RandomPos": true,
       "HasMargin": true,
-      "MaxHP": 1000,
-      "BackpackCapacity": 500
+      "MaxHP": 1,
+      "BuildingType": "Construction",
+      "BackpackCapacity": 1,
+      "HasCrafts": false,
+      "MaxResidents": 0,
+      "VisionRadius": 10
     },
     {
       "Id": 2,
-      "Name": "B2",
-      "WidthCell": 1,
-      "HeightCell": 2,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 2,
-      "Scale": 1.0,
-      "RandomPos": false,
-      "HasMargin": false,
+      "Name": "TownHall",
+      "WidthCell": 2,
+      "HeightCell": 3,
+      "HasMargin": true,
       "MaxHP": 1000,
-      "BackpackCapacity": 0
+      "BuildingType": "TownHall",
+      "BackpackCapacity": 2000,
+      "HasCrafts": false,
+      "MaxResidents": 10,
+      "VisionRadius": 15
     },
     {
       "Id": 3,
-      "Name": "B3",
+      "Name": "Fence",
       "WidthCell": 1,
       "HeightCell": 1,
-      "VisualWidthCell": 1,
-      "VisualHeightCell": 1,
-      "Scale": 1.0,
-      "RandomPos": true,
+      "HasMargin": false,
+      "MaxHP": 1500,
+      "BuildingType": "Fence",
+      "BackpackCapacity": 0,
+      "HasCrafts": false,
+      "MaxResidents": 0,
+      "VisionRadius": 2
+    },
+    {
+      "Id": 4,
+      "Name": "Vault",
+      "WidthCell": 2,
+      "HeightCell": 2,
       "HasMargin": true,
       "MaxHP": 500,
-      "BackpackCapacity": 500
+      "BuildingType": "Vault",
+      "BackpackCapacity": 2000,
+      "HasCrafts": false,
+      "MaxResidents": 0,
+      "VisionRadius": 10
+    },
+    {
+      "Id": 5,
+      "Name": "Blacksmith",
+      "WidthCell": 2,
+      "HeightCell": 2,
+      "HasMargin": true,
+      "MaxHP": 500,
+      "BuildingType": "Blacksmith",
+      "BackpackCapacity": 0,
+      "HasCrafts": true,
+      "MaxResidents": 5,
+      "VisionRadius": 10
     }
   ]
 }

@@ -1,0 +1,144 @@
+﻿{
+  "Recipes": [
+    {
+      "Id": 1,
+      "Name": "Blacksmith",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1500
+        },
+        {
+          "ResourceId": 2,
+          "Quantity": 3000
+        }
+      ],
+      "CraftingTime": 60,
+      "ResultType": "Building",
+      "ResultId": 5,
+      "WhereToCraftId": 0,
+      "MaxUnitToCraftCount": 0
+    },
+    {
+      "Id": 2,
+      "Name": "Wooden Sword",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1500
+        }
+      ],
+      "CraftingTime": 60,
+      "ResultType": "Weapon",
+      "ResultId": 2,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    },
+    {
+      "Id": 3,
+      "Name": "Vault",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1000
+        }
+      ],
+      "CraftingTime": 60,
+      "ResultType": "Building",
+      "ResultId": 4,
+      "WhereToCraftId": 0,
+      "MaxUnitToCraftCount": 0
+    },
+    {
+      "Id": 4,
+      "Name": "Stone Sword",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 500
+        },
+        {
+          "ResourceId": 2,
+          "Quantity": 2000
+        }
+      ],
+      "CraftingTime": 90,
+      "ResultType": "Weapon",
+      "ResultId": 3,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    },
+    {
+      "Id": 5,
+      "Name": "Iron Sword",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 600
+        },
+        {
+          "ResourceId": 3,
+          "Quantity": 2500
+        }
+      ],
+      "CraftingTime": 120,
+      "ResultType": "Weapon",
+      "ResultId": 4,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    },
+    {
+      "Id": 6,
+      "Name": "Wooden Armor",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 3000
+        }
+      ],
+      "CraftingTime": 80,
+      "ResultType": "Armor",
+      "ResultId": 2,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    },
+    {
+      "Id": 7,
+      "Name": "Stone Armor",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 1200
+        },
+        {
+          "ResourceId": 2,
+          "Quantity": 2800
+        }
+      ],
+      "CraftingTime": 100,
+      "ResultType": "Armor",
+      "ResultId": 3,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    },
+    {
+      "Id": 8,
+      "Name": "Iron Armor",
+      "Components": [
+        {
+          "ResourceId": 1,
+          "Quantity": 800
+        },
+        {
+          "ResourceId": 3,
+          "Quantity": 3500
+        }
+      ],
+      "CraftingTime": 150,
+      "ResultType": "Armor",
+      "ResultId": 4,
+      "WhereToCraftId": 5,
+      "MaxUnitToCraftCount": 5
+    }
+  ]
+}

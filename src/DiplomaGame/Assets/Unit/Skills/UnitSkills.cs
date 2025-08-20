@@ -1,36 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 public class UnitSkills
 {
-    private float _passiveExperienceRate = 0.1f;
+    private float _passiveExperienceRate = 1.0f;
     private BaseSkill _activeSkill;
 
-    public HashSet<BaseSkill> _skills = new();
+    public HashSet<BaseSkill> Skills { get; set; } = new();
+
+    public delegate void UpdateEventHandler();
+    public event UpdateEventHandler OnUpdate;
 
     public UnitSkills()
     {
-        _skills.Add(new ArcherySkill(1, 50, 100));
-        _skills.Add(new BuildingSkill(1, 75, 80));
-        _skills.Add(new FarmingSkill(1, 50, 75));
-        _skills.Add(new SmithingSkill(1, 100, 120));
-        _skills.Add(new SwordsmanshipSkill(1, 80, 90));
+        Skills.Add(new ArcherySkill(1, 50, 100));
+        Skills.Add(new SwordsmanshipSkill(1, 80, 90));
+        Skills.Add(new BuildingSkill(1, 75, 80));
+        Skills.Add(new FarmingSkill(1, 50, 75));
+        Skills.Add(new SmithingSkill(1, 100, 120));
     }
 
     public void SetActiveSkill(Type skillType)
     {
-        var skill = _skills.FirstOrDefault(s => s.GetType() == skillType);
+        var skill = Skills.FirstOrDefault(s => s.GetType() == skillType);
 
         if (skill != null)
         {
             _activeSkill = skill;
-            Debug.Log($"Active skill set to {skill.Name}");
-        }
-        else
-        {
-            Debug.LogWarning($"Skill of type {skillType.Name} not found in skills collection");
         }
     }
 
@@ -42,12 +39,19 @@ public class UnitSkills
     public void ResetActiveSkill()
     {
         _activeSkill = null;
-        Debug.Log($"Active skill reset to null");
+    }
 
+    public T GetSkill<T>() where T : BaseSkill
+    {
+        return Skills.OfType<T>().FirstOrDefault();
     }
 
     public void Update(float deltaTime)
     {
-        _activeSkill?.AddExperience(_passiveExperienceRate * deltaTime);
+        if (_activeSkill != null)
+        {
+            _activeSkill.AddExperience(_passiveExperienceRate * deltaTime);
+            OnUpdate?.Invoke();
+        }
     }
 }

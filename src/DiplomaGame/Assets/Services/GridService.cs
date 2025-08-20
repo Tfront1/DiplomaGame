@@ -149,6 +149,27 @@ public static class GridService
     }
 
     /// <summary>
+    /// Converts grid coordinates to world position.
+    /// </summary>
+    /// <param name="x">X coordinate in the grid.</param>
+    /// <param name="y">Y coordinate in the grid.</param>
+    /// <returns>World position vector corresponding to the grid cell center.</returns>
+    public static Vector3 GetWorldPosition(float x, float y)
+    {
+        return new Vector3(x, y) * MapConfig.CellSize + new Vector3(MapConfig.MapStartPointX, MapConfig.MapStartPointY);
+    }
+
+    /// <summary>
+    /// Converts grid coordinates to world position.
+    /// </summary>
+    /// <param name="coords">coordinates in the grid.</param>
+    /// <returns>World position vector corresponding to the grid cell center.</returns>
+    public static Vector3 GetWorldPosition(Vector3 coords)
+    {
+        return GetWorldPosition(coords.x, coords.y);
+    }
+
+    /// <summary>
     /// Converts world position to grid coordinates.
     /// </summary>
     /// <param name="worldPosition">Position in world space.</param>
@@ -173,5 +194,28 @@ public static class GridService
                gridPosition.x < MapConfig.MapWidth * MapConfig.CellSize + MapConfig.MapStartPointX &&
                gridPosition.y >= 0 &&
                gridPosition.y < MapConfig.MapHeight * MapConfig.CellSize + MapConfig.MapStartPointY;
+    }
+
+    /// <summary>
+    /// Checks if the world position is within the map boundaries.
+    /// </summary>
+    /// <param name="position">Position in world space to check.</param>
+    /// <param name="width">Width of the object.</param>
+    /// <param name="height">Height of the object.</param>
+    /// <returns>True if the position is within map bounds, false otherwise.</returns>
+    public static bool IsWorldPositionInMapBounds(Vector2 position, int width, int height)
+    {
+        for (var i = 0; i < width; i++)
+        {
+            for (var j = 0; j < height; j++)
+            {
+                if (!IsWorldPositionInMapBounds(new Vector2(position.x + i, position.y + j)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

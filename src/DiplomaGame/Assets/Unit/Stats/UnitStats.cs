@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using System;
 
 public class UnitStats
 {
@@ -6,6 +6,9 @@ public class UnitStats
     public Armor Armor { get; }
     public Stamina Stamina { get; }
     public Hunger Hunger { get; }
+
+    public delegate void UpdateEventHandler();
+    public event UpdateEventHandler OnUpdate;
 
     public UnitStats(float health, float maxHealth, float armor, float maxArmor,
         float stamina, float maxStamina, float hunger, float maxHunger)
@@ -18,8 +21,10 @@ public class UnitStats
 
     public void Update(float deltaTime)
     {
+        var t1 = Stamina.CurrentValue;
+
         Stamina.Update(deltaTime);
-        Hunger.Update(deltaTime);
+        //Hunger.Update(deltaTime);
 
         if (Hunger.GetPercentage() < 0.2f)
         {
@@ -29,7 +34,10 @@ public class UnitStats
         {
             Stamina.StartRegeneration();
         }
-
-        Debug.Log($"Stamina: {Stamina}\n Hunger: {Hunger}");
+        
+        if (Math.Abs(t1 - Stamina.CurrentValue) > 0.0001f)
+        {
+            OnUpdate?.Invoke();
+        }
     }
 }

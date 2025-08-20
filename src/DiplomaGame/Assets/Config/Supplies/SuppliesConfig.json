@@ -8,7 +8,6 @@
       "Name": "Tree",
       "ResourceId": 1,
       "Ratio": 30,
-      "Texture": "TreeSup.png",
       "WidthCell": 1,
       "HeightCell": 1
     },
@@ -17,7 +16,6 @@
       "Name": "Stone",
       "ResourceId": 2,
       "Ratio": 25,
-      "Texture": "StoneSup.png",
       "WidthCell": 2,
       "HeightCell": 2
     },
@@ -26,7 +24,6 @@
       "Name": "Iron",
       "ResourceId": 3,
       "Ratio": 20,
-      "Texture": "IronSup.png",
       "WidthCell": 2,
       "HeightCell": 1
     },
@@ -35,7 +32,6 @@
       "Name": "Gold",
       "ResourceId": 4,
       "Ratio": 10,
-      "Texture": "GoldSup.png",
       "WidthCell": 2,
       "HeightCell": 1
     }

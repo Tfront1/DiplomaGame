@@ -1,0 +1,52 @@
+﻿{
+  "Weapons": [
+    {
+      "Id": 1,
+      "Name": "Fists",
+      "Damage": 2,
+      "MissChance": 0.1,
+      "StaminaToAttack": 1.0,
+      "ArmorPenetration": 0.0,
+      "AttackDistance": 0.25,
+      "AmmunitionId": 0,
+      "CoolDown": 0.5,
+      "IsMainWeapon": true
+    },
+    {
+      "Id": 2,
+      "Name": "Wooden Sword",
+      "Damage": 8,
+      "MissChance": 0.15,
+      "StaminaToAttack": 5.0,
+      "ArmorPenetration": 0.1,
+      "AttackDistance": 0.3,
+      "AmmunitionId": 0,
+      "CoolDown": 1.0,
+      "IsMainWeapon": true
+    },
+    {
+      "Id": 3,
+      "Name": "Stone Sword",
+      "Damage": 11.5,
+      "MissChance": 0.15,
+      "StaminaToAttack": 5.5,
+      "ArmorPenetration": 0.15,
+      "AttackDistance": 0.3,
+      "AmmunitionId": 0,
+      "CoolDown": 1.1,
+      "IsMainWeapon": true
+    },
+    {
+      "Id": 4,
+      "Name": "Iron Sword",
+      "Damage": 16.0,
+      "MissChance": 0.2,
+      "StaminaToAttack": 7.0,
+      "ArmorPenetration": 0.3,
+      "AttackDistance": 0.3,
+      "AmmunitionId": 0,
+      "CoolDown": 1.1,
+      "IsMainWeapon": true
+    }
+  ]
+}

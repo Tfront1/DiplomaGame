@@ -6,13 +6,52 @@
       "UnitFolder": "Archer/",
       "ActionGroups": [
         {
-          "ActionId": 3,
+          "ActionId": 1,
           "ActionName": "Idle",
           "ActionFolder": "Idle/",
           "Textures": [
             {
-              "Id": 101,
-              "TextureFileName": "/Idle1.png"
+              "Id": 311,
+              "TextureFileName": "Idle1.png"
+            },
+            {
+              "Id": 312,
+              "TextureFileName": "Idle2.png"
+            },
+            {
+              "Id": 313,
+              "TextureFileName": "Idle3.png"
+            },
+            {
+              "Id": 314,
+              "TextureFileName": "Idle4.png"
+            }
+          ]
+        },
+        {
+          "ActionId": 2,
+          "ActionName": "Move",
+          "ActionFolder": "Move/",
+          "Textures": [
+            {
+              "Id": 321,
+              "TextureFileName": "Move1.png"
+            },
+            {
+              "Id": 322,
+              "TextureFileName": "Move2.png"
+            },
+            {
+              "Id": 323,
+              "TextureFileName": "Move3.png"
+            },
+            {
+              "Id": 324,
+              "TextureFileName": "Move4.png"
+            },
+            {
+              "Id": 325,
+              "TextureFileName": "Move5.png"
             }
           ]
         }

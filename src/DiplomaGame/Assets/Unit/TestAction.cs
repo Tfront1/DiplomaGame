@@ -1,122 +1,234 @@
 ﻿using System;
 using GameUtilities.Utils;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using System.IO;
+using System.Linq;
+using Town;
+using Random = UnityEngine.Random;
 
-public class TestAction: MonoBehaviour
+public class TestAction : MonoBehaviour
 {
     public static List<Vector2> _path;
 
-    public UnitActionManager ActionManager = new();
-
-    public UnitItem _unitItem;
-
     public Vector2 _end;
-    
+
+    public static TownItem _town;
+    public static TownItem _enemyTown;
+
+    public void Start()
+    {
+
+        _enemyTown = TownRegistry.TownList.Find(x => !x.IsUnitControlTown);
+        /*
+        _town = new TownItem("Town", Guid.NewGuid());
+        BuildingManager.BuildInstantly(new Vector2Int(5, 5),
+            BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _town);
+
+        _enemyTown = new TownItem("Enemy town",Guid.NewGuid(), false);
+        BuildingManager.BuildInstantly(new Vector2Int(10, 10),
+            BuildingsConfig.Buildings.Find(x => x.BuildingType == Building.BuildingTypes.TownHall), _enemyTown);
+
+        */
+        //_town.TownHall.Backpack.AddItem(WeaponConfig.WeaponElements.Find(x => x.Id == 2));
+    }
+
     private void Update()
     {
+        //Spawn unit
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _town = TownRegistry.UserTown;
+
+            var clickPosition = UtilsClass.GetMouseWorldPosition();
+            var unitItem = UnitManager.CreateUnit(clickPosition, 3, _town);
+            
+            var rand = Random.Range(1, 3);
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
+
+            unitItem.Backpack.FillWithSingleItem(res);
+
+            //SpawnUnit(_town);
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            _enemyTown = TownRegistry.TownList.Find(x => !x.IsUnitControlTown);
+
+            var clickPosition = UtilsClass.GetMouseWorldPosition();
+            UnitManager.CreateUnit(clickPosition, 3, _enemyTown);
+            //SpawnUnit(_enemyTown);
+        }
+        else if (Input.GetKeyDown(KeyCode.A))
+        {
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.TownList.First(x => !x.IsUnitControlTown).TownHall
+                    .CenterCoords));
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            CameraManager.Instance.SetCameraPositionToMove(
+                GridService.GetWorldPosition(TownRegistry.TownList.Last(x => !x.IsUnitControlTown).TownHall
+                    .CenterCoords));
+        }
+        /*
         if (Input.GetKeyDown(KeyCode.R))
         {
-            var waitAction = new WaitUnitAction(_unitItem, 2000f);
-            ActionManager.QueueAction(waitAction);
+            foreach (var unit in _town.Units)
+            {
+                var waitAction = new WaitUnitAction(unit, 2000f);
+                UnitActionManager.Instance.QueueAction(waitAction);
+            }
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
             _end = UtilsClass.GetMouseWorldPosition();
 
-            var moveAction = new MoveUnitAction(_unitItem, _end);
-            ActionManager.ExecuteImmediately(moveAction);
-            FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-
-            ItemListRegistry.ItemChanged += (type, action, item) => {
-                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-                ActionManager.InterruptCurrentAction(_unitItem);
-                moveAction = new MoveUnitAction(_unitItem, _end);
-                ActionManager.ExecuteImmediately(moveAction);
-            };
+            var unit = SelectorManager.SelectedItems.First() as UnitItem;
+            if (unit != null)
+            {
+                var moveAction = new MoveUnitAction(unit, _end);
+                UnitActionManager.Instance.ExecuteImmediately(moveAction);
+            }
         }
+
         //Move to mouse in query
         else if (Input.GetKeyDown(KeyCode.W))
         {
             _end = UtilsClass.GetMouseWorldPosition();
-
-            var moveAction = new MoveUnitAction(_unitItem, _end);
-            ActionManager.QueueAction(moveAction);
-            FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-
-            ItemListRegistry.ItemChanged += (type, action, item) => {
-                FindAndDrawPath(new Vector2(_unitItem.X, _unitItem.Y), _end);
-                ActionManager.InterruptCurrentAction(_unitItem);
-                moveAction = new MoveUnitAction(_unitItem, _end);
-                ActionManager.QueueAction(moveAction);
-            };
+            
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    var moveGroupAction = new MoveGroupUnitAction(unit, _end, true);
+                    UnitActionManager.Instance.QueueAction(moveGroupAction);
+                }
+            }
         }
         //Spawn unit
         else if (Input.GetKeyDown(KeyCode.Q))
         {
-            _unitItem = SpawnUnit();
+            _town.Units.AddRange(SpawnUnit());
         }
         //Pause
         else if (Input.GetKeyDown(KeyCode.S))
         {
-            ActionManager.PauseAllActions();
+            UnitActionManager.Instance.PauseAllActions();
         }
         //Resume
         else if (Input.GetKeyDown(KeyCode.D))
         {
-            ActionManager.ResumeAllActions();
+            UnitActionManager.Instance.ResumeAllActions();
         }
         //Stop doing
         else if (Input.GetKeyDown(KeyCode.F))
         {
-            ActionManager.InterruptCurrentAction(_unitItem);
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    UnitActionManager.Instance.InterruptCurrentAction(unit);
+                }
+            }
         }
-    }
-
-    private void FindAndDrawPath(Vector2 start, Vector2 end)
-    {
-        _path = PathFinder.Instance.FindPath(start, end);
-        if (_path == null || _path.Count() == 0)
+        //Bring Resources
+        else if (Input.GetKeyDown(KeyCode.Z))
         {
-            UtilsClass.CreateWorldTextPopup(
-                "No path found!",
-                UtilsClass.GetMouseWorldPosition(),
-                Color.red,
-                1.5f
-            );
+            var buildingItem = _town.Buildings[2];
+
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    _town.BuildingTownOrder.AssignUnitToOrder(unit, buildingItem);
+                }
+            }
         }
-        UtilsClass.DrawPath(_path, Color.black, 1);
+        //Add builders to town
+        else if (Input.GetKeyDown(KeyCode.X))
+        {
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    _town.BuildingTownOrder.AddBuilder(unit);
+                }
+            }
+        }
+        else if (Input.GetKeyDown(KeyCode.C))
+        {
+            var mousePosition = UtilsClass.GetMouseWorldPosition();
+            var selectedItems = SelectorManager.Instance.GetSelectedItem(mousePosition);
+
+            SupplyItem supply = null;
+
+            if (selectedItems.Item1.Count == 1)
+            {
+                if (selectedItems.Item1.First() is SupplyItem supplyItem)
+                {
+                    supply = supplyItem;
+                }
+            }
+
+            foreach (var item in SelectorManager.SelectedItems)
+            {
+                var unit = item as UnitItem;
+                if (unit != null)
+                {
+                    var collectAction = new CollectSupplyAction(unit, supply);
+                    UnitActionManager.Instance.QueueAction(collectAction);
+                }
+            }
+        }
+        */
     }
 
-    private UnitItem SpawnUnit()
+    public static void SpawnUnit(TownItem town)
     {
         var clickPosition = UtilsClass.GetMouseWorldPosition();
-        var unit = new Unit { Speed = 15f };
-        var unitGameObject = new GameObject("TestUnit");
-        var renderer = unitGameObject.AddComponent<SpriteRenderer>();
 
-        var fileData = File.ReadAllBytes("Assets/Textures/Units/Archer/Idle/Idle1.png");
-        var texture = new Texture2D(2, 2);
-        texture.LoadImage(fileData);
-        texture.filterMode = FilterMode.Point;
-        texture.wrapMode = TextureWrapMode.Clamp;
-        texture.Apply();
+        var random = new System.Random();
+        List<UnitItem> units = new();
+        for (var i = 0; i < 1; i++)
+        {
+            var unitGameObject = new GameObject("TestUnit");
+            var renderer = unitGameObject.AddComponent<SpriteRenderer>();
 
-        var newBuildingSprite = Sprite.Create(
-            texture,
-            new Rect(0.0f, 0.0f, texture.width, texture.height),
-            Vector2.zero
-        );
+            var fileData = File.ReadAllBytes("Assets/Textures/Units/Archer/Idle/Idle1.png");
+            var texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.Apply();
 
-        renderer.sprite = newBuildingSprite;
-        unitGameObject.transform.position = (Vector2)clickPosition;
-        unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
+            var newBuildingSprite = Sprite.Create(
+                texture,
+                new Rect(0.0f, 0.0f, texture.width, texture.height),
+                Vector2.zero
+            );
 
-        var unitItem = new UnitItem(clickPosition, new Guid(), unit, unitGameObject);
-        return unitItem;
+            var unit = UnitsConfig.Units.Find(x => x.Id == 3);
+            renderer.sprite = newBuildingSprite;
+            unitGameObject.transform.localScale = new Vector3(25f, 25f, 1f);
+
+            var randomX = clickPosition.x + (float)(random.NextDouble() * 50);
+            var randomY = clickPosition.y + (float)(random.NextDouble() * 50);
+            randomX = clickPosition.x;
+            randomY = clickPosition.y;
+            var randomPosition = new Vector2(randomX, randomY);
+
+            var unitItem = UnitItem.Create(randomPosition, Guid.NewGuid(), UtilsClass.GetRandomName(), unit, unitGameObject, town);
+
+            town.AddUnit(unitItem);
+
+            var rand = Random.Range(1, 3);
+            var res = ResourcesConfig.ResourceElements.Find(x => x.Id == rand);
+
+            unitItem.Backpack.FillWithSingleItem(res);
+        }
     }
-
-
 }

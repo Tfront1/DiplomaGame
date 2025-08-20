@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Game;
 using GameUtilities.Utils.MapUtils;
 
 namespace Supplies
 {
-    internal static class SupplyGenerator
+    public static class SupplyGenerator
     {
         internal static (int[,], Dictionary<(int, int), int>) GenerateSupply(
             int mapWidth,
             int mapHeight,
-            int seed,
             List<Supply> supplies,
             List<BiomeSupply> biomeSupplies,
             List<SupplyTexture> suppliesTexture,
             int SupplyPerBlocks,
             int[,] map)
         {
-            var random = new Random(seed);
             var totalSupplies = mapHeight * mapWidth / SupplyPerBlocks;
             var distribution = CalculateSupplyDistribution(supplies, totalSupplies);
 
@@ -35,7 +34,7 @@ namespace Supplies
                 supplyCache,
                 mapWidth,
                 mapHeight,
-                random,
+                GameRandom.Random,
                 out var supplyList);
 
             return (supplyMap, supplyList);

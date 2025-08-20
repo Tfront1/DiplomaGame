@@ -13,14 +13,21 @@ public static partial class ConfigLoader
 		ConfigPaths.MapConfigPath = configPathsDto.MapConfigPath;
 		ConfigPaths.TerrainTexturesPath = configPathsDto.TerrainTexturesPath;
 		ConfigPaths.SupplyTexturesPath = configPathsDto.SupplyTexturesPath;
-		ConfigPaths.InputActionConfigPath = configPathsDto.InputSystemPath;
+        ConfigPaths.BuildingTexturesPath = configPathsDto.BuildingTexturesPath;
+        ConfigPaths.InputActionConfigPath = configPathsDto.InputSystemPath;
 		ConfigPaths.BiomesConfigPath = configPathsDto.BiomesConfigPath;
         ConfigPaths.SuppliesConfigPath = configPathsDto.SuppliesConfigPath;
         ConfigPaths.BiomeSuppliesConfigPath = configPathsDto.BiomeSuppliesConfigPath;
         ConfigPaths.BuildingsConfigPath = configPathsDto.BuildingsConfigPath;
         ConfigPaths.UnitsConfigPath = configPathsDto.UnitsConfigPath;
         ConfigPaths.UnitsTexturesPath = configPathsDto.UnitsTexturesPath;
-        ConfigPaths.ResourceItemsConfig = configPathsDto.ResourceItemsConfig;
+        ConfigPaths.ResourceItemsConfigPath = configPathsDto.ResourceItemsConfigPath;
+        ConfigPaths.CraftingRecipesConfigPath = configPathsDto.CraftingRecipesConfigPath;
+        ConfigPaths.WeaponsConfigPath = configPathsDto.WeaponsConfigPath;
+        ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
+        ConfigPaths.ArmorsConfigPath = configPathsDto.ArmorsConfigPath;
+        ConfigPaths.UITexturesPath = configPathsDto.UITexturesPath;
+        ConfigPaths.FogOfWarTexturesPath = configPathsDto.FogOfWarTexturesPath;
 
         Debug.Log("Config paths loaded");
 	}

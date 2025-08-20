@@ -1,0 +1,315 @@
+﻿{
+  "TexturesFolderPath": "Assets/Textures/UI/",
+  "TextureGroups": [
+    {
+      "Folder": "Actions/",
+      "Textures": [
+        {
+          "Name": "Attack",
+          "Path": "Attack.png"
+        },
+        {
+          "Name": "BringResources",
+          "Path": "BringResources.png"
+        },
+        {
+          "Name": "Build",
+          "Path": "Build.png"
+        },
+        {
+          "Name": "Craft",
+          "Path": "Craft.png"
+        },
+        {
+          "Name": "GoToSupply",
+          "Path": "GoToSupply.png"
+        },
+        {
+          "Name": "GoToTarget",
+          "Path": "GoToTarget.png"
+        },
+        {
+          "Name": "TakeEquip",
+          "Path": "TakeEquip.png"
+        }
+      ]
+    },
+    {
+      "Folder": "General/",
+      "Textures": [
+        {
+          "Name": "Build",
+          "Path": "Build.png"
+        },
+        {
+          "Name": "Close",
+          "Path": "Close.png"
+        },
+        {
+          "Name": "Craft",
+          "Path": "Craft.png"
+        },
+        {
+          "Name": "NewGroup",
+          "Path": "NewGroup.png"
+        },
+        {
+          "Name": "HalfGroup",
+          "Path": "HalfGroup.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Resource/",
+      "Textures": [
+        {
+          "Name": "Gold Ore",
+          "Path": "Gold.png"
+        },
+        {
+          "Name": "Iron Ore",
+          "Path": "Iron.png"
+        },
+        {
+          "Name": "Stone",
+          "Path": "Stone.png"
+        },
+        {
+          "Name": "Wood",
+          "Path": "Wood.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Armor/",
+      "Textures": [
+        {
+          "Name": "Gold Armor",
+          "Path": "GoldArmor.png"
+        },
+        {
+          "Name": "Gold Iron Armor",
+          "Path": "GoldIronArmor.png"
+        },
+        {
+          "Name": "Iron Armor",
+          "Path": "IronArmor.png"
+        },
+        {
+          "Name": "Stone Armor",
+          "Path": "StoneArmor.png"
+        },
+        {
+          "Name": "Strong Gold Iron Armor",
+          "Path": "StrongGoldIronArmor.png"
+        },
+        {
+          "Name": "Strong Iron Armor",
+          "Path": "StrongIronArmor.png"
+        },
+        {
+          "Name": "Wooden Armor",
+          "Path": "WoodenArmor.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Equipment/",
+      "Textures": [
+        {
+          "Name": "Gold Arrow",
+          "Path": "GoldArrow.png"
+        },
+        {
+          "Name": "Iron Arrow",
+          "Path": "IronArrow.png"
+        },
+        {
+          "Name": "Sharp Wooden Arrow",
+          "Path": "SharpWoodenArrow.png"
+        },
+        {
+          "Name": "Stone Arrow",
+          "Path": "StoneArrow.png"
+        },
+        {
+          "Name": "Wooden Arrow",
+          "Path": "WoodenArrow.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Items/Weapon/",
+      "Textures": [
+        {
+          "Name": "Gold Hammer",
+          "Path": "GoldHammer.png"
+        },
+        {
+          "Name": "Gold Iron Axe",
+          "Path": "GoldIronAxe.png"
+        },
+        {
+          "Name": "Gold Iron Sword",
+          "Path": "GoldIronSword.png"
+        },
+        {
+          "Name": "Gold Sword",
+          "Path": "GoldSword.png"
+        },
+        {
+          "Name": "Iron Axe",
+          "Path": "IronAxe.png"
+        },
+        {
+          "Name": "Iron Gold Hammer",
+          "Path": "IronGoldHammer.png"
+        },
+        {
+          "Name": "Iron Hammer",
+          "Path": "IronHammer.png"
+        },
+        {
+          "Name": "Iron Sword",
+          "Path": "IronSword.png"
+        },
+        {
+          "Name": "Stone Axe",
+          "Path": "StoneAxe.png"
+        },
+        {
+          "Name": "Stone Hammer",
+          "Path": "StoneHammer.png"
+        },
+        {
+          "Name": "Stone Iron Axe",
+          "Path": "StoneIronAxe.png"
+        },
+        {
+          "Name": "Stone Iron Hammer",
+          "Path": "StoneIronHammer.png"
+        },
+        {
+          "Name": "Stone Sword",
+          "Path": "StoneSword.png"
+        },
+        {
+          "Name": "Strong Iron Sword",
+          "Path": "StrongIronSword.png"
+        },
+        {
+          "Name": "Strong Wooden Bow",
+          "Path": "StrongWoodenBow.png"
+        },
+        {
+          "Name": "Wooden Axe",
+          "Path": "WoodenAxe.png"
+        },
+        {
+          "Name": "Wooden Bow",
+          "Path": "WoodenBow.png"
+        },
+        {
+          "Name": "Wooden Hammer",
+          "Path": "WoodenHammer.png"
+        },
+        {
+          "Name": "Wooden Stone Bow",
+          "Path": "WoodenStoneBow.png"
+        },
+        {
+          "Name": "Wooden Sword",
+          "Path": "WoodenSword.png"
+        },
+        {
+          "Name": "Wood Gold Stone Bow",
+          "Path": "WoodGoldStoneBow.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Town/",
+      "Textures": [
+        {
+          "Name": "AliveUnits",
+          "Path": "AliveUnits.png"
+        },
+        {
+          "Name": "Buildings",
+          "Path": "Buildings.png"
+        },
+        {
+          "Name": "DiedUnits",
+          "Path": "DiedUnits.png"
+        },
+        {
+          "Name": "Settings",
+          "Path": "Settings.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Unit/Equipment/",
+      "Textures": [
+        {
+          "Name": "Ammo",
+          "Path": "Ammo.png"
+        },
+        {
+          "Name": "Armor",
+          "Path": "Armor.png"
+        },
+        {
+          "Name": "MainWeapon",
+          "Path": "MainWeapon.png"
+        },
+        {
+          "Name": "SecWeapon",
+          "Path": "SecWeapon.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Unit/Stats/",
+      "Textures": [
+        {
+          "Name": "Armor",
+          "Path": "Armor.png"
+        },
+        {
+          "Name": "HP",
+          "Path": "HP.png"
+        },
+        {
+          "Name": "Stamina",
+          "Path": "Stamina.png"
+        }
+      ]
+    },
+    {
+      "Folder": "Unit/Skills/",
+      "Textures": [
+        {
+          "Name": "ArcherySkill",
+          "Path": "ArcherySkill.png"
+        },
+        {
+          "Name": "BuildingSkill",
+          "Path": "BuildingSkill.png"
+        },
+        {
+          "Name": "CraftSkill",
+          "Path": "CraftSkill.png"
+        },
+        {
+          "Name": "SupplySkill",
+          "Path": "SupplySkill.png"
+        },
+        {
+          "Name": "SwordSkill",
+          "Path": "SwordSkill.png"
+        }
+      ]
+    }
+  ]
+}

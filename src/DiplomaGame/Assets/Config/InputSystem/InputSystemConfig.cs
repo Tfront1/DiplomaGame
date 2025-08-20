@@ -14,6 +14,7 @@ public static class InputSystemConfig
     {
         public string ActionName { get; set; }
         public string ActionType { get; set; }
+        public string Interactions { get; set; }
         public string ExpectedControlType { get; set; }
 
         public List<ActionBindingsConfig> ActionBindings { get; set; }

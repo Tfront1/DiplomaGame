@@ -1,0 +1,42 @@
+﻿{
+  "TexturesPath": "Assets/Textures/Building/",
+  "DefaultTextureSize": 64,
+  "TilemapSprites": [
+    {
+      "Id": 1,
+      "BuildingId": 1,
+      "TextureFileName": "StartBuilding.png",
+      "VisualWidthCell": 1,
+      "VisualHeightCell": 1,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 2,
+      "BuildingId": 2,
+      "TextureFileName": "TownHall.png",
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 3,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 4,
+      "BuildingId": 4,
+      "TextureFileName": "Vault.png",
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2,
+      "Scale": 1.0,
+      "RandomPos": false
+    },
+    {
+      "Id": 5,
+      "BuildingId": 5,
+      "TextureFileName": "Blacksmith.png",
+      "VisualWidthCell": 2,
+      "VisualHeightCell": 2,
+      "Scale": 1.0,
+      "RandomPos": false
+    }
+  ]
+}

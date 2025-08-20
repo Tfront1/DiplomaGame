@@ -13,7 +13,25 @@ namespace Assets.Items.Crafts
 
             foreach (var component in recipe.Components)
             {
-                if (!inBackpack.HasResource(component.BackpackItem, component.Quantity))
+                if (!inBackpack.HasResourceCount(component.BackpackItem, component.Quantity))
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static bool CanCraftMultiple(CraftingRecipe recipe, Backpack inBackpack, int count)
+        {
+            if (recipe == null || inBackpack == null || count <= 0)
+                return false;
+
+            foreach (var component in recipe.Components)
+            {
+                var availableAmount = inBackpack.GetResourceQuantity(component.BackpackItem);
+
+                var requiredAmount = component.Quantity * count;
+
+                if (availableAmount < requiredAmount)
                     return false;
             }
 
@@ -22,7 +40,7 @@ namespace Assets.Items.Crafts
 
         public static bool CanCraft(int recipeId, Backpack inBackpack)
         {
-            var recipe = CraftingRecipeConfig.CraftingRecipes.Find(x => x.Id == recipeId);
+            var recipe = CraftingRecipesConfig.CraftingRecipes.Find(x => x.Id == recipeId);
             return CanCraft(recipe, inBackpack);
         }
 
@@ -33,7 +51,7 @@ namespace Assets.Items.Crafts
 
             foreach (var component in recipe.Components)
             {
-                inBackpack.RemoveResource(component.BackpackItem, component.Quantity);
+                inBackpack.RemoveItem(component.BackpackItem, component.Quantity);
             }
 
             var craftedItem = ItemFactory.CreateItem(recipe.ResultId, recipe.ResultType);
@@ -51,7 +69,7 @@ namespace Assets.Items.Crafts
 
         public static bool Craft(int recipeId, Backpack inBackpack, Backpack outBackpack)
         {
-            var recipe = CraftingRecipeConfig.CraftingRecipes.Find(x => x.Id == recipeId);
+            var recipe = CraftingRecipesConfig.CraftingRecipes.Find(x => x.Id == recipeId);
             return Craft(recipe, inBackpack, outBackpack);
         }
         
@@ -60,7 +78,7 @@ namespace Assets.Items.Crafts
             if (backpack == null)
                 return new List<CraftingRecipe>();
 
-            return CraftingRecipeConfig.CraftingRecipes
+            return CraftingRecipesConfig.CraftingRecipes
                 .Where(recipe => CanCraft(recipe, backpack))
                 .ToList();
         }

@@ -62,7 +62,6 @@ public static partial class ConfigLoader
 			Name = x.Name,
             ResourceId = x.ResourceId,
 			Ratio = x.Ratio,
-			Texture = x.Texture,
             HeightCell = x.HeightCell,
 			WidthCell = x.WidthCell
 		}));

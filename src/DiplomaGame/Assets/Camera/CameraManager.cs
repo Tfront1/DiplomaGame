@@ -25,26 +25,49 @@ public class CameraManager : MonoBehaviour
     /// </summary>
     private Vector3 _positionToMove;
 
-    public GameplayInputHandler inputHandler;
+    private static CameraManager _instance;
+
+    public static CameraManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<CameraManager>();
+                if (_instance == null)
+                {
+                    var gameObject = new GameObject("CameraManager");
+                    _instance = gameObject.AddComponent<CameraManager>();
+                }
+            }
+            return _instance;
+        }
+    }
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            _instance = this;
+        }
+    }
 
     private void OnEnable()
     {
-        if (inputHandler != null)
-        {
-            inputHandler.OnMiddleMouseHold += HandleMiddleMouseMovement;
-            inputHandler.OnScroll += HandleZoom;
-            inputHandler.OnMouseNearEdge += HandleEdgeMovement;
-        }
+        GameplayInputHandler.Instance.OnMiddleMouseHold += HandleMiddleMouseMovement;
+        GameplayInputHandler.Instance.OnScroll += HandleZoom;
+        GameplayInputHandler.Instance.OnMouseNearEdge += HandleEdgeMovement;
     }
 
     private void OnDisable()
     {
-        if (inputHandler != null)
-        {
-            inputHandler.OnMiddleMouseHold -= HandleMiddleMouseMovement;
-            inputHandler.OnScroll -= HandleZoom;
-            inputHandler.OnMouseNearEdge -= HandleEdgeMovement;
-        }
+        GameplayInputHandler.Instance.OnMiddleMouseHold -= HandleMiddleMouseMovement;
+        GameplayInputHandler.Instance.OnScroll -= HandleZoom;
+        GameplayInputHandler.Instance.OnMouseNearEdge -= HandleEdgeMovement;
     }
 
     void Start()
@@ -59,13 +82,6 @@ public class CameraManager : MonoBehaviour
         _targetPosition = cameraFollow.transform.position;
         cameraFollow.SetCameraZoom(_currentZoom);
     }
-
-    //    //For testing
-    //    if (Input.GetKeyDown(KeyCode.T))
-    //    {
-    //        SetCameraPositionToMove(new Vector3(2845, 2845, 0));
-    //    }
-    //    //Debug
 
     private void HandleEdgeMovement(Vector2 mousePosition)
     {
@@ -108,9 +124,8 @@ public class CameraManager : MonoBehaviour
             var mouseDelta = currentMousePosition - _lastMousePosition;
 
             var moveDirection = new Vector3(mouseDelta.x, mouseDelta.y, 0).normalized;
-            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / CameraConfig.MiddleMouseSpeed / 2;
 
-
+            var distance = Vector3.Distance(currentMousePosition, _lastMousePosition) / 2;
             var toAddPosition = moveDirection * CameraConfig.MiddleMouseSpeed * Time.deltaTime * distance;
 
             _targetPosition += toAddPosition;
@@ -126,7 +141,7 @@ public class CameraManager : MonoBehaviour
 
         if (CheckCameraMapBordersCollision(newZoom))
         {
-            _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom);
+            _targetPosition += CalculateVectorToMoveCameraFromBorder(newZoom) * 5;
             NormalizeCameraMapPosition();
             _currentZoom = newZoom;
         }
@@ -272,7 +287,7 @@ public class CameraManager : MonoBehaviour
     {
         _targetPosition.x = _positionToMove.x;
         _targetPosition.y = _positionToMove.y;
-        NormalizeCameraMapPosition();
+        UpdateCameraData();
     }
 
     /// <summary>
@@ -285,6 +300,19 @@ public class CameraManager : MonoBehaviour
     public void SetCameraPositionToMove(Vector3 finalPosition)
     {
         _positionToMove = finalPosition;
+        if (Math.Abs(_targetPosition.x - _positionToMove.x) > 0.001f &&
+            Math.Abs(_targetPosition.y - _positionToMove.y) > 0.001f)
+        {
+            MoveCameraToPosition();
+        }
+    }
+
+    public void SetCameraZoom(float zoom)
+    {
+        NormalizeCameraMapPosition();
+
+        _currentZoom = zoom;
+        cameraFollow.SetCameraZoom(_currentZoom);
     }
 
     private void UpdateCameraData()

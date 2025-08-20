@@ -1,10 +1,10 @@
 ﻿{
-	"EdgeMoveSpeed": 50.0,
+	"EdgeMoveSpeed": 8.0,
 	"EdgeSize": 20.0,
-	"MiddleMouseSpeed": 50.0,
-	"MinZoom": 50.0,
-	"MaxZoom": 500.0,
-	"StepZoom": 5.0,
-	"CurrentZoom": 100.0,
-	"ZoomSpeed": 450.0
+	"MiddleMouseSpeed": 0.5,
+	"MinZoom": 5.0,
+	"MaxZoom": 50.0,
+	"StepZoom": 1.0,
+	"CurrentZoom": 20.0,
+	"ZoomSpeed": 20.0
 }

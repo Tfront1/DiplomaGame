@@ -17,13 +17,13 @@ public class BaseSkill : ISkill
     public float ExperienceToNextLevel =>
         _baseExperienceToLevel * Mathf.Pow(_experienceMultiplier, _currentLevel);
 
-    public BaseSkill(string name, float initialLevel = 1, float maxLevel = 100,
-                    float baseExperienceToLevel = 100, float experienceMultiplier = 1.1f)
+    public BaseSkill(string name, float initialLevel = 1, float maxLevel = 100f,
+                    float baseExperienceToLevel = 100f, float experienceMultiplier = 1.1f)
     {
         _name = name;
         _maxLevel = maxLevel;
         _currentLevel = Mathf.Clamp(initialLevel, 1, maxLevel);
-        _experience = 0;
+        _experience = 0f;
         _baseExperienceToLevel = baseExperienceToLevel;
         _experienceMultiplier = experienceMultiplier;
     }
